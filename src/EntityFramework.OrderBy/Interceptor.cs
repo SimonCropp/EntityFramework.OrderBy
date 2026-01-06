@@ -17,26 +17,16 @@ sealed class Interceptor : IQueryExpressionInterceptor
 
     static MethodInfo queryableThenByDescending = GetQueryableMethod(nameof(Queryable.ThenByDescending));
 
-    ConcurrentDictionary<Type, bool> validatedContextTypes = new();
-
     public Expression QueryCompilationStarting(Expression query, QueryExpressionEventData eventData)
     {
-        if (eventData.Context == null)
+        var context = eventData.Context;
+        if (context == null)
         {
             return query;
         }
 
-        var model = eventData.Context.Model;
-
-        // Check if this DbContext requires ordering for all entities (opt-in feature)
-        var requireOrdering = eventData.Context.GetService<IDbContextOptions>()
-            .FindExtension<DefaultOrderByOptionsExtension>()
-            ?.RequireOrderingForAllEntities ?? false;
-
-        if (requireOrdering)
-        {
-            ValidateAllEntitiesHaveOrdering(eventData.Context.GetType(), model);
-        }
+        var model = context.Model;
+        RequiredOrder.Validate(context);
 
         // First, process Include nodes to add ordering to nested collections
         var visitor = new IncludeOrderingApplicator(model);
@@ -122,39 +112,5 @@ sealed class Interceptor : IQueryExpressionInterceptor
         }
 
         return result;
-    }
-
-    void ValidateAllEntitiesHaveOrdering(Type contextType, IModel model)
-    {
-        // Only validate once per DbContext type
-        if (!validatedContextTypes.TryAdd(contextType, true))
-        {
-            return;
-        }
-
-        var entitiesWithoutOrdering = new List<string>();
-
-        foreach (var entity in model.GetEntityTypes())
-        {
-            // Skip entity types that are not queryable (owned types, etc.)
-            if (entity.IsOwned() || entity.HasSharedClrType)
-            {
-                continue;
-            }
-
-            // Check if this entity type has default ordering configured
-            var hasOrdering = entity.FindAnnotation(OrderByExtensions.AnnotationName)?.Value
-                is Configuration { Clauses.Count: > 0 };
-
-            if (!hasOrdering)
-            {
-                entitiesWithoutOrdering.Add(entity.ClrType.Name);
-            }
-        }
-
-        if (entitiesWithoutOrdering.Count > 0)
-        {
-            throw new($"Default ordering is required for all entity types but the following entities do not have ordering configured: {string.Join(", ", entitiesWithoutOrdering)}. Use modelBuilder.Entity<T>().OrderBy() to configure default ordering.");
-        }
     }
 }
