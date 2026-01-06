@@ -9,8 +9,8 @@ public sealed class DefaultOrderByConfiguration
 
     internal void AddClause(string propertyName, bool descending, bool isThenBy)
     {
-        Clauses.Add(new OrderByClause(propertyName, descending, isThenBy));
+        Clauses.Add(new(propertyName, descending, isThenBy));
     }
 }
 
-internal sealed record OrderByClause(string PropertyName, bool Descending, bool IsThenBy);
+sealed record OrderByClause(string PropertyName, bool Descending, bool IsThenBy);

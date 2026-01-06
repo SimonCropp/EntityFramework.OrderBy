@@ -1,4 +1,5 @@
-public class TestDbContext(DbContextOptions<TestDbContext> options) : DbContext(options)
+public class TestDbContext(DbContextOptions<TestDbContext> options) :
+    DbContext(options)
 {
     public DbSet<TestEntity> TestEntities => Set<TestEntity>();
     public DbSet<AnotherEntity> AnotherEntities => Set<AnotherEntity>();
@@ -11,14 +12,14 @@ public class TestDbContext(DbContextOptions<TestDbContext> options) : DbContext(
 
         // Configure default ordering using fluent API
         modelBuilder.Entity<TestEntity>()
-            .HasDefaultOrderByDescending(e => e.CreatedDate);
+            .OrderByDescending(_ => _.CreatedDate);
 
         modelBuilder.Entity<AnotherEntity>()
-            .HasDefaultOrderBy(e => e.Name);
+            .OrderBy(_ => _.Name);
 
         // Multiple orderings: Category ASC, then Priority DESC, then Name ASC
         modelBuilder.Entity<EntityWithMultipleOrderings>()
-            .HasDefaultOrderBy(e => e.Category)
+            .OrderBy(e => e.Category)
             .ThenByDescending(e => e.Priority)
             .ThenBy(e => e.Name);
 

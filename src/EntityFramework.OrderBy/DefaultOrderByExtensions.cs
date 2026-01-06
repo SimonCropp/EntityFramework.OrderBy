@@ -20,25 +20,25 @@ public static class DefaultOrderByExtensions
     /// <summary>
     /// Configures a default ascending ordering for this entity type.
     /// </summary>
-    public static DefaultOrderByBuilder<TEntity> HasDefaultOrderBy<TEntity, TProperty>(
+    public static DefaultOrderByBuilder<TEntity> OrderBy<TEntity, TProperty>(
         this EntityTypeBuilder<TEntity> builder,
         Expression<Func<TEntity, TProperty>> propertyExpression)
         where TEntity : class
     {
         var propertyName = GetPropertyName(propertyExpression);
-        return new DefaultOrderByBuilder<TEntity>(builder, propertyName, descending: false);
+        return new(builder, propertyName, descending: false);
     }
 
     /// <summary>
     /// Configures a default descending ordering for this entity type.
     /// </summary>
-    public static DefaultOrderByBuilder<TEntity> HasDefaultOrderByDescending<TEntity, TProperty>(
+    public static DefaultOrderByBuilder<TEntity> OrderByDescending<TEntity, TProperty>(
         this EntityTypeBuilder<TEntity> builder,
         Expression<Func<TEntity, TProperty>> propertyExpression)
         where TEntity : class
     {
         var propertyName = GetPropertyName(propertyExpression);
-        return new DefaultOrderByBuilder<TEntity>(builder, propertyName, descending: true);
+        return new(builder, propertyName, descending: true);
     }
 
     static string GetPropertyName<TEntity, TProperty>(Expression<Func<TEntity, TProperty>> propertyExpression)
