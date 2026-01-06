@@ -53,7 +53,8 @@ sealed class Interceptor : IQueryExpressionInterceptor
         // Check interfaces
         foreach (var iface in type.GetInterfaces())
         {
-            if (iface.IsGenericType && iface.GetGenericTypeDefinition() == typeof(IQueryable<>))
+            if (iface.IsGenericType &&
+                iface.GetGenericTypeDefinition() == typeof(IQueryable<>))
             {
                 return iface.GetGenericArguments()[0];
             }
