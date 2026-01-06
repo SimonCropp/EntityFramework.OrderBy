@@ -1,6 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-
 namespace EntityFramework.OrderBy;
 
 public static class DefaultOrderByExtensions
@@ -13,7 +10,7 @@ public static class DefaultOrderByExtensions
     /// </summary>
     public static DbContextOptionsBuilder UseDefaultOrderBy(this DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.AddInterceptors(new DefaultOrderByInterceptor());
+        optionsBuilder.AddInterceptors(new Interceptor());
         return optionsBuilder;
     }
 

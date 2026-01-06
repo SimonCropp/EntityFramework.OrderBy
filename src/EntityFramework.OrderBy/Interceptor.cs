@@ -1,36 +1,34 @@
-namespace EntityFramework.OrderBy;
-
 /// <summary>
 /// Interceptor that applies default ordering to queries that don't have explicit OrderBy.
 /// </summary>
-public sealed class DefaultOrderByInterceptor : IQueryExpressionInterceptor
+sealed class Interceptor : IQueryExpressionInterceptor
 {
-    public Expression QueryCompilationStarting(Expression queryExpression, QueryExpressionEventData eventData)
+    public Expression QueryCompilationStarting(Expression query, QueryExpressionEventData eventData)
     {
         // First check if there's already ordering in the expression
-        if (HasOrdering(queryExpression))
+        if (HasOrdering(query))
         {
-            return queryExpression;
+            return query;
         }
 
         // Find the element type of the query from its type
-        var elementType = GetQueryElementType(queryExpression.Type);
+        var elementType = GetQueryElementType(query.Type);
         if (elementType == null)
         {
-            return queryExpression;
+            return query;
         }
 
         // Get the configuration from the model
         var entityType = eventData.Context?.Model.FindEntityType(elementType);
-        var configuration = entityType?.FindAnnotation(DefaultOrderByExtensions.AnnotationName)?.Value as DefaultOrderByConfiguration;
 
-        if (configuration == null || configuration.Clauses.Count == 0)
+        if (entityType?.FindAnnotation(DefaultOrderByExtensions.AnnotationName)?.Value is not
+                DefaultOrderByConfiguration configuration || configuration.Clauses.Count == 0)
         {
-            return queryExpression;
+            return query;
         }
 
         // Apply all ordering clauses
-        return ApplyOrdering(queryExpression, elementType, configuration);
+        return ApplyOrdering(query, elementType, configuration);
     }
 
     static bool HasOrdering(Expression expression)
@@ -101,8 +99,13 @@ public sealed class DefaultOrderByInterceptor : IQueryExpressionInterceptor
 
         protected override Expression VisitMethodCall(MethodCallExpression node)
         {
-            if (node.Method.DeclaringType == typeof(Queryable) &&
-                node.Method.Name is "OrderBy" or "OrderByDescending" or "ThenBy" or "ThenByDescending")
+            var method = node.Method;
+            if (method.DeclaringType == typeof(Queryable) &&
+                method.Name is
+                    "OrderBy" or
+                    "OrderByDescending" or
+                    "ThenBy" or
+                    "ThenByDescending")
             {
                 HasOrdering = true;
             }

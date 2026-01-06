@@ -1,6 +1,0 @@
-<Solution>
-  <Folder Name="/src/">
-    <Project Path="src/EntityFramework.OrderBy/EntityFramework.OrderBy.csproj" />
-    <Project Path="src/EntityFramework.OrderBy.Tests/EntityFramework.OrderBy.Tests.csproj" />
-  </Folder>
-</Solution>
