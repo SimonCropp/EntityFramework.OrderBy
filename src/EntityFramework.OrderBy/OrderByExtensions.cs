@@ -3,15 +3,33 @@ namespace EntityFrameworkOrderBy;
 public static class OrderByExtensions
 {
     internal const string AnnotationName = "DefaultOrderBy:Configuration";
+    internal const string RequireOrderingAnnotation = "DefaultOrderBy:RequireOrdering";
     static Interceptor interceptor = new();
 
     /// <summary>
     /// Adds the default ordering interceptor to automatically apply ordering to queries
     /// based on fluent configuration.
     /// </summary>
-    public static DbContextOptionsBuilder UseDefaultOrderBy(this DbContextOptionsBuilder builder)
+    /// <param name="builder">The DbContextOptionsBuilder to configure.</param>
+    /// <param name="requireOrderingForAllEntities">
+    /// When true, throws an exception during the first query if any entity type
+    /// in the model doesn't have default ordering configured. Validation occurs
+    /// once per DbContext type.
+    /// </param>
+    public static DbContextOptionsBuilder UseDefaultOrderBy(
+        this DbContextOptionsBuilder builder,
+        bool requireOrderingForAllEntities = false)
     {
         builder.AddInterceptors(interceptor);
+
+        if (requireOrderingForAllEntities)
+        {
+            // Store the requirement in the builder's options
+            // We'll use a marker extension to track this
+            ((IDbContextOptionsBuilderInfrastructure)builder).AddOrUpdateExtension(
+                new DefaultOrderByOptionsExtension(requireOrderingForAllEntities));
+        }
+
         return builder;
     }
 

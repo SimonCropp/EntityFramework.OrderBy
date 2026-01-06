@@ -21,25 +21,25 @@ public class TestDbContext(DbContextOptions<TestDbContext> options) :
 
         // Multiple orderings: Category ASC, then Priority DESC, then Name ASC
         modelBuilder.Entity<EntityWithMultipleOrderings>()
-            .OrderBy(e => e.Category)
-            .ThenByDescending(e => e.Priority)
-            .ThenBy(e => e.Name);
+            .OrderBy(_ => _.Category)
+            .ThenByDescending(_ => _.Priority)
+            .ThenBy(_ => _.Name);
 
         // EntityWithoutDefaultOrder has no default ordering configured
 
         // Configure Department-Employee relationship
         modelBuilder.Entity<Department>()
-            .HasMany(d => d.Employees)
-            .WithOne(e => e.Department)
-            .HasForeignKey(e => e.DepartmentId)
+            .HasMany(_ => _.Employees)
+            .WithOne(_ => _.Department)
+            .HasForeignKey(_ => _.DepartmentId)
             .IsRequired();
 
         // Default ordering for Department: DisplayOrder ascending
         modelBuilder.Entity<Department>()
-            .OrderBy(d => d.DisplayOrder);
+            .OrderBy(_ => _.DisplayOrder);
 
         // Default ordering for Employee: HireDate descending (newest first)
         modelBuilder.Entity<Employee>()
-            .OrderByDescending(e => e.HireDate);
+            .OrderByDescending(_ => _.HireDate);
     }
 }

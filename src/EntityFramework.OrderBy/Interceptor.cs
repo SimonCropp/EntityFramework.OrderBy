@@ -3,6 +3,8 @@
 /// </summary>
 sealed class Interceptor : IQueryExpressionInterceptor
 {
+    readonly ConcurrentDictionary<Type, bool> validatedContextTypes = new();
+
     public Expression QueryCompilationStarting(Expression query, QueryExpressionEventData eventData)
     {
         if (eventData.Context == null)
@@ -11,6 +13,16 @@ sealed class Interceptor : IQueryExpressionInterceptor
         }
 
         var model = eventData.Context.Model;
+
+        // Check if this DbContext requires ordering for all entities (opt-in feature)
+        var requireOrdering = eventData.Context.GetService<IDbContextOptions>()
+            .FindExtension<DefaultOrderByOptionsExtension>()
+            ?.RequireOrderingForAllEntities ?? false;
+
+        if (requireOrdering)
+        {
+            ValidateAllEntitiesHaveOrdering(eventData.Context.GetType(), model);
+        }
 
         // First, process Include nodes to add ordering to nested collections
         var visitor = new IncludeOrderingApplicator(model);
@@ -100,6 +112,40 @@ sealed class Interceptor : IQueryExpressionInterceptor
         return result;
     }
 
+    void ValidateAllEntitiesHaveOrdering(Type contextType, IModel model)
+    {
+        // Only validate once per DbContext type
+        if (!validatedContextTypes.TryAdd(contextType, true))
+        {
+            return;
+        }
+
+        var entitiesWithoutOrdering = new List<string>();
+
+        foreach (var entityType in model.GetEntityTypes())
+        {
+            // Skip entity types that are not queryable (owned types, etc.)
+            if (entityType.IsOwned() || entityType.HasSharedClrType)
+            {
+                continue;
+            }
+
+            // Check if this entity type has default ordering configured
+            var hasOrdering = entityType.FindAnnotation(OrderByExtensions.AnnotationName)?.Value
+                is Configuration { Clauses.Count: > 0 };
+
+            if (!hasOrdering)
+            {
+                entitiesWithoutOrdering.Add(entityType.ClrType.Name);
+            }
+        }
+
+        if (entitiesWithoutOrdering.Count > 0)
+        {
+            throw new($"Default ordering is required for all entity types but the following entities do not have ordering configured: {string.Join(", ", entitiesWithoutOrdering)}. Use modelBuilder.Entity<T>().OrderBy() to configure default ordering.");
+        }
+    }
+
     /// <summary>
     /// Visitor that applies default ordering to nested collections in Include().
     /// </summary>
@@ -155,7 +201,7 @@ sealed class Interceptor : IQueryExpressionInterceptor
                     var configuration = GetConfiguration(elementType);
                     if (configuration is { Clauses.Count: > 0 })
                     {
-                        // Build OrderBy expression:  d => d.Employees.OrderBy(...).ThenBy(...)
+                        // Build OrderBy expression:  _ => _.Employees.OrderBy(...).ThenBy(...)
                         var orderedNavigation = BuildOrderedNavigationExpression(lambda.Body, elementType, configuration);
                         var orderedLambda = Expression.Lambda(orderedNavigation, lambda.Parameters);
 
@@ -205,7 +251,8 @@ sealed class Interceptor : IQueryExpressionInterceptor
 
                 var orderByMethod = typeof(Enumerable)
                     .GetMethods()
-                    .First(m => m.Name == methodName && m.GetParameters().Length == 2)
+                    .First(_ => _.Name == methodName &&
+                                _.GetParameters().Length == 2)
                     .MakeGenericMethod(elementType, property.Type);
 
                 result = Expression.Call(orderByMethod, result, lambda);

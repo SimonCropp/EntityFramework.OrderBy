@@ -1,6 +1,6 @@
 # <img src="/src/icon.png" height="30px"> EntityFramework.OrderBy
 
-[![Build status](https://img.shields.io/appveyor/build/SimonCropp/graphql-validation)](https://ci.appveyor.com/project/SimonCropp/EntityFramework.OrderBy)
+[![Build status](https://img.shields.io/appveyor/build/SimonCropp/entityframework-orderby)](https://ci.appveyor.com/project/SimonCropp/entityframework-orderby)
 [![NuGet Status](https://img.shields.io/nuget/v/EntityFramework.OrderBy.svg)](https://www.nuget.org/packages/EntityFramework.OrderBy/)
 
 **See [Milestones](../../milestones?state=closed) for release notes.**

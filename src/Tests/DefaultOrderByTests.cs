@@ -36,7 +36,7 @@ public class DefaultOrderByTests
         await using var context = database.NewDbContext();
 
         var results = await context.TestEntities
-            .OrderBy(e => e.Name)
+            .OrderBy(_ => _.Name)
             .ToListAsync();
 
         // Should be ordered by Name (explicit), not CreatedDate (default)
@@ -64,7 +64,7 @@ public class DefaultOrderByTests
         await using var context = database.NewDbContext();
 
         var results = await context.TestEntities
-            .Where(e => e.Name != "Alpha")
+            .Where(_ => _.Name != "Alpha")
             .ToListAsync();
 
         // Should still apply default ordering
@@ -112,7 +112,7 @@ public class DefaultOrderByTests
         await using var context = database.NewDbContext();
 
         var results = await context.Departments
-            .Include(d => d.Employees)
+            .Include(_ => _.Employees)
             .ToListAsync();
 
         // Departments should be ordered by DisplayOrder (1, 2, 3)
@@ -142,7 +142,7 @@ public class DefaultOrderByTests
         await using var context = database.NewDbContext();
 
         var results = await context.Departments
-            .Include(d => d.Employees.OrderBy(e => e.Name))
+            .Include(_ => _.Employees.OrderBy(_ => _.Name))
             .ToListAsync();
 
         // Departments should be ordered by DisplayOrder (default)
@@ -179,8 +179,8 @@ public class DefaultOrderByTests
         await using var context = database.NewDbContext();
 
         var results = await context.Departments
-            .Include(d => d.Employees)
-            .OrderByDescending(d => d.Name)
+            .Include(_ => _.Employees)
+            .OrderByDescending(_ => _.Name)
             .ToListAsync();
 
         // Departments should be ordered by Name descending (explicit), not DisplayOrder (default)
