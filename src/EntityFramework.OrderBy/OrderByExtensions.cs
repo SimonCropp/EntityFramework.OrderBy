@@ -3,7 +3,6 @@ namespace EntityFrameworkOrderBy;
 public static class OrderByExtensions
 {
     internal const string AnnotationName = "DefaultOrderBy:Configuration";
-    internal const string RequireOrderingAnnotation = "DefaultOrderBy:RequireOrdering";
     static Interceptor interceptor = new();
 
     /// <summary>

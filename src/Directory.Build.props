@@ -9,7 +9,7 @@
     <AssemblyVersion>1.0.0</AssemblyVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <PackageTags>EntityFramework</PackageTags>
+    <PackageTags>EntityFramework. Ordering</PackageTags>
     <Description>.</Description>
   </PropertyGroup>
 </Project>

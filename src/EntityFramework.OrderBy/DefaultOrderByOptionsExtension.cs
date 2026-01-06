@@ -1,9 +1,8 @@
-namespace EntityFrameworkOrderBy;
-
 /// <summary>
 /// Options extension to store default ordering configuration.
 /// </summary>
-sealed class DefaultOrderByOptionsExtension(bool requireOrderingForAllEntities) : IDbContextOptionsExtension
+sealed class DefaultOrderByOptionsExtension(bool requireOrderingForAllEntities) :
+    IDbContextOptionsExtension
 {
     public bool RequireOrderingForAllEntities { get; } = requireOrderingForAllEntities;
 
