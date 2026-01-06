@@ -1,16 +1,18 @@
 static class RequiredOrder
 {
-    static ConcurrentDictionary<Type, bool> validatedContextTypes = new();
+    static ConcurrentBag<Type> validated = [];
 
     public static void Validate(DbContext context)
     {
         var contextType = context.GetType();
 
         // Only check and validate once per DbContext type
-        if (!validatedContextTypes.TryAdd(contextType, true))
+        if (validated.Contains(contextType))
         {
             return;
         }
+
+        validated.Add(contextType);
 
         // Check if this DbContext requires ordering for all entities (opt-in feature)
         var requireOrdering = context.GetService<IDbContextOptions>()

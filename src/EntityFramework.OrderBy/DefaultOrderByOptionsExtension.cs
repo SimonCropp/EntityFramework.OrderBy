@@ -10,12 +10,10 @@ sealed class DefaultOrderByOptionsExtension(bool requireOrderingForAllEntities) 
 
     public void ApplyServices(IServiceCollection services)
     {
-        // No services to register
     }
 
     public void Validate(IDbContextOptions options)
     {
-        // No validation needed
     }
 
     class ExtensionInfo(IDbContextOptionsExtension extension) : DbContextOptionsExtensionInfo(extension)
