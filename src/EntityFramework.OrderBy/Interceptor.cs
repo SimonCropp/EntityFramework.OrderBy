@@ -3,7 +3,21 @@
 /// </summary>
 sealed class Interceptor : IQueryExpressionInterceptor
 {
-    readonly ConcurrentDictionary<Type, bool> validatedContextTypes = new();
+    static MethodInfo GetQueryableMethod(string name) =>
+        typeof(Queryable)
+            .GetMethods()
+            .First(_ => _.Name == name &&
+                        _.GetParameters().Length == 2);
+
+    static MethodInfo queryableOrderBy = GetQueryableMethod(nameof(Queryable.OrderBy) );
+
+    static MethodInfo queryableOrderByDescending = GetQueryableMethod(nameof(Queryable.OrderByDescending));
+
+    static MethodInfo queryableThenBy = GetQueryableMethod(nameof(Queryable.ThenBy));
+
+    static MethodInfo queryableThenByDescending = GetQueryableMethod(nameof(Queryable.ThenByDescending));
+
+    ConcurrentDictionary<Type, bool> validatedContextTypes = new();
 
     public Expression QueryCompilationStarting(Expression query, QueryExpressionEventData eventData)
     {
@@ -63,7 +77,8 @@ sealed class Interceptor : IQueryExpressionInterceptor
         if (type.IsGenericType)
         {
             var genericDef = type.GetGenericTypeDefinition();
-            if (genericDef == typeof(IQueryable<>) || genericDef == typeof(IOrderedQueryable<>))
+            if (genericDef == typeof(IQueryable<>) ||
+                genericDef == typeof(IOrderedQueryable<>))
             {
                 return type.GetGenericArguments()[0];
             }
@@ -91,20 +106,17 @@ sealed class Interceptor : IQueryExpressionInterceptor
             var property = Expression.Property(parameter, clause.Property);
             var lambda = Expression.Lambda(property, parameter);
 
-            string methodName;
+            MethodInfo genericMethod;
             if (clause.IsThenBy)
             {
-                methodName = clause.Descending ? "ThenByDescending" : "ThenBy";
+                genericMethod = clause.Descending ? queryableThenByDescending : queryableThenBy;
             }
             else
             {
-                methodName = clause.Descending ? "OrderByDescending" : "OrderBy";
+                genericMethod = clause.Descending ? queryableOrderByDescending : queryableOrderBy;
             }
 
-            var orderByMethod = typeof(Queryable)
-                .GetMethods()
-                .First(_ => _.Name == methodName && _.GetParameters().Length == 2)
-                .MakeGenericMethod(elementType, property.Type);
+            var orderByMethod = genericMethod.MakeGenericMethod(elementType, property.Type);
 
             result = Expression.Call(orderByMethod, result, Expression.Quote(lambda));
         }

@@ -3,6 +3,22 @@
 /// </summary>
 sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
 {
+    static readonly MethodInfo EnumerableOrderBy = typeof(Enumerable)
+        .GetMethods()
+        .First(m => m.Name == nameof(Enumerable.OrderBy) && m.GetParameters().Length == 2);
+
+    static readonly MethodInfo EnumerableOrderByDescending = typeof(Enumerable)
+        .GetMethods()
+        .First(m => m.Name == nameof(Enumerable.OrderByDescending) && m.GetParameters().Length == 2);
+
+    static readonly MethodInfo EnumerableThenBy = typeof(Enumerable)
+        .GetMethods()
+        .First(m => m.Name == nameof(Enumerable.ThenBy) && m.GetParameters().Length == 2);
+
+    static readonly MethodInfo EnumerableThenByDescending = typeof(Enumerable)
+        .GetMethods()
+        .First(m => m.Name == nameof(Enumerable.ThenByDescending) && m.GetParameters().Length == 2);
+
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
         // First, recursively visit children
@@ -91,21 +107,17 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
             var property = Expression.Property(parameter, clause.Property);
             var lambda = Expression.Lambda(property, parameter);
 
-            string methodName;
+            MethodInfo genericMethod;
             if (clause.IsThenBy)
             {
-                methodName = clause.Descending ? "ThenByDescending" : "ThenBy";
+                genericMethod = clause.Descending ? EnumerableThenByDescending : EnumerableThenBy;
             }
             else
             {
-                methodName = clause.Descending ? "OrderByDescending" : "OrderBy";
+                genericMethod = clause.Descending ? EnumerableOrderByDescending : EnumerableOrderBy;
             }
 
-            var orderByMethod = typeof(Enumerable)
-                .GetMethods()
-                .First(_ => _.Name == methodName &&
-                            _.GetParameters().Length == 2)
-                .MakeGenericMethod(elementType, property.Type);
+            var orderByMethod = genericMethod.MakeGenericMethod(elementType, property.Type);
 
             result = Expression.Call(orderByMethod, result, lambda);
         }
