@@ -1,5 +1,3 @@
-﻿// Global using directives
-
-global using System.Runtime.CompilerServices;
-global using EntityFramework.OrderBy;
+﻿global using System.Runtime.CompilerServices;
+global using EntityFrameworkOrderBy;
 global using Microsoft.EntityFrameworkCore;

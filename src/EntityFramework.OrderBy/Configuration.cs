@@ -1,12 +1,10 @@
 /// <summary>
 /// Stores the default ordering configuration for an entity type.
 /// </summary>
-sealed class DefaultOrderByConfiguration
+sealed class Configuration
 {
     internal List<OrderByClause> Clauses { get; } = [];
 
     internal void AddClause(string property, bool descending, bool isThenBy) =>
         Clauses.Add(new(property, descending, isThenBy));
 }
-
-sealed record OrderByClause(string Property, bool Descending, bool IsThenBy);

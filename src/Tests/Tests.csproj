@@ -7,19 +7,14 @@
 
   <ItemGroup>
     <PackageReference Include="EfLocalDb" />
+    <PackageReference Include="MarkdownSnippets.MsBuild" PrivateAssets="all" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="NUnit" />
     <PackageReference Include="NUnit3TestAdapter" />
-    <PackageReference Include="ProjectDefaults">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="ProjectDefaults" PrivateAssets="all" />
     <PackageReference Include="Verify.EntityFramework" />
     <PackageReference Include="Verify.NUnit" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\EntityFramework.OrderBy\EntityFramework.OrderBy.csproj" />
   </ItemGroup>
 

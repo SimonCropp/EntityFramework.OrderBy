@@ -21,8 +21,8 @@ sealed class Interceptor : IQueryExpressionInterceptor
         // Get the configuration from the model
         var entityType = eventData.Context?.Model.FindEntityType(elementType);
 
-        if (entityType?.FindAnnotation(DefaultOrderByExtensions.AnnotationName)?.Value is not
-                DefaultOrderByConfiguration configuration || configuration.Clauses.Count == 0)
+        if (entityType?.FindAnnotation(OrderByExtensions.AnnotationName)?.Value is not
+                Configuration configuration || configuration.Clauses.Count == 0)
         {
             return query;
         }
@@ -62,14 +62,14 @@ sealed class Interceptor : IQueryExpressionInterceptor
         return null;
     }
 
-    static Expression ApplyOrdering(Expression source, Type elementType, DefaultOrderByConfiguration configuration)
+    static Expression ApplyOrdering(Expression source, Type elementType, Configuration configuration)
     {
         var result = source;
 
         foreach (var clause in configuration.Clauses)
         {
             var parameter = Expression.Parameter(elementType, "x");
-            var property = Expression.Property(parameter, clause.PropertyName);
+            var property = Expression.Property(parameter, clause.Property);
             var lambda = Expression.Lambda(property, parameter);
 
             string methodName;
