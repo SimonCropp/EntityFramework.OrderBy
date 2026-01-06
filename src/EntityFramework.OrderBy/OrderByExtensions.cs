@@ -3,15 +3,16 @@ namespace EntityFrameworkOrderBy;
 public static class OrderByExtensions
 {
     internal const string AnnotationName = "DefaultOrderBy:Configuration";
+    static Interceptor interceptor = new();
 
     /// <summary>
     /// Adds the default ordering interceptor to automatically apply ordering to queries
     /// based on fluent configuration.
     /// </summary>
-    public static DbContextOptionsBuilder UseDefaultOrderBy(this DbContextOptionsBuilder optionsBuilder)
+    public static DbContextOptionsBuilder UseDefaultOrderBy(this DbContextOptionsBuilder builder)
     {
-        optionsBuilder.AddInterceptors(new Interceptor());
-        return optionsBuilder;
+        builder.AddInterceptors(interceptor);
+        return builder;
     }
 
     /// <summary>

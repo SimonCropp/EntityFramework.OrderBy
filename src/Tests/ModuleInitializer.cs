@@ -1,4 +1,4 @@
-public static class ModuleInit
+public static class ModuleInitializer
 {
     public static SqlInstance<TestDbContext> SqlInstance = null!;
 
@@ -9,16 +9,16 @@ public static class ModuleInit
             constructInstance: builder =>
             {
                 builder.UseDefaultOrderBy();
-                return new TestDbContext(builder.Options);
+                return new(builder.Options);
             },
             buildTemplate: async context =>
             {
                 await context.Database.EnsureCreatedAsync();
 
                 context.TestEntities.AddRange(
-                    new TestEntity { Name = "Alpha", CreatedDate = new DateTime(2024, 1, 1) },
-                    new TestEntity { Name = "Beta", CreatedDate = new DateTime(2024, 6, 15) },
-                    new TestEntity { Name = "Gamma", CreatedDate = new DateTime(2024, 3, 10) }
+                    new TestEntity { Name = "Alpha", CreatedDate = new(2024, 1, 1) },
+                    new TestEntity { Name = "Beta", CreatedDate = new(2024, 6, 15) },
+                    new TestEntity { Name = "Gamma", CreatedDate = new(2024, 3, 10) }
                 );
 
                 context.AnotherEntities.AddRange(
@@ -41,6 +41,42 @@ public static class ModuleInit
                     new EntityWithMultipleOrderings { Category = "A", Priority = 1, Name = "Item3" },
                     new EntityWithMultipleOrderings { Category = "B", Priority = 2, Name = "Item4" }
                 );
+
+                // Test data for Department-Employee relationship
+                var dept1 = new Department
+                {
+                    Name = "Engineering",
+                    DisplayOrder = 1,
+                    Employees =
+                    [
+                        new() { Name = "Alice", HireDate = new(2024, 1, 15), Salary = 90000 },
+                        new() { Name = "Bob", HireDate = new(2024, 3, 20), Salary = 85000 },
+                        new() { Name = "Charlie", HireDate = new(2023, 6, 10), Salary = 95000 }
+                    ]
+                };
+
+                var dept2 = new Department
+                {
+                    Name = "Sales",
+                    DisplayOrder = 2,
+                    Employees =
+                    [
+                        new() { Name = "Diana", HireDate = new(2024, 2, 5), Salary = 70000 },
+                        new() { Name = "Eve", HireDate = new(2023, 11, 1), Salary = 72000 }
+                    ]
+                };
+
+                var dept3 = new Department
+                {
+                    Name = "HR",
+                    DisplayOrder = 3,
+                    Employees =
+                    [
+                        new() { Name = "Frank", HireDate = new(2024, 4, 10), Salary = 65000 }
+                    ]
+                };
+
+                context.Departments.AddRange(dept1, dept2, dept3);
 
                 await context.SaveChangesAsync();
             });

@@ -5,6 +5,8 @@ public class TestDbContext(DbContextOptions<TestDbContext> options) :
     public DbSet<AnotherEntity> AnotherEntities => Set<AnotherEntity>();
     public DbSet<EntityWithoutDefaultOrder> EntitiesWithoutDefaultOrder => Set<EntityWithoutDefaultOrder>();
     public DbSet<EntityWithMultipleOrderings> EntitiesWithMultipleOrderings => Set<EntityWithMultipleOrderings>();
+    public DbSet<Department> Departments => Set<Department>();
+    public DbSet<Employee> Employees => Set<Employee>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -24,5 +26,20 @@ public class TestDbContext(DbContextOptions<TestDbContext> options) :
             .ThenBy(e => e.Name);
 
         // EntityWithoutDefaultOrder has no default ordering configured
+
+        // Configure Department-Employee relationship
+        modelBuilder.Entity<Department>()
+            .HasMany(d => d.Employees)
+            .WithOne(e => e.Department)
+            .HasForeignKey(e => e.DepartmentId)
+            .IsRequired();
+
+        // Default ordering for Department: DisplayOrder ascending
+        modelBuilder.Entity<Department>()
+            .OrderBy(d => d.DisplayOrder);
+
+        // Default ordering for Employee: HireDate descending (newest first)
+        modelBuilder.Entity<Employee>()
+            .OrderByDescending(e => e.HireDate);
     }
 }
