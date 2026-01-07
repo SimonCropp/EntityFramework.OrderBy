@@ -54,7 +54,7 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
         if (argument is UnaryExpression { Operand: LambdaExpression lambda })
         {
             // Check if the navigation already has ordering
-            if (Interceptor. HasOrdering(lambda.Body))
+            if (Interceptor.HasOrdering(lambda.Body))
             {
                 // Already has explicit ordering, don't apply default
                 return includeCall;
@@ -66,11 +66,11 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
 
             if (elementType != null)
             {
-                var (entityType, configuration) = GetConfigurationAndEntityType(elementType);
-                if (entityType != null && configuration is { Clauses.Count: > 0 })
+                var configuration = GetConfiguration(elementType);
+                if (configuration is { Clauses.Count: > 0 })
                 {
                     // Build OrderBy expression: _ => _.Employees.OrderBy(...).ThenBy(...)
-                    var orderedNavigation = BuildOrderedNavigationExpression(lambda.Body, elementType, configuration);
+                    var orderedNavigation = BuildOrderedExpression(lambda.Body, elementType, configuration);
                     var orderedLambda = Expression.Lambda(orderedNavigation, lambda.Parameters);
 
                     // Get the Include method with the new return type
@@ -94,7 +94,7 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
         return includeCall;
     }
 
-    static Expression BuildOrderedNavigationExpression(Expression navigationProperty, Type elementType, Configuration configuration)
+    static Expression BuildOrderedExpression(Expression navigationProperty, Type elementType, Configuration configuration)
     {
         // Use Enumerable methods (not Queryable) because navigation properties are IEnumerable<T>
         // EF Core's ExtractIncludeFilter will handle these specially
@@ -154,15 +154,9 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
             return null;
         });
 
-    (IEntityType?, Configuration?) GetConfigurationAndEntityType(Type elementType)
+    Configuration? GetConfiguration(Type element)
     {
-        var entityType = model.FindEntityType(elementType);
-        if (entityType == null)
-        {
-            return (null, null);
-        }
-
-        var configuration = entityType.FindAnnotation(OrderByExtensions.AnnotationName)?.Value as Configuration;
-        return (entityType, configuration);
+        var entity = model.FindEntityType(element);
+        return entity?.FindAnnotation(OrderByExtensions.AnnotationName)?.Value as Configuration;
     }
 }
