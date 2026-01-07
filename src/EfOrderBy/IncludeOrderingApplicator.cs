@@ -103,7 +103,7 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
         // Apply each ordering clause using Enumerable methods
         foreach (var clause in configuration.Clauses)
         {
-            var parameter = Expression.Parameter(elementType);
+            var parameter = Expression.Parameter(elementType, "x");
             var property = Expression.Property(parameter, clause.Property);
             var lambda = Expression.Lambda(property, parameter);
 

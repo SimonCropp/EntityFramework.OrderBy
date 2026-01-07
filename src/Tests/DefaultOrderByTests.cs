@@ -375,4 +375,131 @@ public class DefaultOrderByTests
         Assert.That(engEmployees[1].Salary, Is.LessThanOrEqualTo(engEmployees[2].Salary));
         await Verify(results);
     }
+
+    [Test]
+    public async Task QueryWithWhereNullComparison_CanBeTranslated()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        // Add test data with null properties
+        context.TestEntities.Add(new() { Name = "NullProperty", CreatedDate = DateTime.Parse("2024-07-01") });
+        await context.SaveChangesAsync();
+
+        Recording.Start();
+        // This query should be translatable to SQL
+        var results = await context.TestEntities
+            .Where(_ => string.Equals(_.Name, null))
+            .ToListAsync();
+
+        // Should apply default ordering (CreatedDate DESC) and translate properly
+        Assert.That(results, Is.Empty);
+        await Verify(results);
+    }
+
+    [Test]
+    public async Task QueryWithWhereNotNullComparison_CanBeTranslated()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+        // This query should be translatable to SQL
+        var results = await context.TestEntities
+            .Where(_ => _.Name != "")
+            .ToListAsync();
+
+        // Should apply default ordering (CreatedDate DESC) and translate properly
+        Assert.That(results, Has.Count.EqualTo(3));
+        Assert.That(results[0].Name, Is.EqualTo("Beta"));
+        await Verify(results);
+    }
+
+    [Test]
+    public async Task QueryWithComplexWhere_CanBeTranslated()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+        // Complex where clause with default ordering
+        var results = await context.TestEntities
+            .Where(_ => _.Name.StartsWith('A') || _.Name.Contains("eta"))
+            .ToListAsync();
+
+        // Should apply default ordering (CreatedDate DESC)
+        Assert.That(results, Has.Count.EqualTo(2));
+        Assert.That(results[0].Name, Is.EqualTo("Beta"));   // 2024-06-15
+        Assert.That(results[1].Name, Is.EqualTo("Alpha"));  // 2024-01-01
+        await Verify(results);
+    }
+
+    [Test]
+    public async Task ToQueryString_WorksWithDefaultOrdering()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        // ToQueryString should not throw - expression must be translatable
+        var query = context.TestEntities.Where(_ => _.Name != "");
+        var sql = query.ToQueryString();
+
+        Assert.That(sql, Does.Contain("ORDER BY"));
+        Assert.That(sql, Does.Contain("CreatedDate"));
+    }
+
+    [Test]
+    public async Task ToQueryString_WorksWithWhereAndDefaultOrdering()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        // Complex query with Where and default ordering
+        var query = context.TestEntities
+            .Where(_ => string.Equals(_.Name, "Alpha"));
+        var sql = query.ToQueryString();
+
+        Assert.That(sql, Does.Contain("ORDER BY"));
+        Assert.That(sql, Does.Contain("WHERE"));
+    }
+
+    [Test]
+    public async Task QueryWithMultipleWhereConditions_CanBeTranslated()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+        var results = await context.TestEntities
+            .Where(_ => _.Name != "")
+            .Where(_ => _.CreatedDate > DateTime.Parse("2024-02-01"))
+            .ToListAsync();
+
+        // Should apply default ordering (CreatedDate DESC)
+        Assert.That(results, Has.Count.EqualTo(2));
+        Assert.That(results[0].Name, Is.EqualTo("Beta"));
+        Assert.That(results[1].Name, Is.EqualTo("Gamma"));
+        await Verify(results);
+    }
+
+    [Test]
+    public async Task IncludeWithWhereOnParent_AppliesOrderingToNestedCollection()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+        var results = await context.Departments
+            .Where(_ => _.Name != "")
+            .Include(_ => _.Employees)
+            .ToListAsync();
+
+        // Should apply ordering to both parent and nested collections
+        Assert.That(results, Has.Count.EqualTo(3));
+        Assert.That(results[0].Name, Is.EqualTo("Engineering"));
+
+        var engEmployees = results[0].Employees;
+        Assert.That(engEmployees[0].Name, Is.EqualTo("Bob"));
+        await Verify(results);
+    }
 }
