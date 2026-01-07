@@ -137,6 +137,26 @@ Use modelBuilder.Entity<T>().OrderBy() to configure default ordering.
 Validation occurs once per `DbContext` type for performance.
 
 
+## Configuration Errors
+
+Calling `OrderBy` or `OrderByDescending` multiple times for the same entity type throws an `InvalidOperationException`:
+
+```cs
+// WRONG - throws InvalidOperationException
+builder.Entity<Employee>()
+    .OrderBy(_ => _.HireDate);
+builder.Entity<Employee>()
+    .OrderBy(_ => _.Salary);  // Error!
+
+// CORRECT - use ThenBy for additional columns
+builder.Entity<Employee>()
+    .OrderBy(_ => _.HireDate)
+    .ThenBy(_ => _.Salary);
+```
+
+This prevents accidentally overwriting ordering configuration and ensures the intended ordering is applied.
+
+
 ## Example
 
 <!-- snippet: CompleteExample -->

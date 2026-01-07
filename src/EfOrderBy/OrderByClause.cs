@@ -49,11 +49,11 @@
     static MethodInfo enumerableThenByDescending = GetEnumerableMethod(nameof(Enumerable.ThenByDescending));
     LambdaExpression lambda;
 
-    // The fully generic Enumerable method (e.g., OrderBy&lt;ParentEntity, string&gt;)
+    // The fully generic Enumerable method (e.g., OrderBy<ParentEntity, string>)
     // ready to be invoked without further generic type arguments.
     MethodInfo enumerableMethod;
 
-    // The fully generic Queryable method (e.g., OrderBy&lt;ParentEntity, string&gt;)
+    // The fully generic Queryable method (e.g., OrderBy<ParentEntity, string>)
     // ready to be invoked without further generic type arguments.
     MethodInfo queryableMethod;
 
