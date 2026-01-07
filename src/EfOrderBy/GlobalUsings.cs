@@ -1,6 +1,6 @@
 ﻿global using System.Collections.Concurrent;
 global using System.Linq.Expressions;
-global using EntityFrameworkOrderBy;
+global using EfOrderBy;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.EntityFrameworkCore.Diagnostics;
 global using Microsoft.EntityFrameworkCore.Infrastructure;

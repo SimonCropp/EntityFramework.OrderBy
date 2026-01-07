@@ -16,7 +16,7 @@
     <PackageReference Include="Verify.EntityFramework" />
     <PackageReference Include="Verify.NUnit" />
     <PackageReference Include="Verify.SqlServer" />
-    <ProjectReference Include="..\EntityFramework.OrderBy\EntityFramework.OrderBy.csproj" />
+    <ProjectReference Include="..\EfOrderBy\EfOrderBy.csproj" />
   </ItemGroup>
 
 </Project>

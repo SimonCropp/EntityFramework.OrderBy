@@ -1,3 +1,3 @@
 ﻿global using System.Runtime.CompilerServices;
-global using EntityFrameworkOrderBy;
+global using EfOrderBy;
 global using Microsoft.EntityFrameworkCore;

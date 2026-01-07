@@ -1,19 +1,15 @@
 # <img src="/src/icon.png" height="30px"> EntityFramework.OrderBy
 
 [![Build status](https://img.shields.io/appveyor/build/SimonCropp/entityframework-orderby)](https://ci.appveyor.com/project/SimonCropp/entityframework-orderby)
-[![NuGet Status](https://img.shields.io/nuget/v/EntityFramework.OrderBy.svg)](https://www.nuget.org/packages/EntityFramework.OrderBy/)
+[![NuGet Status](https://img.shields.io/nuget/v/EfOrderBy.svg)](https://www.nuget.org/packages/EfOrderBy/)
 
 **See [Milestones](../../milestones?state=closed) for release notes.**
 
+Automatically applies default ordering to Entity Framework Core queries based on fluent configuration. This ensures consistent query results and prevents non-deterministic ordering issues.
 
 ## NuGet package
 
-https://nuget.org/packages/EntityFramework.OrderBy/
-
-
-## Overview
-
-EntityFramework.OrderBy automatically applies default ordering to Entity Framework Core queries based on fluent configuration. This ensures consistent query results and prevents non-deterministic ordering issues.
+https://nuget.org/packages/EfOrderBy/
 
 
 ## Features

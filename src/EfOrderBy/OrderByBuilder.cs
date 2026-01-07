@@ -1,4 +1,4 @@
-namespace EntityFrameworkOrderBy;
+namespace EfOrderBy;
 
 /// <summary>
 /// Builder for configuring default ordering on an entity type.

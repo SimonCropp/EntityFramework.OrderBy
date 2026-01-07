@@ -1,4 +1,4 @@
-namespace EntityFrameworkOrderBy;
+namespace EfOrderBy;
 
 /// <summary>
 /// Provides extension methods for configuring default ordering on Entity Framework Core queries.

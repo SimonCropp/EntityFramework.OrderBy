@@ -7,6 +7,6 @@
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
   </Folder>
-  <Project Path="EntityFramework.OrderBy/EntityFramework.OrderBy.csproj" />
+  <Project Path="EfOrderBy/EfOrderBy.csproj" />
   <Project Path="Tests/Tests.csproj" />
 </Solution>
