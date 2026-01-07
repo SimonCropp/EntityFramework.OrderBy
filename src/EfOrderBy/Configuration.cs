@@ -5,6 +5,6 @@ sealed class Configuration
 {
     internal List<OrderByClause> Clauses { get; } = [];
 
-    internal void AddClause(string property, bool descending, bool isThenBy) =>
-        Clauses.Add(new(property, descending, isThenBy));
+    internal void AddClause(PropertyInfo propertyInfo, bool descending, bool isThenBy) =>
+        Clauses.Add(new(propertyInfo, descending, isThenBy));
 }

@@ -1,1 +1,1 @@
-﻿sealed record OrderByClause(string Property, bool Descending, bool IsThenBy);
+﻿sealed record OrderByClause(PropertyInfo PropertyInfo, bool Descending, bool IsThenBy);

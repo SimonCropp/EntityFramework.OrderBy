@@ -8,10 +8,10 @@ public sealed class OrderByBuilder<TEntity>
 {
     Configuration configuration;
 
-    internal OrderByBuilder(EntityTypeBuilder<TEntity> entityTypeBuilder, string propertyName, bool descending)
+    internal OrderByBuilder(EntityTypeBuilder<TEntity> entityTypeBuilder, PropertyInfo propertyInfo, bool descending)
     {
         configuration = new();
-        configuration.AddClause(propertyName, descending, isThenBy: false);
+        configuration.AddClause(propertyInfo, descending, isThenBy: false);
 
         // Store configuration in model annotation
         entityTypeBuilder.Metadata.SetAnnotation(OrderByExtensions.AnnotationName, configuration);
@@ -22,8 +22,8 @@ public sealed class OrderByBuilder<TEntity>
     /// </summary>
     public OrderByBuilder<TEntity> ThenBy<TProperty>(Expression<Func<TEntity, TProperty>> property)
     {
-        var name = GetPropertyName(property);
-        configuration.AddClause(name, descending: false, isThenBy: true);
+        var propertyInfo = GetPropertyInfo(property);
+        configuration.AddClause(propertyInfo, descending: false, isThenBy: true);
         return this;
     }
 
@@ -32,16 +32,16 @@ public sealed class OrderByBuilder<TEntity>
     /// </summary>
     public OrderByBuilder<TEntity> ThenByDescending<TProperty>(Expression<Func<TEntity, TProperty>> property)
     {
-        var name = GetPropertyName(property);
-        configuration.AddClause(name, descending: true, isThenBy: true);
+        var propertyInfo = GetPropertyInfo(property);
+        configuration.AddClause(propertyInfo, descending: true, isThenBy: true);
         return this;
     }
 
-    static string GetPropertyName<TProperty>(Expression<Func<TEntity, TProperty>> property)
+    static PropertyInfo GetPropertyInfo<TProperty>(Expression<Func<TEntity, TProperty>> property)
     {
-        if (property.Body is MemberExpression member)
+        if (property.Body is MemberExpression { Member: PropertyInfo propertyInfo })
         {
-            return member.Member.Name;
+            return propertyInfo;
         }
 
         throw new ArgumentException("Expression must be a property access expression", nameof(property));

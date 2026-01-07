@@ -48,8 +48,8 @@ public static class OrderByExtensions
         Expression<Func<TEntity, TProperty>> property)
         where TEntity : class
     {
-        var name = GetPropertyName(property);
-        return new(builder, name, descending: false);
+        var propertyInfo = GetPropertyInfo(property);
+        return new(builder, propertyInfo, descending: false);
     }
 
     /// <summary>
@@ -65,15 +65,15 @@ public static class OrderByExtensions
         Expression<Func<TEntity, TProperty>> property)
         where TEntity : class
     {
-        var name = GetPropertyName(property);
-        return new(builder, name, descending: true);
+        var propertyInfo = GetPropertyInfo(property);
+        return new(builder, propertyInfo, descending: true);
     }
 
-    static string GetPropertyName<TEntity, TProperty>(Expression<Func<TEntity, TProperty>> property)
+    static PropertyInfo GetPropertyInfo<TEntity, TProperty>(Expression<Func<TEntity, TProperty>> property)
     {
-        if (property.Body is MemberExpression member)
+        if (property.Body is MemberExpression { Member: PropertyInfo propertyInfo })
         {
-            return member.Member.Name;
+            return propertyInfo;
         }
 
         throw new ArgumentException("Expression must be a property access expression", nameof(property));
