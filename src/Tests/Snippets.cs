@@ -22,7 +22,7 @@ public class ConfigureOrderingExample : DbContext
     {
         builder.Entity<Employee>()
             .OrderBy(_ => _.HireDate)
-            .ThenByDescending(e => e.Salary);
+            .ThenByDescending(_ => _.Salary);
 
         builder.Entity<Department>()
             .OrderBy(_ => _.DisplayOrder);

@@ -49,7 +49,7 @@ protected override void OnModelCreating(ModelBuilder builder)
 {
     builder.Entity<Employee>()
         .OrderBy(_ => _.HireDate)
-        .ThenByDescending(e => e.Salary);
+        .ThenByDescending(_ => _.Salary);
 
     builder.Entity<Department>()
         .OrderBy(_ => _.DisplayOrder);
