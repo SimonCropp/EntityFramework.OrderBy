@@ -10,6 +10,6 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <PackageTags>EntityFramework. Ordering</PackageTags>
-    <Description>.</Description>
+    <Description>Applies default ordering to Entity Framework Core queries based on fluent configuration. This ensures consistent query results and prevents non-deterministic ordering issues.</Description>
   </PropertyGroup>
 </Project>
