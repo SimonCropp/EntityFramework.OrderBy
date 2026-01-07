@@ -146,7 +146,7 @@ Calling `OrderBy` or `OrderByDescending` multiple times for the same entity type
 builder.Entity<Employee>()
     .OrderBy(_ => _.HireDate);
 builder.Entity<Employee>()
-    .OrderBy(_ => _.Salary);  // Error!
+    .OrderBy(_ => _.Salary);  // Error
 
 // CORRECT - use ThenBy for additional columns
 builder.Entity<Employee>()
