@@ -65,19 +65,19 @@ sealed class Interceptor : IQueryExpressionInterceptor
     }
 
     static Type? GetQueryElementType(Type type) =>
-        queryElementTypeCache.GetOrAdd(type, static t =>
+        queryElementTypeCache.GetOrAdd(type, static type =>
         {
-            if (t.IsGenericType)
+            if (type.IsGenericType)
             {
-                var genericDef = t.GetGenericTypeDefinition();
+                var genericDef = type.GetGenericTypeDefinition();
                 if (genericDef == typeof(IQueryable<>) ||
                     genericDef == typeof(IOrderedQueryable<>))
                 {
-                    return t.GetGenericArguments()[0];
+                    return type.GetGenericArguments()[0];
                 }
             }
 
-            foreach (var iface in t.GetInterfaces())
+            foreach (var iface in type.GetInterfaces())
             {
                 if (iface.IsGenericType &&
                     iface.GetGenericTypeDefinition() == typeof(IQueryable<>))
