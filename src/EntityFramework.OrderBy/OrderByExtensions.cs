@@ -1,5 +1,8 @@
 namespace EntityFrameworkOrderBy;
 
+/// <summary>
+/// Provides extension methods for configuring default ordering on Entity Framework Core queries.
+/// </summary>
 public static class OrderByExtensions
 {
     internal const string AnnotationName = "DefaultOrderBy:Configuration";
@@ -35,6 +38,11 @@ public static class OrderByExtensions
     /// <summary>
     /// Configures a default ascending ordering for this entity type.
     /// </summary>
+    /// <typeparam name="TEntity">The entity type being configured.</typeparam>
+    /// <typeparam name="TProperty">The type of the property to order by.</typeparam>
+    /// <param name="builder">The entity type builder.</param>
+    /// <param name="property">A lambda expression representing the property to order by.</param>
+    /// <returns>An <see cref="OrderByBuilder{TEntity}"/> for chaining additional ordering operations.</returns>
     public static OrderByBuilder<TEntity> OrderBy<TEntity, TProperty>(
         this EntityTypeBuilder<TEntity> builder,
         Expression<Func<TEntity, TProperty>> property)
@@ -47,6 +55,11 @@ public static class OrderByExtensions
     /// <summary>
     /// Configures a default descending ordering for this entity type.
     /// </summary>
+    /// <typeparam name="TEntity">The entity type being configured.</typeparam>
+    /// <typeparam name="TProperty">The type of the property to order by.</typeparam>
+    /// <param name="builder">The entity type builder.</param>
+    /// <param name="property">A lambda expression representing the property to order by.</param>
+    /// <returns>An <see cref="OrderByBuilder{TEntity}"/> for chaining additional ordering operations.</returns>
     public static OrderByBuilder<TEntity> OrderByDescending<TEntity, TProperty>(
         this EntityTypeBuilder<TEntity> builder,
         Expression<Func<TEntity, TProperty>> property)

@@ -18,4 +18,9 @@
     <ProjectReference Include="..\EntityFramework.OrderBy\EntityFramework.OrderBy.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Snippets.cs" />
+    <None Include="Snippets.cs" />
+  </ItemGroup>
+
 </Project>
