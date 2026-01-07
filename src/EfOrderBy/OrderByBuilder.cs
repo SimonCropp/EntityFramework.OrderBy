@@ -10,7 +10,7 @@ public sealed class OrderByBuilder<TEntity>
 
     internal OrderByBuilder(EntityTypeBuilder<TEntity> entityTypeBuilder, PropertyInfo propertyInfo, bool descending)
     {
-        configuration = new();
+        configuration = new(typeof(TEntity));
         configuration.AddClause(propertyInfo, descending, isThenBy: false);
 
         // Store configuration in model annotation

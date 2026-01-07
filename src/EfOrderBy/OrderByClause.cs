@@ -1,18 +1,26 @@
 ﻿sealed record OrderByClause
 {
-    public OrderByClause(PropertyInfo PropertyInfo, bool descending, bool isThenBy)
+    internal OrderByClause(Type elementType, PropertyInfo propertyInfo, bool descending, bool isThenBy)
     {
-        this.PropertyInfo = PropertyInfo;
+        PropertyInfo = propertyInfo;
+
+        MethodInfo genericQueryableMethod;
+        MethodInfo genericEnumerableMethod;
+
         if (isThenBy)
         {
-            QueryableMethod = descending ? queryableThenByDescending : queryableThenBy;
-            EnumerableMethod = descending ? enumerableThenByDescending : enumerableThenBy;
+            genericQueryableMethod = descending ? queryableThenByDescending : queryableThenBy;
+            genericEnumerableMethod = descending ? enumerableThenByDescending : enumerableThenBy;
         }
         else
         {
-            QueryableMethod = descending ? queryableOrderByDescending : queryableOrderBy;
-            EnumerableMethod = descending ? enumerableOrderByDescending : enumerableOrderBy;
+            genericQueryableMethod = descending ? queryableOrderByDescending : queryableOrderBy;
+            genericEnumerableMethod = descending ? enumerableOrderByDescending : enumerableOrderBy;
         }
+
+        // Pre-compute the fully generic methods (e.g., OrderBy<ParentEntity, string>)
+        QueryableMethod = genericQueryableMethod.MakeGenericMethod(elementType, propertyInfo.PropertyType);
+        EnumerableMethod = genericEnumerableMethod.MakeGenericMethod(elementType, propertyInfo.PropertyType);
     }
 
     static MethodInfo GetQueryableMethod(string name) =>
@@ -38,16 +46,16 @@
     static readonly MethodInfo enumerableThenByDescending = GetEnumerableMethod(nameof(Enumerable.ThenByDescending));
 
     /// <summary>
-    /// The appropriate Queryable method (OrderBy, OrderByDescending, ThenBy, or ThenByDescending)
-    /// for this clause.
+    /// The fully generic Queryable method (e.g., OrderBy&lt;ParentEntity, string&gt;)
+    /// ready to be invoked without further generic type arguments.
     /// </summary>
     public MethodInfo QueryableMethod { get; }
 
     /// <summary>
-    /// The appropriate Enumerable method (OrderBy, OrderByDescending, ThenBy, or ThenByDescending)
-    /// for this clause.
+    /// The fully generic Enumerable method (e.g., OrderBy&lt;ParentEntity, string&gt;)
+    /// ready to be invoked without further generic type arguments.
     /// </summary>
     public MethodInfo EnumerableMethod { get; }
 
-    public PropertyInfo PropertyInfo { get; init; }
+    public PropertyInfo PropertyInfo { get; }
 }
