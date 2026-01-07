@@ -1,0 +1,84 @@
+﻿{
+  target: [
+    {
+      Id: 1,
+      Name: Engineering,
+      DisplayOrder: 1,
+      Employees: [
+        {
+          Id: 3,
+          DepartmentId: 1,
+          Name: Charlie,
+          HireDate: 2023-06-10,
+          Salary: 95000
+        },
+        {
+          Id: 2,
+          DepartmentId: 1,
+          Name: Bob,
+          HireDate: 2024-03-20,
+          Salary: 85000
+        },
+        {
+          Id: 1,
+          DepartmentId: 1,
+          Name: Alice,
+          HireDate: 2024-01-15,
+          Salary: 90000
+        }
+      ]
+    },
+    {
+      Id: 2,
+      Name: Sales,
+      DisplayOrder: 2,
+      Employees: [
+        {
+          Id: 5,
+          DepartmentId: 2,
+          Name: Eve,
+          HireDate: 2023-11-01,
+          Salary: 72000
+        },
+        {
+          Id: 4,
+          DepartmentId: 2,
+          Name: Diana,
+          HireDate: 2024-02-05,
+          Salary: 70000
+        }
+      ]
+    },
+    {
+      Id: 3,
+      Name: HR,
+      DisplayOrder: 3,
+      Employees: [
+        {
+          Id: 6,
+          DepartmentId: 3,
+          Name: Frank,
+          HireDate: 2024-04-10,
+          Salary: 65000
+        }
+      ]
+    }
+  ],
+  sql: {
+    Text:
+select   d.Id,
+         d.DisplayOrder,
+         d.Name,
+         e.Id,
+         e.DepartmentId,
+         e.HireDate,
+         e.Name,
+         e.Salary
+from     Departments as d
+         left outer join
+         Employees as e
+         on d.Id = e.DepartmentId
+order by d.Id, e.Name desc,
+    HasTransaction: false
+  }
+}

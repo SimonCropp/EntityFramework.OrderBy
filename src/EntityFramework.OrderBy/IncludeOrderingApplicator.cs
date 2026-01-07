@@ -3,21 +3,21 @@
 /// </summary>
 sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
 {
-    static readonly MethodInfo EnumerableOrderBy = typeof(Enumerable)
-        .GetMethods()
-        .First(m => m.Name == nameof(Enumerable.OrderBy) && m.GetParameters().Length == 2);
+    static MethodInfo GetEnumerableMethop(string name) =>
+        typeof(Enumerable)
+            .GetMethods()
+            .First(_ => _.Name == name &&
+                        _.GetParameters().Length == 2);
 
-    static readonly MethodInfo EnumerableOrderByDescending = typeof(Enumerable)
-        .GetMethods()
-        .First(m => m.Name == nameof(Enumerable.OrderByDescending) && m.GetParameters().Length == 2);
+    static readonly MethodInfo enumerableOrderBy = GetEnumerableMethop(nameof(Enumerable.OrderBy));
 
-    static readonly MethodInfo EnumerableThenBy = typeof(Enumerable)
-        .GetMethods()
-        .First(m => m.Name == nameof(Enumerable.ThenBy) && m.GetParameters().Length == 2);
+    static readonly MethodInfo enumerableOrderByDescending = GetEnumerableMethop(nameof(Enumerable.OrderByDescending));
 
-    static readonly MethodInfo EnumerableThenByDescending = typeof(Enumerable)
-        .GetMethods()
-        .First(m => m.Name == nameof(Enumerable.ThenByDescending) && m.GetParameters().Length == 2);
+    static readonly MethodInfo enumerableThenBy = GetEnumerableMethop(nameof(Enumerable.ThenBy));
+
+    static readonly MethodInfo enumerableThenByDescending = GetEnumerableMethop(nameof(Enumerable.ThenByDescending));
+
+    static readonly ConcurrentDictionary<Type, Type?> collectionElementTypeCache = new();
 
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
@@ -40,7 +40,7 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
                method.Name is "Include" or "ThenInclude";
     }
 
-    Expression ProcessInclude(MethodCallExpression includeCall)
+    MethodCallExpression ProcessInclude(MethodCallExpression includeCall)
     {
         // Include has 2 arguments: source and navigation lambda
         if (includeCall.Arguments.Count != 2)
@@ -48,10 +48,10 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
             return includeCall;
         }
 
-        var navigationArg = includeCall.Arguments[1];
+        var argument = includeCall.Arguments[1];
 
         // Check if the navigation lambda returns a collection
-        if (navigationArg is UnaryExpression { Operand: LambdaExpression lambda })
+        if (argument is UnaryExpression { Operand: LambdaExpression lambda })
         {
             // Check if the navigation already has ordering
             if (Interceptor. HasOrdering(lambda.Body))
@@ -69,7 +69,7 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
                 var configuration = GetConfiguration(elementType);
                 if (configuration is { Clauses.Count: > 0 })
                 {
-                    // Build OrderBy expression:  _ => _.Employees.OrderBy(...).ThenBy(...)
+                    // Build OrderBy expression: _ => _.Employees.OrderBy(...).ThenBy(...)
                     var orderedNavigation = BuildOrderedNavigationExpression(lambda.Body, elementType, configuration);
                     var orderedLambda = Expression.Lambda(orderedNavigation, lambda.Parameters);
 
@@ -103,18 +103,18 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
         // Apply each ordering clause using Enumerable methods
         foreach (var clause in configuration.Clauses)
         {
-            var parameter = Expression.Parameter(elementType, "x");
+            var parameter = Expression.Parameter(elementType);
             var property = Expression.Property(parameter, clause.Property);
             var lambda = Expression.Lambda(property, parameter);
 
             MethodInfo genericMethod;
             if (clause.IsThenBy)
             {
-                genericMethod = clause.Descending ? EnumerableThenByDescending : EnumerableThenBy;
+                genericMethod = clause.Descending ? enumerableThenByDescending : enumerableThenBy;
             }
             else
             {
-                genericMethod = clause.Descending ? EnumerableOrderByDescending : EnumerableOrderBy;
+                genericMethod = clause.Descending ? enumerableOrderByDescending : enumerableOrderBy;
             }
 
             var orderByMethod = genericMethod.MakeGenericMethod(elementType, property.Type);
@@ -125,33 +125,34 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
         return result;
     }
 
-    static Type? GetCollectionElementType(Type type)
-    {
-        // Check for IEnumerable<T>
-        if (type.IsGenericType)
+    static Type? GetCollectionElementType(Type type) =>
+        collectionElementTypeCache.GetOrAdd(type, static type =>
         {
-            var genericDef = type.GetGenericTypeDefinition();
-            if (genericDef == typeof(IEnumerable<>) ||
-                genericDef == typeof(ICollection<>) ||
-                genericDef == typeof(IList<>) ||
-                genericDef == typeof(List<>))
+            // Check for IEnumerable<T>
+            if (type.IsGenericType)
             {
-                return type.GetGenericArguments()[0];
+                var genericDef = type.GetGenericTypeDefinition();
+                if (genericDef == typeof(IEnumerable<>) ||
+                    genericDef == typeof(ICollection<>) ||
+                    genericDef == typeof(IList<>) ||
+                    genericDef == typeof(List<>))
+                {
+                    return type.GetGenericArguments()[0];
+                }
             }
-        }
 
-        // Check interfaces
-        foreach (var iface in type.GetInterfaces())
-        {
-            if (iface.IsGenericType &&
-                iface.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+            // Check interfaces
+            foreach (var iface in type.GetInterfaces())
             {
-                return iface.GetGenericArguments()[0];
+                if (iface.IsGenericType &&
+                    iface.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                {
+                    return iface.GetGenericArguments()[0];
+                }
             }
-        }
 
-        return null;
-    }
+            return null;
+        });
 
     Configuration? GetConfiguration(Type elementType)
     {

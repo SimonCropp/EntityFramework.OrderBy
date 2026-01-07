@@ -1,0 +1,28 @@
+﻿{
+  target: [
+    {
+      Id: 1,
+      Name: Engineering,
+      DisplayOrder: 1
+    },
+    {
+      Id: 3,
+      Name: HR,
+      DisplayOrder: 3
+    },
+    {
+      Id: 2,
+      Name: Sales,
+      DisplayOrder: 2
+    }
+  ],
+  sql: {
+    Text:
+select   d.Id,
+         d.DisplayOrder,
+         d.Name
+from     Departments as d
+order by d.Name, d.DisplayOrder desc,
+    HasTransaction: false
+  }
+}

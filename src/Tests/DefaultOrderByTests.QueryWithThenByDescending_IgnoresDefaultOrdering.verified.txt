@@ -1,0 +1,44 @@
+﻿{
+  target: [
+    {
+      Id: 4,
+      Category: A,
+      Priority: 1,
+      Name: Item3
+    },
+    {
+      Id: 2,
+      Category: A,
+      Priority: 2,
+      Name: Item2
+    },
+    {
+      Id: 3,
+      Category: A,
+      Priority: 2,
+      Name: Item1
+    },
+    {
+      Id: 5,
+      Category: B,
+      Priority: 2,
+      Name: Item4
+    },
+    {
+      Id: 1,
+      Category: B,
+      Priority: 1,
+      Name: Item1
+    }
+  ],
+  sql: {
+    Text:
+select   e.Id,
+         e.Category,
+         e.Name,
+         e.Priority
+from     EntitiesWithMultipleOrderings as e
+order by e.Category, e.Name desc,
+    HasTransaction: false
+  }
+}

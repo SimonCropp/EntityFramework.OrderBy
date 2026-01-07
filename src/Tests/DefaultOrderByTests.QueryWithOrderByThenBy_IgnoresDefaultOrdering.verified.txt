@@ -1,0 +1,33 @@
+﻿{
+  target: [
+    {
+      Id: 1,
+      Name: Alpha,
+      CreatedDate: 2024-01-01
+    },
+    {
+      Id: 3,
+      Name: Gamma,
+      CreatedDate: 2024-03-10
+    },
+    {
+      Id: 2,
+      Name: Beta,
+      CreatedDate: 2024-06-15
+    },
+    {
+      Id: 4,
+      Name: Delta,
+      CreatedDate: 2024-06-15
+    }
+  ],
+  sql: {
+    Text:
+select   t.Id,
+         t.CreatedDate,
+         t.Name
+from     TestEntities as t
+order by t.CreatedDate, t.Name,
+    HasTransaction: false
+  }
+}

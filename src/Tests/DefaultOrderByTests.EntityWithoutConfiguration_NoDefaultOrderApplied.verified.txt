@@ -1,0 +1,23 @@
+﻿{
+  target: [
+    {
+      Id: 1,
+      Value: Third
+    },
+    {
+      Id: 2,
+      Value: First
+    },
+    {
+      Id: 3,
+      Value: Second
+    }
+  ],
+  sql: {
+    Text:
+select e.Id,
+       e.Value
+from   EntitiesWithoutDefaultOrder as e,
+    HasTransaction: false
+  }
+}

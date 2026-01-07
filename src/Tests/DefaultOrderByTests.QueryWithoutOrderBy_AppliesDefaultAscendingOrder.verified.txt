@@ -1,0 +1,28 @@
+﻿{
+  target: [
+    {
+      Id: 2,
+      Name: Apple,
+      Priority: 3
+    },
+    {
+      Id: 3,
+      Name: Mango,
+      Priority: 2
+    },
+    {
+      Id: 1,
+      Name: Zebra,
+      Priority: 1
+    }
+  ],
+  sql: {
+    Text:
+select   a.Id,
+         a.Name,
+         a.Priority
+from     AnotherEntities as a
+order by a.Name,
+    HasTransaction: false
+  }
+}

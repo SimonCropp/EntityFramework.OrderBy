@@ -33,12 +33,10 @@ Configure the default ordering interceptor in the `DbContext`:
 <a id='snippet-EnableInterceptor'></a>
 ```cs
 protected override void OnConfiguring(
-    DbContextOptionsBuilder optionsBuilder)
-{
+    DbContextOptionsBuilder optionsBuilder) =>
     optionsBuilder.UseDefaultOrderBy();
-}
 ```
-<sup><a href='/src/Tests/Snippets.cs#L4-L12' title='Snippet source file'>snippet source</a> | <a href='#snippet-EnableInterceptor' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L9-L15' title='Snippet source file'>snippet source</a> | <a href='#snippet-EnableInterceptor' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### 2. Configure entity ordering
@@ -59,7 +57,7 @@ protected override void OnModelCreating(
         .OrderBy(d => d.DisplayOrder);
 }
 ```
-<sup><a href='/src/Tests/Snippets.cs#L14-L27' title='Snippet source file'>snippet source</a> | <a href='#snippet-ConfigureOrdering' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L20-L33' title='Snippet source file'>snippet source</a> | <a href='#snippet-ConfigureOrdering' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### 3. Query without explicit OrderBy
@@ -78,7 +76,7 @@ var employeesByName = await context.Set<Employee>()
     .OrderBy(e => e.Name)
     .ToListAsync();
 ```
-<sup><a href='/src/Tests/Snippets.cs#L35-L46' title='Snippet source file'>snippet source</a> | <a href='#snippet-QueryWithoutOrderBy' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L54-L65' title='Snippet source file'>snippet source</a> | <a href='#snippet-QueryWithoutOrderBy' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Include() Support
@@ -94,7 +92,7 @@ var departments = await context.Set<Department>()
     .Include(d => d.Employees)
     .ToListAsync();
 ```
-<sup><a href='/src/Tests/Snippets.cs#L53-L61' title='Snippet source file'>snippet source</a> | <a href='#snippet-IncludeSupport' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L72-L80' title='Snippet source file'>snippet source</a> | <a href='#snippet-IncludeSupport' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Multi-Column Ordering
@@ -109,7 +107,7 @@ modelBuilder.Entity<Product>()
     .ThenBy(p => p.Name)
     .ThenByDescending(p => p.Price);
 ```
-<sup><a href='/src/Tests/Snippets.cs#L66-L73' title='Snippet source file'>snippet source</a> | <a href='#snippet-MultiColumnOrdering' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L85-L92' title='Snippet source file'>snippet source</a> | <a href='#snippet-MultiColumnOrdering' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Require Ordering for All Entities
@@ -120,13 +118,11 @@ Enable validation mode to ensure all entities have default ordering configured:
 <a id='snippet-RequireOrdering'></a>
 ```cs
 protected override void OnConfiguring(
-    DbContextOptionsBuilder optionsBuilder)
-{
+    DbContextOptionsBuilder optionsBuilder) =>
     optionsBuilder.UseDefaultOrderBy(
         requireOrderingForAllEntities: true);
-}
 ```
-<sup><a href='/src/Tests/Snippets.cs#L77-L86' title='Snippet source file'>snippet source</a> | <a href='#snippet-RequireOrdering' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L38-L45' title='Snippet source file'>snippet source</a> | <a href='#snippet-RequireOrdering' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 This throws an exception during the first query if any entity type lacks default ordering configuration:
@@ -147,17 +143,17 @@ Validation occurs once per `DbContext` type for performance.
 public class Department
 {
     public int Id { get; set; }
-    public string Name { get; set; }
+    public string Name { get; set; } = "";
     public int DisplayOrder { get; set; }
-    public List<Employee> Employees { get; set; }
+    public List<Employee> Employees { get; set; } = [];
 }
 
 public class Employee
 {
     public int Id { get; set; }
     public int DepartmentId { get; set; }
-    public Department Department { get; set; }
-    public string Name { get; set; }
+    public Department Department { get; set; } = null!;
+    public string Name { get; set; } = "";
     public DateTime HireDate { get; set; }
     public int Salary { get; set; }
 }
@@ -187,7 +183,7 @@ public class AppDbContext : DbContext
     public DbSet<Employee> Employees => Set<Employee>();
 }
 ```
-<sup><a href='/src/Tests/Snippets.cs#L88-L133' title='Snippet source file'>snippet source</a> | <a href='#snippet-CompleteExample' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L96-L141' title='Snippet source file'>snippet source</a> | <a href='#snippet-CompleteExample' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 

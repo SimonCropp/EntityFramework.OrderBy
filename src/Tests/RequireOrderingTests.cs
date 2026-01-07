@@ -1,9 +1,9 @@
 [TestFixture]
 public class RequireOrderingTests
 {
-    static SqlInstance<TestDbContextWithMissingOrdering> sqlInstanceWithMissing = null!;
-    static SqlInstance<TestDbContextWithAllOrdering> sqlInstanceWithAll = null!;
-    static SqlInstance<TestDbContextWithMissingOrderingNoValidation> sqlInstanceNoValidation = null!;
+    static SqlInstance<ContextMissingOrdering> sqlInstanceWithMissing = null!;
+    static SqlInstance<ContextAllOrdering> sqlInstanceWithAll = null!;
+    static SqlInstance<ContextMissingOrderingNoValidation> sqlInstanceNoValidation = null!;
 
     [OneTimeSetUp]
     public void Setup()
@@ -94,18 +94,20 @@ public class RequireOrderingTests
     }
 }
 
-class TestDbContextWithMissingOrdering(DbContextOptions<TestDbContextWithMissingOrdering> options)
+class ContextMissingOrdering(DbContextOptions<ContextMissingOrdering> options)
     : DbContext(options)
 {
-    public DbSet<EntityWithoutDefaultOrder> EntitiesWithoutDefaultOrder => Set<EntityWithoutDefaultOrder>();
+    public DbSet<EntityWithoutDefaultOrder> EntitiesWithoutDefaultOrder =>
+        Set<EntityWithoutDefaultOrder>();
 
     // Intentionally not configuring default ordering for EntityWithoutDefaultOrder
 }
 
-class TestDbContextWithAllOrdering(DbContextOptions<TestDbContextWithAllOrdering> options)
+class ContextAllOrdering(DbContextOptions<ContextAllOrdering> options)
     : DbContext(options)
 {
-    public DbSet<TestEntity> TestEntities => Set<TestEntity>();
+    public DbSet<TestEntity> TestEntities =>
+        Set<TestEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -117,10 +119,11 @@ class TestDbContextWithAllOrdering(DbContextOptions<TestDbContextWithAllOrdering
     }
 }
 
-class TestDbContextWithMissingOrderingNoValidation(DbContextOptions<TestDbContextWithMissingOrderingNoValidation> options)
+class ContextMissingOrderingNoValidation(DbContextOptions<ContextMissingOrderingNoValidation> options)
     : DbContext(options)
 {
-    public DbSet<EntityWithoutDefaultOrder> EntitiesWithoutDefaultOrder => Set<EntityWithoutDefaultOrder>();
+    public DbSet<EntityWithoutDefaultOrder> EntitiesWithoutDefaultOrder =>
+        Set<EntityWithoutDefaultOrder>();
 
     // Intentionally not configuring default ordering for EntityWithoutDefaultOrder
 }

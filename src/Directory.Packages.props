@@ -14,5 +14,6 @@
     <PackageVersion Include="ProjectDefaults" Version="1.0.170" />
     <PackageVersion Include="Verify.NUnit" Version="31.9.3" />
     <PackageVersion Include="Verify.EntityFramework" Version="14.0.0" />
+    <PackageVersion Include="Verify.SqlServer" Version="11.2.0" />
   </ItemGroup>
 </Project>

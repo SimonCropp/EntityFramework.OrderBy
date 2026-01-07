@@ -1,34 +1,53 @@
 // ReSharper disable All
+#pragma warning disable IDE0022
 using Microsoft.EntityFrameworkCore;
 
-#region EnableInterceptor
+namespace Snippets;
 
-protected override void OnConfiguring(
-    DbContextOptionsBuilder optionsBuilder)
+public class EnableInterceptorExample : DbContext
 {
-    optionsBuilder.UseDefaultOrderBy();
+    #region EnableInterceptor
+
+    protected override void OnConfiguring(
+        DbContextOptionsBuilder optionsBuilder) =>
+        optionsBuilder.UseDefaultOrderBy();
+
+    #endregion
 }
 
-#endregion
-
-#region ConfigureOrdering
-
-protected override void OnModelCreating(
-    ModelBuilder modelBuilder)
+public class ConfigureOrderingExample : DbContext
 {
-    modelBuilder.Entity<Employee>()
-        .OrderBy(e => e.HireDate)
-        .ThenByDescending(e => e.Salary);
+    #region ConfigureOrdering
 
-    modelBuilder.Entity<Department>()
-        .OrderBy(d => d.DisplayOrder);
+    protected override void OnModelCreating(
+        ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Employee>()
+            .OrderBy(e => e.HireDate)
+            .ThenByDescending(e => e.Salary);
+
+        modelBuilder.Entity<Department>()
+            .OrderBy(d => d.DisplayOrder);
+    }
+
+    #endregion
 }
 
-#endregion
+public class RequireOrderingExample : DbContext
+{
+    #region RequireOrdering
+
+    protected override void OnConfiguring(
+        DbContextOptionsBuilder optionsBuilder) =>
+        optionsBuilder.UseDefaultOrderBy(
+            requireOrderingForAllEntities: true);
+
+    #endregion
+}
 
 public class SnippetExamples
 {
-    async Task QueryWithoutOrderBy()
+    static async Task QueryWithoutOrderBy()
     {
         DbContext context = null!;
 
@@ -46,7 +65,7 @@ public class SnippetExamples
         #endregion
     }
 
-    async Task IncludeSupport()
+    static async Task IncludeSupport()
     {
         DbContext context = null!;
 
@@ -61,7 +80,7 @@ public class SnippetExamples
         #endregion
     }
 
-    void MultiColumnOrdering(ModelBuilder modelBuilder)
+    static void MultiColumnOrdering(ModelBuilder modelBuilder)
     {
         #region MultiColumnOrdering
 
@@ -74,33 +93,22 @@ public class SnippetExamples
     }
 }
 
-#region RequireOrdering
-
-protected override void OnConfiguring(
-    DbContextOptionsBuilder optionsBuilder)
-{
-    optionsBuilder.UseDefaultOrderBy(
-        requireOrderingForAllEntities: true);
-}
-
-#endregion
-
 #region CompleteExample
 
 public class Department
 {
     public int Id { get; set; }
-    public string Name { get; set; }
+    public string Name { get; set; } = "";
     public int DisplayOrder { get; set; }
-    public List<Employee> Employees { get; set; }
+    public List<Employee> Employees { get; set; } = [];
 }
 
 public class Employee
 {
     public int Id { get; set; }
     public int DepartmentId { get; set; }
-    public Department Department { get; set; }
-    public string Name { get; set; }
+    public Department Department { get; set; } = null!;
+    public string Name { get; set; } = "";
     public DateTime HireDate { get; set; }
     public int Salary { get; set; }
 }
@@ -134,7 +142,7 @@ public class AppDbContext : DbContext
 
 class Product
 {
-    public string Category { get; set; }
-    public string Name { get; set; }
+    public string Category { get; set; } = "";
+    public string Name { get; set; } = "";
     public decimal Price { get; set; }
 }

@@ -17,6 +17,8 @@ sealed class Interceptor : IQueryExpressionInterceptor
 
     static MethodInfo queryableThenByDescending = GetQueryableMethod(nameof(Queryable.ThenByDescending));
 
+    static readonly ConcurrentDictionary<Type, Type?> queryElementTypeCache = new();
+
     public Expression QueryCompilationStarting(Expression query, QueryExpressionEventData eventData)
     {
         var context = eventData.Context;
@@ -62,29 +64,30 @@ sealed class Interceptor : IQueryExpressionInterceptor
         return visitor.HasOrdering;
     }
 
-    static Type? GetQueryElementType(Type type)
-    {
-        if (type.IsGenericType)
+    static Type? GetQueryElementType(Type type) =>
+        queryElementTypeCache.GetOrAdd(type, static t =>
         {
-            var genericDef = type.GetGenericTypeDefinition();
-            if (genericDef == typeof(IQueryable<>) ||
-                genericDef == typeof(IOrderedQueryable<>))
+            if (t.IsGenericType)
             {
-                return type.GetGenericArguments()[0];
+                var genericDef = t.GetGenericTypeDefinition();
+                if (genericDef == typeof(IQueryable<>) ||
+                    genericDef == typeof(IOrderedQueryable<>))
+                {
+                    return t.GetGenericArguments()[0];
+                }
             }
-        }
 
-        foreach (var iface in type.GetInterfaces())
-        {
-            if (iface.IsGenericType &&
-                iface.GetGenericTypeDefinition() == typeof(IQueryable<>))
+            foreach (var iface in t.GetInterfaces())
             {
-                return iface.GetGenericArguments()[0];
+                if (iface.IsGenericType &&
+                    iface.GetGenericTypeDefinition() == typeof(IQueryable<>))
+                {
+                    return iface.GetGenericArguments()[0];
+                }
             }
-        }
 
-        return null;
-    }
+            return null;
+        });
 
     static Expression ApplyOrdering(Expression source, Type elementType, Configuration configuration)
     {
