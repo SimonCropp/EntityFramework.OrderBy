@@ -8,7 +8,7 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
         // First, recursively visit children
-        var visited = (MethodCallExpression)base.VisitMethodCall(node);
+        var visited = (MethodCallExpression) base.VisitMethodCall(node);
 
         // Check if this is an Include method call
         if (IsIncludeMethod(visited))
@@ -22,7 +22,7 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
     static bool IsIncludeMethod(MethodCallExpression node)
     {
         var method = node.Method;
-        return method.DeclaringType?.Name == "EntityFrameworkQueryableExtensions" &&
+        return method.DeclaringType == typeof(EntityFrameworkQueryableExtensions) &&
                method.Name is "Include" or "ThenInclude";
     }
 
@@ -37,7 +37,7 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
         var argument = includeCall.Arguments[1];
 
         // Check if the navigation lambda returns a collection
-        if (argument is UnaryExpression { Operand: LambdaExpression lambda })
+        if (argument is UnaryExpression {Operand: LambdaExpression lambda})
         {
             // Check if the navigation already has ordering
             if (Interceptor.HasOrdering(lambda.Body))
@@ -53,7 +53,7 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
             if (elementType != null)
             {
                 var configuration = GetConfiguration(elementType);
-                if (configuration is { Clauses.Count: > 0 })
+                if (configuration is {Clauses.Count: > 0})
                 {
                     // Build OrderBy expression: _ => _.Employees.OrderBy(...).ThenBy(...)
                     var orderedNavigation = ApplyOrdering(lambda.Body, configuration);
@@ -96,33 +96,34 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
     }
 
     static Type? GetCollectionElementType(Type type) =>
-        collectionElementTypeCache.GetOrAdd(type, static type =>
-        {
-            // Check for IEnumerable<T>
-            if (type.IsGenericType)
+        collectionElementTypeCache.GetOrAdd(type,
+            static type =>
             {
-                var genericDef = type.GetGenericTypeDefinition();
-                if (genericDef == typeof(IEnumerable<>) ||
-                    genericDef == typeof(ICollection<>) ||
-                    genericDef == typeof(IList<>) ||
-                    genericDef == typeof(List<>))
+                // Check for IEnumerable<T>
+                if (type.IsGenericType)
                 {
-                    return type.GetGenericArguments()[0];
+                    var genericDef = type.GetGenericTypeDefinition();
+                    if (genericDef == typeof(IEnumerable<>) ||
+                        genericDef == typeof(ICollection<>) ||
+                        genericDef == typeof(IList<>) ||
+                        genericDef == typeof(List<>))
+                    {
+                        return type.GetGenericArguments()[0];
+                    }
                 }
-            }
 
-            // Check interfaces
-            foreach (var iface in type.GetInterfaces())
-            {
-                if (iface.IsGenericType &&
-                    iface.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                // Check interfaces
+                foreach (var iface in type.GetInterfaces())
                 {
-                    return iface.GetGenericArguments()[0];
+                    if (iface.IsGenericType &&
+                        iface.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                    {
+                        return iface.GetGenericArguments()[0];
+                    }
                 }
-            }
 
-            return null;
-        });
+                return null;
+            });
 
     Configuration? GetConfiguration(Type element)
     {
