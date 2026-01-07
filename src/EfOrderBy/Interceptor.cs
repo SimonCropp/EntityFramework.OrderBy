@@ -3,20 +3,6 @@
 /// </summary>
 sealed class Interceptor : IQueryExpressionInterceptor
 {
-    static MethodInfo GetQueryableMethod(string name) =>
-        typeof(Queryable)
-            .GetMethods()
-            .First(_ => _.Name == name &&
-                        _.GetParameters().Length == 2);
-
-    static MethodInfo queryableOrderBy = GetQueryableMethod(nameof(Queryable.OrderBy) );
-
-    static MethodInfo queryableOrderByDescending = GetQueryableMethod(nameof(Queryable.OrderByDescending));
-
-    static MethodInfo queryableThenBy = GetQueryableMethod(nameof(Queryable.ThenBy));
-
-    static MethodInfo queryableThenByDescending = GetQueryableMethod(nameof(Queryable.ThenByDescending));
-
     static readonly ConcurrentDictionary<Type, Type?> queryElementTypeCache = new();
 
     public Expression QueryCompilationStarting(Expression query, QueryExpressionEventData eventData)
@@ -116,17 +102,7 @@ sealed class Interceptor : IQueryExpressionInterceptor
             var property = Expression.Property(parameter, clause.PropertyInfo);
             var lambda = Expression.Lambda(property, parameter);
 
-            MethodInfo genericMethod;
-            if (clause.IsThenBy)
-            {
-                genericMethod = clause.Descending ? queryableThenByDescending : queryableThenBy;
-            }
-            else
-            {
-                genericMethod = clause.Descending ? queryableOrderByDescending : queryableOrderBy;
-            }
-
-            var orderByMethod = genericMethod.MakeGenericMethod(elementType, property.Type);
+            var orderByMethod = clause.QueryableMethod.MakeGenericMethod(elementType, property.Type);
 
             result = Expression.Call(orderByMethod, result, Expression.Quote(lambda));
         }

@@ -3,20 +3,6 @@
 /// </summary>
 sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
 {
-    static MethodInfo GetEnumerableMethop(string name) =>
-        typeof(Enumerable)
-            .GetMethods()
-            .First(_ => _.Name == name &&
-                        _.GetParameters().Length == 2);
-
-    static readonly MethodInfo enumerableOrderBy = GetEnumerableMethop(nameof(Enumerable.OrderBy));
-
-    static readonly MethodInfo enumerableOrderByDescending = GetEnumerableMethop(nameof(Enumerable.OrderByDescending));
-
-    static readonly MethodInfo enumerableThenBy = GetEnumerableMethop(nameof(Enumerable.ThenBy));
-
-    static readonly MethodInfo enumerableThenByDescending = GetEnumerableMethop(nameof(Enumerable.ThenByDescending));
-
     static readonly ConcurrentDictionary<Type, Type?> collectionElementTypeCache = new();
 
     protected override Expression VisitMethodCall(MethodCallExpression node)
@@ -107,17 +93,7 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
             var property = Expression.Property(parameter, clause.PropertyInfo);
             var lambda = Expression.Lambda(property, parameter);
 
-            MethodInfo genericMethod;
-            if (clause.IsThenBy)
-            {
-                genericMethod = clause.Descending ? enumerableThenByDescending : enumerableThenBy;
-            }
-            else
-            {
-                genericMethod = clause.Descending ? enumerableOrderByDescending : enumerableOrderBy;
-            }
-
-            var orderByMethod = genericMethod.MakeGenericMethod(elementType, property.Type);
+            var orderByMethod = clause.EnumerableMethod.MakeGenericMethod(elementType, property.Type);
 
             result = Expression.Call(orderByMethod, result, lambda);
         }
