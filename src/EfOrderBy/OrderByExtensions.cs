@@ -29,7 +29,7 @@ public static class OrderByExtensions
             // Store the requirement in the builder's options
             // We'll use a marker extension to track this
             ((IDbContextOptionsBuilderInfrastructure)builder).AddOrUpdateExtension(
-                new DefaultOrderByOptionsExtension(requireOrderingForAllEntities));
+                new OrderRequiredExtension(requireOrderingForAllEntities));
         }
 
         return builder;

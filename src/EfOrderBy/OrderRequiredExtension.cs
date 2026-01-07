@@ -1,7 +1,7 @@
 /// <summary>
 /// Options extension to store default ordering configuration.
 /// </summary>
-sealed class DefaultOrderByOptionsExtension(bool requireOrderingForAllEntities) :
+sealed class OrderRequiredExtension(bool requireOrderingForAllEntities) :
     IDbContextOptionsExtension
 {
     public bool RequireOrderingForAllEntities { get; } = requireOrderingForAllEntities;
@@ -18,7 +18,7 @@ sealed class DefaultOrderByOptionsExtension(bool requireOrderingForAllEntities) 
 
     class ExtensionInfo(IDbContextOptionsExtension extension) : DbContextOptionsExtensionInfo(extension)
     {
-        new DefaultOrderByOptionsExtension Extension => (DefaultOrderByOptionsExtension)base.Extension;
+        new OrderRequiredExtension Extension => (OrderRequiredExtension)base.Extension;
 
         public override bool IsDatabaseProvider => false;
 

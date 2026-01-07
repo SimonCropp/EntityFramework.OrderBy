@@ -16,7 +16,7 @@ static class RequiredOrder
 
         // Check if this DbContext requires ordering for all entities (opt-in feature)
         var requireOrdering = context.GetService<IDbContextOptions>()
-            .FindExtension<DefaultOrderByOptionsExtension>()
+            .FindExtension<OrderRequiredExtension>()
             ?.RequireOrderingForAllEntities ?? false;
 
         if (requireOrdering)
