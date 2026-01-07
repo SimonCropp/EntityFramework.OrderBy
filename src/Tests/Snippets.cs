@@ -8,9 +8,8 @@ public class EnableInterceptorExample : DbContext
 {
     #region EnableInterceptor
 
-    protected override void OnConfiguring(
-        DbContextOptionsBuilder optionsBuilder) =>
-        optionsBuilder.UseDefaultOrderBy();
+    protected override void OnConfiguring(DbContextOptionsBuilder builder) =>
+        builder.UseDefaultOrderBy();
 
     #endregion
 }
@@ -19,15 +18,14 @@ public class ConfigureOrderingExample : DbContext
 {
     #region ConfigureOrdering
 
-    protected override void OnModelCreating(
-        ModelBuilder modelBuilder)
+    protected override void OnModelCreating(ModelBuilder builder)
     {
-        modelBuilder.Entity<Employee>()
-            .OrderBy(e => e.HireDate)
+        builder.Entity<Employee>()
+            .OrderBy(_ => _.HireDate)
             .ThenByDescending(e => e.Salary);
 
-        modelBuilder.Entity<Department>()
-            .OrderBy(d => d.DisplayOrder);
+        builder.Entity<Department>()
+            .OrderBy(_ => _.DisplayOrder);
     }
 
     #endregion
@@ -37,9 +35,8 @@ public class RequireOrderingExample : DbContext
 {
     #region RequireOrdering
 
-    protected override void OnConfiguring(
-        DbContextOptionsBuilder optionsBuilder) =>
-        optionsBuilder.UseDefaultOrderBy(
+    protected override void OnConfiguring(DbContextOptionsBuilder builder) =>
+        builder.UseDefaultOrderBy(
             requireOrderingForAllEntities: true);
 
     #endregion
@@ -59,7 +56,7 @@ public class SnippetExamples
 
         // Explicit ordering takes precedence
         var employeesByName = await context.Set<Employee>()
-            .OrderBy(e => e.Name)
+            .OrderBy(_ => _.Name)
             .ToListAsync();
 
         #endregion
@@ -74,20 +71,20 @@ public class SnippetExamples
         // Departments ordered by DisplayOrder
         // Employees ordered by HireDate, then Salary descending
         var departments = await context.Set<Department>()
-            .Include(d => d.Employees)
+            .Include(_ => _.Employees)
             .ToListAsync();
 
         #endregion
     }
 
-    static void MultiColumnOrdering(ModelBuilder modelBuilder)
+    static void MultiColumnOrdering(ModelBuilder builder)
     {
         #region MultiColumnOrdering
 
-        modelBuilder.Entity<Product>()
-            .OrderBy(p => p.Category)
-            .ThenBy(p => p.Name)
-            .ThenByDescending(p => p.Price);
+        builder.Entity<Product>()
+            .OrderBy(_ => _.Category)
+            .ThenBy(_ => _.Name)
+            .ThenByDescending(_ => _.Price);
 
         #endregion
     }
@@ -115,23 +112,21 @@ public class Employee
 
 public class AppDbContext : DbContext
 {
-    protected override void OnConfiguring(
-        DbContextOptionsBuilder optionsBuilder)
+    protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
-        optionsBuilder
+        builder
             .UseSqlServer("connection-string")
             .UseDefaultOrderBy();
     }
 
-    protected override void OnModelCreating(
-        ModelBuilder modelBuilder)
+    protected override void OnModelCreating(ModelBuilder builder)
     {
-        modelBuilder.Entity<Department>()
-            .OrderBy(d => d.DisplayOrder);
+        builder.Entity<Department>()
+            .OrderBy(_ => _.DisplayOrder);
 
-        modelBuilder.Entity<Employee>()
-            .OrderBy(e => e.HireDate)
-            .ThenByDescending(e => e.Salary);
+        builder.Entity<Employee>()
+            .OrderBy(_ => _.HireDate)
+            .ThenByDescending(_ => _.Salary);
     }
 
     public DbSet<Department> Departments => Set<Department>();
