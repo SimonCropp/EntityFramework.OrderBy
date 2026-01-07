@@ -98,11 +98,7 @@ sealed class Interceptor : IQueryExpressionInterceptor
 
         foreach (var clause in configuration.Clauses)
         {
-            var parameter = Expression.Parameter(configuration.ElementType, "p");
-            var property = Expression.Property(parameter, clause.PropertyInfo);
-            var lambda = Expression.Lambda(property, parameter);
-
-            result = Expression.Call(clause.QueryableMethod, result, Expression.Quote(lambda));
+            result = clause.AppendQueryableOrder(result);
         }
 
         return result;

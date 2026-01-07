@@ -56,7 +56,7 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
                 if (configuration is { Clauses.Count: > 0 })
                 {
                     // Build OrderBy expression: _ => _.Employees.OrderBy(...).ThenBy(...)
-                    var orderedNavigation = BuildOrderedExpression(lambda.Body, configuration);
+                    var orderedNavigation = ApplyOrdering(lambda.Body, configuration);
                     var orderedLambda = Expression.Lambda(orderedNavigation, lambda.Parameters);
 
                     // Get the Include method with the new return type
@@ -80,20 +80,16 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
         return includeCall;
     }
 
-    static Expression BuildOrderedExpression(Expression navigationProperty, Configuration configuration)
+    static Expression ApplyOrdering(Expression source, Configuration configuration)
     {
         // Use Enumerable methods (not Queryable) because navigation properties are IEnumerable<T>
         // EF Core's ExtractIncludeFilter will handle these specially
-        var result = navigationProperty;
+        var result = source;
 
         // Apply each ordering clause using Enumerable methods
         foreach (var clause in configuration.Clauses)
         {
-            var parameter = Expression.Parameter(configuration.ElementType, "x");
-            var property = Expression.Property(parameter, clause.PropertyInfo);
-            var lambda = Expression.Lambda(property, parameter);
-
-            result = Expression.Call(clause.EnumerableMethod, result, lambda);
+            result = clause.AppendEnumerableOrder(result);
         }
 
         return result;

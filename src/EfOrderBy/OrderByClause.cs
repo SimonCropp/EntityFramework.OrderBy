@@ -1,8 +1,10 @@
 ﻿sealed record OrderByClause
 {
-    internal OrderByClause(Type elementType, PropertyInfo propertyInfo, bool descending, bool isThenBy)
+    internal OrderByClause(Type elementType, ParameterExpression parameter, PropertyInfo propertyInfo, bool descending, bool isThenBy)
     {
-        PropertyInfo = propertyInfo;
+        // Pre-build the property access and lambda expression
+        var property = Expression.Property(parameter, propertyInfo);
+        lambda = Expression.Lambda(property, parameter);
 
         MethodInfo genericQueryableMethod;
         MethodInfo genericEnumerableMethod;
@@ -19,8 +21,9 @@
         }
 
         // Pre-compute the fully generic methods (e.g., OrderBy<ParentEntity, string>)
-        QueryableMethod = genericQueryableMethod.MakeGenericMethod(elementType, propertyInfo.PropertyType);
-        EnumerableMethod = genericEnumerableMethod.MakeGenericMethod(elementType, propertyInfo.PropertyType);
+        queryableMethod = genericQueryableMethod.MakeGenericMethod(elementType, propertyInfo.PropertyType);
+        enumerableMethod = genericEnumerableMethod.MakeGenericMethod(elementType, propertyInfo.PropertyType);
+        quotedLambda = Expression.Quote(lambda);
     }
 
     static MethodInfo GetQueryableMethod(string name) =>
@@ -35,27 +38,34 @@
             .First(_ => _.Name == name &&
                         _.GetParameters().Length == 2);
 
-    static readonly MethodInfo queryableOrderBy = GetQueryableMethod(nameof(Queryable.OrderBy));
-    static readonly MethodInfo queryableOrderByDescending = GetQueryableMethod(nameof(Queryable.OrderByDescending));
-    static readonly MethodInfo queryableThenBy = GetQueryableMethod(nameof(Queryable.ThenBy));
-    static readonly MethodInfo queryableThenByDescending = GetQueryableMethod(nameof(Queryable.ThenByDescending));
+    static MethodInfo queryableOrderBy = GetQueryableMethod(nameof(Queryable.OrderBy));
+    static MethodInfo queryableOrderByDescending = GetQueryableMethod(nameof(Queryable.OrderByDescending));
+    static MethodInfo queryableThenBy = GetQueryableMethod(nameof(Queryable.ThenBy));
+    static MethodInfo queryableThenByDescending = GetQueryableMethod(nameof(Queryable.ThenByDescending));
 
-    static readonly MethodInfo enumerableOrderBy = GetEnumerableMethod(nameof(Enumerable.OrderBy));
-    static readonly MethodInfo enumerableOrderByDescending = GetEnumerableMethod(nameof(Enumerable.OrderByDescending));
-    static readonly MethodInfo enumerableThenBy = GetEnumerableMethod(nameof(Enumerable.ThenBy));
-    static readonly MethodInfo enumerableThenByDescending = GetEnumerableMethod(nameof(Enumerable.ThenByDescending));
-
-    /// <summary>
-    /// The fully generic Queryable method (e.g., OrderBy&lt;ParentEntity, string&gt;)
-    /// ready to be invoked without further generic type arguments.
-    /// </summary>
-    public MethodInfo QueryableMethod { get; }
-
+    static MethodInfo enumerableOrderBy = GetEnumerableMethod(nameof(Enumerable.OrderBy));
+    static MethodInfo enumerableOrderByDescending = GetEnumerableMethod(nameof(Enumerable.OrderByDescending));
+    static MethodInfo enumerableThenBy = GetEnumerableMethod(nameof(Enumerable.ThenBy));
+    static MethodInfo enumerableThenByDescending = GetEnumerableMethod(nameof(Enumerable.ThenByDescending));
+    LambdaExpression lambda;
     /// <summary>
     /// The fully generic Enumerable method (e.g., OrderBy&lt;ParentEntity, string&gt;)
     /// ready to be invoked without further generic type arguments.
     /// </summary>
-    public MethodInfo EnumerableMethod { get; }
+    MethodInfo enumerableMethod;
+    /// <summary>
+    /// The fully generic Queryable method (e.g., OrderBy&lt;ParentEntity, string&gt;)
+    /// ready to be invoked without further generic type arguments.
+    /// </summary>
+    MethodInfo queryableMethod;
 
-    public PropertyInfo PropertyInfo { get; }
+    public Expression AppendEnumerableOrder(Expression result) =>
+        // Enumerable methods expect Func<T, TKey>, so we pass the lambda directly (no Quote)
+        Expression.Call(enumerableMethod, result, lambda);
+
+    // Queryable methods expect Expression<Func<T, TKey>>, so we use Quote()
+    UnaryExpression quotedLambda;
+
+    public Expression AppendQueryableOrder(Expression result) =>
+        Expression.Call(queryableMethod, result, quotedLambda);
 }
