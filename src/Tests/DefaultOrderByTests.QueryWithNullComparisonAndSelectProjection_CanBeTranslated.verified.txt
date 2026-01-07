@@ -1,0 +1,11 @@
+﻿{
+  target: [],
+  sql: {
+    Text:
+select   t.Id
+from     TestEntities as t
+where    0 = 1
+order by t.CreatedDate desc,
+    HasTransaction: false
+  }
+}

@@ -1,0 +1,23 @@
+﻿{
+  target: [
+    {
+      Id: 2,
+      Name: 
+    },
+    {
+      Id: 3,
+      Name: 
+    },
+    {
+      Id: 1,
+      Name: 
+    }
+  ],
+  sql: {
+    Text:
+select   t.Id
+from     TestEntities as t
+order by t.CreatedDate desc,
+    HasTransaction: false
+  }
+}

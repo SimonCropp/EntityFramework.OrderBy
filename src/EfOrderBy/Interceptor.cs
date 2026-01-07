@@ -54,7 +54,8 @@ sealed class Interceptor : IQueryExpressionInterceptor
         }
 
         // Apply default ordering to the top-level query
-        return ApplyOrdering(queryWithOrderedIncludes, elementType, configuration);
+        // If there's a Select projection at the end, we need to insert OrderBy before it
+        return ApplyOrderingBeforeSelect(queryWithOrderedIncludes, elementType, entityType, configuration);
     }
 
     public static bool HasOrdering(Expression expression)
@@ -89,14 +90,32 @@ sealed class Interceptor : IQueryExpressionInterceptor
             return null;
         });
 
-    static Expression ApplyOrdering(Expression source, Type elementType, Configuration configuration)
+    static Expression ApplyOrderingBeforeSelect(Expression query, Type elementType, IEntityType entityType, Configuration configuration)
+    {
+        // Check if the query ends with a Select call
+        if (query is MethodCallExpression methodCall &&
+            methodCall.Method.DeclaringType == typeof(Queryable) &&
+            methodCall.Method.Name == "Select")
+        {
+            // Apply ordering to the source of the Select, then recreate the Select
+            var orderedSource = ApplyOrdering(methodCall.Arguments[0], elementType, entityType, configuration);
+            return Expression.Call(methodCall.Method, orderedSource, methodCall.Arguments[1]);
+        }
+
+        // No Select at the end, apply ordering normally
+        return ApplyOrdering(query, elementType, entityType, configuration);
+    }
+
+    static Expression ApplyOrdering(Expression source, Type elementType, IEntityType entityType, Configuration configuration)
     {
         var result = source;
 
         foreach (var clause in configuration.Clauses)
         {
-            var parameter = Expression.Parameter(elementType, "x");
-            var property = Expression.Property(parameter, clause.Property);
+            var propertyInfo = PropertyInfoHelper.GetPropertyInfo(entityType, clause.Property);
+
+            var parameter = Expression.Parameter(elementType, "p");
+            var property = Expression.Property(parameter, propertyInfo);
             var lambda = Expression.Lambda(property, parameter);
 
             MethodInfo genericMethod;

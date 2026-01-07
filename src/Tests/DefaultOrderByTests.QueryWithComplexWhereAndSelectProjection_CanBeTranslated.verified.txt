@@ -1,0 +1,22 @@
+﻿{
+  target: [
+    {
+      Id: 2,
+      Name: Beta
+    },
+    {
+      Id: 1,
+      Name: Alpha
+    }
+  ],
+  sql: {
+    Text:
+select   t.Id,
+         t.Name
+from     TestEntities as t
+where    t.Name like N'A%'
+         or t.Name like N'%eta%'
+order by t.CreatedDate desc,
+    HasTransaction: false
+  }
+}

@@ -502,4 +502,156 @@ public class DefaultOrderByTests
         Assert.That(engEmployees[0].Name, Is.EqualTo("Bob"));
         await Verify(results);
     }
+
+    [Test]
+    public async Task ToQueryString_WithNullableStringProperty()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        // This reproduces the GraphQL scenario with nullable string properties
+        var query = context.TestEntities
+            .Where(_ => string.Equals(_.Name, null));
+
+        var sql = query.ToQueryString();
+        Assert.That(sql, Does.Contain("WHERE"));
+    }
+
+    [Test]
+    public async Task QueryWithSelectProjection_AppliesOrderingBeforeSelect()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+        // Simulate GraphQL-style projection that only selects specific fields
+        var results = await context.TestEntities
+            .Select(_ => new TestEntity { Id = _.Id, Name = _.Name })
+            .ToListAsync();
+
+        // Should be ordered by CreatedDate descending (default ordering applied before Select)
+        // Even though CreatedDate is not in the projection
+        Assert.That(results, Has.Count.EqualTo(3));
+        Assert.That(results[0].Name, Is.EqualTo("Beta"));
+        Assert.That(results[1].Name, Is.EqualTo("Gamma"));
+        Assert.That(results[2].Name, Is.EqualTo("Alpha"));
+        await Verify(results);
+    }
+
+    [Test]
+    public async Task QueryWithWhereAndSelectProjection_AppliesOrderingBeforeSelect()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+        // This reproduces the exact GraphQL.EntityFramework scenario:
+        // Where clause followed by Select projection
+        var results = await context.TestEntities
+            .Where(_ => _.Name != "")
+            .Select(_ => new TestEntity { Id = _.Id, Name = _.Name })
+            .ToListAsync();
+
+        // Should be ordered by CreatedDate descending (applied before the Select)
+        Assert.That(results, Has.Count.EqualTo(3));
+        Assert.That(results[0].Name, Is.EqualTo("Beta"));   // 2024-06-15
+        Assert.That(results[1].Name, Is.EqualTo("Gamma"));  // 2024-03-10
+        Assert.That(results[2].Name, Is.EqualTo("Alpha"));  // 2024-01-01
+        await Verify(results);
+    }
+
+    [Test]
+    public async Task QueryWithNullComparisonAndSelectProjection_CanBeTranslated()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+        // This is the exact failing scenario from GraphQL.EntityFramework
+        // Where with null comparison + Select projection
+        var results = await context.TestEntities
+            .Where(_ => string.Equals(_.Name, null))
+            .Select(_ => new TestEntity { Id = _.Id })
+            .ToListAsync();
+
+        // The query should translate successfully without throwing
+        // "OrderBy(p => new TestEntity{ Id = p.Id }.Property)" error
+        Assert.That(results, Is.Empty);
+        await Verify(results);
+    }
+
+    [Test]
+    public async Task ToQueryString_WithSelectProjection_ShowsOrderByBeforeSelect()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        // Verify the SQL shows ORDER BY is applied correctly
+        var query = context.TestEntities
+            .Where(_ => _.Name != "")
+            .Select(_ => new TestEntity { Id = _.Id, Name = _.Name });
+
+        var sql = query.ToQueryString();
+
+        // SQL should contain ORDER BY and it should work correctly
+        Assert.That(sql, Does.Contain("ORDER BY"));
+        Assert.That(sql, Does.Contain("CreatedDate"));
+    }
+
+    [Test]
+    public async Task QueryWithSelectProjectionOnlyId_CanBeTranslated()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+        // Select only the Id field (like GraphQL does)
+        // Default ordering by CreatedDate should still work
+        var results = await context.TestEntities
+            .Select(_ => new TestEntity { Id = _.Id })
+            .ToListAsync();
+
+        Assert.That(results, Has.Count.EqualTo(3));
+        // All should have Ids, ordered by CreatedDate descending
+        Assert.That(results.All(_ => _.Id > 0), Is.True);
+        await Verify(results);
+    }
+
+    [Test]
+    public async Task QueryWithComplexWhereAndSelectProjection_CanBeTranslated()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+        // Complex scenario: complex where + projection
+        var results = await context.TestEntities
+            .Where(_ => _.Name.StartsWith('A') || _.Name.Contains("eta"))
+            .Select(_ => new TestEntity { Id = _.Id, Name = _.Name })
+            .ToListAsync();
+
+        // Should be ordered by CreatedDate descending
+        Assert.That(results, Has.Count.EqualTo(2));
+        Assert.That(results[0].Name, Is.EqualTo("Beta"));   // 2024-06-15
+        Assert.That(results[1].Name, Is.EqualTo("Alpha"));  // 2024-01-01
+        await Verify(results);
+    }
+
+    [Test]
+    public async Task ToQueryString_WithWhereNullComparisonAndSelectProjection()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        // This exact scenario was failing in GraphQL.EntityFramework
+        var query = context.TestEntities
+            .Where(_ => string.Equals(_.Name, null))
+            .Select(_ => new TestEntity { Id = _.Id });
+
+        // Should not throw translation error
+        var sql = query.ToQueryString();
+
+        Assert.That(sql, Does.Contain("WHERE"));
+        Assert.That(sql, Does.Contain("ORDER BY"));
+    }
 }

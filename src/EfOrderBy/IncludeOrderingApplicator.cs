@@ -66,11 +66,11 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
 
             if (elementType != null)
             {
-                var configuration = GetConfiguration(elementType);
-                if (configuration is { Clauses.Count: > 0 })
+                var (entityType, configuration) = GetConfigurationAndEntityType(elementType);
+                if (entityType != null && configuration is { Clauses.Count: > 0 })
                 {
                     // Build OrderBy expression: _ => _.Employees.OrderBy(...).ThenBy(...)
-                    var orderedNavigation = BuildOrderedNavigationExpression(lambda.Body, elementType, configuration);
+                    var orderedNavigation = BuildOrderedNavigationExpression(lambda.Body, elementType, entityType, configuration);
                     var orderedLambda = Expression.Lambda(orderedNavigation, lambda.Parameters);
 
                     // Get the Include method with the new return type
@@ -94,7 +94,7 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
         return includeCall;
     }
 
-    static Expression BuildOrderedNavigationExpression(Expression navigationProperty, Type elementType, Configuration configuration)
+    static Expression BuildOrderedNavigationExpression(Expression navigationProperty, Type elementType, IEntityType entityType, Configuration configuration)
     {
         // Use Enumerable methods (not Queryable) because navigation properties are IEnumerable<T>
         // EF Core's ExtractIncludeFilter will handle these specially
@@ -103,8 +103,10 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
         // Apply each ordering clause using Enumerable methods
         foreach (var clause in configuration.Clauses)
         {
+            var propertyInfo = PropertyInfoHelper.GetPropertyInfo(entityType, clause.Property);
+
             var parameter = Expression.Parameter(elementType, "x");
-            var property = Expression.Property(parameter, clause.Property);
+            var property = Expression.Property(parameter, propertyInfo);
             var lambda = Expression.Lambda(property, parameter);
 
             MethodInfo genericMethod;
@@ -154,9 +156,15 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
             return null;
         });
 
-    Configuration? GetConfiguration(Type elementType)
+    (IEntityType?, Configuration?) GetConfigurationAndEntityType(Type elementType)
     {
         var entityType = model.FindEntityType(elementType);
-        return entityType?.FindAnnotation(OrderByExtensions.AnnotationName)?.Value as Configuration;
+        if (entityType == null)
+        {
+            return (null, null);
+        }
+
+        var configuration = entityType.FindAnnotation(OrderByExtensions.AnnotationName)?.Value as Configuration;
+        return (entityType, configuration);
     }
 }
