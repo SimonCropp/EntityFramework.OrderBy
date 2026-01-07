@@ -5,7 +5,7 @@
 
 **See [Milestones](../../milestones?state=closed) for release notes.**
 
-Applies default ordering to Entity Framework Core queries based on fluent configuration. This ensures consistent query results and prevents non-deterministic ordering issues.
+Applies default ordering to EntityFramework queries based on fluent configuration. This ensures consistent query results and prevents non-deterministic ordering issues.
 
 ## NuGet package
 
