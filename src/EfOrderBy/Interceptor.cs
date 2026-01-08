@@ -71,7 +71,7 @@ sealed class Interceptor : IQueryExpressionInterceptor
 
             // Skip over Include operations
             if (methodCall.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions) &&
-                (methodCall.Method.Name == "Include" || methodCall.Method.Name == "ThenInclude"))
+                methodCall.Method.Name is "Include" or "ThenInclude")
             {
                 expression = methodCall.Arguments[0];
                 continue;
@@ -155,7 +155,7 @@ sealed class Interceptor : IQueryExpressionInterceptor
         // Find the last method call before Include
         if (query is MethodCallExpression methodCall &&
             methodCall.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions) &&
-            (methodCall.Method.Name == "Include" || methodCall.Method.Name == "ThenInclude"))
+            methodCall.Method.Name is "Include" or "ThenInclude")
         {
             // Apply ordering to the source of the Include, then recreate the Include
             var orderedSource = ApplyOrderingBeforeInclude(methodCall.Arguments[0], configuration);
@@ -182,7 +182,7 @@ sealed class Interceptor : IQueryExpressionInterceptor
         protected override Expression VisitMethodCall(MethodCallExpression node)
         {
             if (node.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions) &&
-                (node.Method.Name == "Include" || node.Method.Name == "ThenInclude"))
+                node.Method.Name is "Include" or "ThenInclude")
             {
                 HasInclude = true;
             }
