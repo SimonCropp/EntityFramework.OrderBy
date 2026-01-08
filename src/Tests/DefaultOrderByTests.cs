@@ -2,6 +2,14 @@
 public class DefaultOrderByTests
 {
     [Test]
+    public async Task Schema()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+        await Verify(database.Connection);
+    }
+
+    [Test]
     public async Task QueryWithoutOrderBy_AppliesDefaultDescendingOrder()
     {
         await using var database = await ModuleInitializer.SqlInstance.Build();
