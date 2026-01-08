@@ -18,6 +18,7 @@ https://nuget.org/packages/EfOrderBy/
 - **Include() support**: Nested collections in `.Include()` expressions are automatically ordered
 - **Fluent configuration**: Configure default ordering using the familiar EF Core fluent API
 - **Multi-column ordering**: Chain multiple ordering clauses with `ThenBy` and `ThenByDescending`
+- **Automatic indexes**: Database indexes are automatically created for ordering columns
 - **Validation mode**: Optionally require all entities to have default ordering configured
 
 
@@ -110,6 +111,27 @@ builder.Entity<Product>()
 ```
 <sup><a href='/src/Tests/Snippets.cs#L82-L89' title='Snippet source file'>snippet source</a> | <a href='#snippet-MultiColumnOrdering' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
+
+
+## Automatic Index Creation
+
+When configuring default ordering, a database index is automatically created for the ordering columns. This improves query performance since the database can use the index when sorting.
+
+```cs
+builder.Entity<Product>()
+    .OrderBy(_ => _.Category)
+    .ThenBy(_ => _.Name)
+    .ThenByDescending(_ => _.Price);
+
+// Automatically creates index: IX_Product_DefaultOrder (Category, Name, Price)
+```
+
+The index:
+- Is named `IX_{EntityName}_DefaultOrder`
+- Contains all columns in the ordering chain as a composite index
+- Is automatically updated when using `ThenBy`/`ThenByDescending`
+
+This eliminates the need to manually create indexes that match the ordering configuration.
 
 
 ## Require Ordering for All Entities

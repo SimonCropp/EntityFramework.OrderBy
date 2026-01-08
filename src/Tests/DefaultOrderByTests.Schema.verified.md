@@ -1,17 +1,24 @@
-﻿## Tables
+## Tables
 
 ### AnotherEntities
 
 ```sql
 CREATE TABLE [dbo].[AnotherEntities](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Name] [nvarchar](max) NOT NULL,
+	[Name] [nvarchar](450) NOT NULL,
 	[Priority] [int] NOT NULL,
  CONSTRAINT [PK_AnotherEntities] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
 ) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+) ON [PRIMARY]
+
+SET ANSI_PADDING ON
+
+CREATE NONCLUSTERED INDEX [IX_AnotherEntity_DefaultOrder] ON [dbo].[AnotherEntities]
+(
+	[Name] ASC
+) ON [PRIMARY]
 ```
 
 ### Departments
@@ -26,6 +33,11 @@ CREATE TABLE [dbo].[Departments](
 	[Id] ASC
 ) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_Department_DefaultOrder] ON [dbo].[Departments]
+(
+	[DisplayOrder] ASC
+) ON [PRIMARY]
 ```
 
 ### Employees
@@ -43,6 +55,10 @@ CREATE TABLE [dbo].[Employees](
 ) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 
+CREATE NONCLUSTERED INDEX [IX_Employee_DefaultOrder] ON [dbo].[Employees]
+(
+	[HireDate] ASC
+) ON [PRIMARY]
 CREATE NONCLUSTERED INDEX [IX_Employees_DepartmentId] ON [dbo].[Employees]
 (
 	[DepartmentId] ASC
@@ -54,14 +70,23 @@ CREATE NONCLUSTERED INDEX [IX_Employees_DepartmentId] ON [dbo].[Employees]
 ```sql
 CREATE TABLE [dbo].[EntitiesWithMultipleOrderings](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Category] [nvarchar](max) NOT NULL,
+	[Category] [nvarchar](450) NOT NULL,
 	[Priority] [int] NOT NULL,
-	[Name] [nvarchar](max) NOT NULL,
+	[Name] [nvarchar](450) NOT NULL,
  CONSTRAINT [PK_EntitiesWithMultipleOrderings] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
 ) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+) ON [PRIMARY]
+
+SET ANSI_PADDING ON
+
+CREATE NONCLUSTERED INDEX [IX_EntityWithMultipleOrderings_DefaultOrder] ON [dbo].[EntitiesWithMultipleOrderings]
+(
+	[Category] ASC,
+	[Priority] ASC,
+	[Name] ASC
+) ON [PRIMARY]
 ```
 
 ### EntitiesWithoutDefaultOrder
@@ -89,4 +114,9 @@ CREATE TABLE [dbo].[TestEntities](
 	[Id] ASC
 ) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_TestEntity_DefaultOrder] ON [dbo].[TestEntities]
+(
+	[CreatedDate] ASC
+) ON [PRIMARY]
 ```
