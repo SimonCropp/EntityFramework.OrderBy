@@ -837,4 +837,61 @@ public class DefaultOrderByTests
         await Verify(sql);
     }
 
+    [Test]
+    public async Task SelectWithOrderByInProjection_AppliesDefaultOrderToParent()
+    {
+        // This test verifies the fix for: OrderingDetector should skip OrderBy within Select projections
+        // For when OrderBy is added to nested collections in Select projections for deterministic ordering
+        // This OrderBy should NOT prevent default ordering from being applied to the parent query
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        var query = context.Departments
+            .Select(_ => new
+            {
+                _.Id,
+                _.Name,
+                _.DisplayOrder,
+                // OrderBy on nested collection (like GraphQL.EntityFramework does)
+                Employees = _.Employees.OrderBy(e => e.Id).ToList()
+            });
+
+        var sql = query.ToQueryString();
+
+        // Verify SQL includes default ordering for Department (DisplayOrder)
+        // The OrderBy on Employees collection should NOT prevent this
+        await Verify(sql);
+    }
+
+    [Test]
+    public async Task SelectWithOrderByInProjection_AppliesDefaultOrderToParent_ResultsVerification()
+    {
+        // Runtime verification that the fix works correctly with actual query execution
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+        var results = await context.Departments
+            .Select(_ => new
+            {
+                _.Id,
+                _.Name,
+                _.DisplayOrder,
+                // OrderBy on nested collection (like GraphQL.EntityFramework does)
+                Employees = _.Employees.OrderBy(e => e.Id).ToList()
+            })
+            .ToListAsync();
+
+        // Should be ordered by DisplayOrder (default), not affected by the OrderBy in the projection
+        Assert.That(results, Has.Count.EqualTo(3));
+        Assert.That(results[0].Name, Is.EqualTo("Engineering"));  // DisplayOrder 1
+        Assert.That(results[1].Name, Is.EqualTo("Sales"));        // DisplayOrder 2
+        Assert.That(results[2].Name, Is.EqualTo("HR"));           // DisplayOrder 3
+
+        // Verify the nested employees are ordered by Id (from the Select projection)
+        Assert.That(results[0].Employees[0].Id, Is.LessThan(results[0].Employees[1].Id));
+
+        await Verify(results);
+    }
+
 }
