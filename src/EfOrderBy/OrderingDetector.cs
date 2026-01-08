@@ -6,7 +6,7 @@
     {
         // Check if this is an Include/ThenInclude - don't look for ordering inside its lambda
         if (node.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions) &&
-            (node.Method.Name == "Include" || node.Method.Name == "ThenInclude"))
+            node.Method.Name is "Include" or "ThenInclude")
         {
             // Visit the source (first argument) but skip the lambda (second argument)
             // to avoid detecting ordering within Include(_ => _.Collection.OrderBy(...))
