@@ -6,6 +6,7 @@ namespace EfOrderBy;
 public static class OrderByExtensions
 {
     internal const string AnnotationName = "DefaultOrderBy:Configuration";
+    internal const string InterceptorRegisteredAnnotation = "DefaultOrderBy:InterceptorRegistered";
     static Interceptor interceptor = new();
 
     /// <summary>
@@ -24,13 +25,9 @@ public static class OrderByExtensions
     {
         builder.AddInterceptors(interceptor);
 
-        if (requireOrderingForAllEntities)
-        {
-            // Store the requirement in the builder's options
-            // We'll use a marker extension to track this
-            ((IDbContextOptionsBuilderInfrastructure)builder).AddOrUpdateExtension(
-                new OrderRequiredExtension(requireOrderingForAllEntities));
-        }
+        // Always add the extension to register the convention that marks the model
+        ((IDbContextOptionsBuilderInfrastructure)builder).AddOrUpdateExtension(
+            new OrderRequiredExtension(requireOrderingForAllEntities));
 
         return builder;
     }
@@ -52,6 +49,7 @@ public static class OrderByExtensions
         Expression<Func<TEntity, TProperty>> property)
         where TEntity : class
     {
+        ThrowIfInterceptorNotRegistered(builder);
         ThrowIfOrderingAlreadyConfigured(builder);
         var propertyInfo = GetPropertyInfo(property);
         return new(builder, propertyInfo, descending: false);
@@ -74,6 +72,7 @@ public static class OrderByExtensions
         Expression<Func<TEntity, TProperty>> property)
         where TEntity : class
     {
+        ThrowIfInterceptorNotRegistered(builder);
         ThrowIfOrderingAlreadyConfigured(builder);
         var propertyInfo = GetPropertyInfo(property);
         return new(builder, propertyInfo, descending: true);
@@ -87,6 +86,22 @@ public static class OrderByExtensions
         }
 
         throw new ArgumentException("Expression must be a property access expression", nameof(property));
+    }
+
+    static void ThrowIfInterceptorNotRegistered<TEntity>(EntityTypeBuilder<TEntity> builder)
+        where TEntity : class
+    {
+        var model = builder.Metadata.Model;
+        if (model.FindAnnotation(InterceptorRegisteredAnnotation) != null)
+        {
+            return;
+        }
+
+        throw new(
+            """
+            UseDefaultOrderBy() must be called on DbContextOptionsBuilder before configuring entity ordering.
+            Add builder.UseDefaultOrderBy() in your DbContext options configuration.
+            """);
     }
 
     static void ThrowIfOrderingAlreadyConfigured<TEntity>(EntityTypeBuilder<TEntity> builder)

@@ -8,9 +8,8 @@ sealed class OrderRequiredExtension(bool requireOrderingForAllEntities) :
 
     public DbContextOptionsExtensionInfo Info => new ExtensionInfo(this);
 
-    public void ApplyServices(IServiceCollection services)
-    {
-    }
+    public void ApplyServices(IServiceCollection services) =>
+        services.AddSingleton<IConventionSetPlugin, UseDefaultOrderByConventionPlugin>();
 
     public void Validate(IDbContextOptions options)
     {
