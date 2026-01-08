@@ -7,14 +7,18 @@ public sealed class OrderByBuilder<TEntity>
     where TEntity : class
 {
     Configuration configuration;
+    EntityTypeBuilder<TEntity> entityBuilder;
 
     internal OrderByBuilder(EntityTypeBuilder<TEntity> builder, PropertyInfo propertyInfo, bool descending)
     {
+        entityBuilder = builder;
         configuration = new(typeof(TEntity));
         configuration.AddClause(propertyInfo, descending, isThenBy: false);
 
         // Store configuration in model annotation
         builder.Metadata.SetAnnotation(OrderByExtensions.AnnotationName, configuration);
+
+        UpdateIndex();
     }
 
     /// <summary>
@@ -24,6 +28,7 @@ public sealed class OrderByBuilder<TEntity>
     {
         var propertyInfo = GetPropertyInfo(property);
         configuration.AddClause(propertyInfo, descending: false, isThenBy: true);
+        UpdateIndex();
         return this;
     }
 
@@ -34,7 +39,29 @@ public sealed class OrderByBuilder<TEntity>
     {
         var propertyInfo = GetPropertyInfo(property);
         configuration.AddClause(propertyInfo, descending: true, isThenBy: true);
+        UpdateIndex();
         return this;
+    }
+
+    /// <summary>
+    /// Creates or updates a composite index for all ordering properties.
+    /// </summary>
+    void UpdateIndex()
+    {
+        var indexName = $"IX_{typeof(TEntity).Name}_DefaultOrder";
+        var entityType = entityBuilder.Metadata;
+
+        // Remove existing index with this name (if any) before creating the updated one
+        var existingIndex = entityType.GetIndexes()
+            .FirstOrDefault(i => i.GetDatabaseName() == indexName);
+        if (existingIndex != null)
+        {
+            entityType.RemoveIndex(existingIndex);
+        }
+
+        entityBuilder
+            .HasIndex(configuration.PropertyNames.ToArray())
+            .HasDatabaseName(indexName);
     }
 
     static PropertyInfo GetPropertyInfo<TProperty>(Expression<Func<TEntity, TProperty>> property)

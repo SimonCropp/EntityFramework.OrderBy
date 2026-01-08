@@ -9,6 +9,14 @@ sealed class Configuration(Type elementType)
 
     internal List<OrderByClause> Clauses { get; } = [];
 
-    internal void AddClause(PropertyInfo propertyInfo, bool descending, bool isThenBy) =>
+    /// <summary>
+    /// Property names in order, used for creating composite indexes.
+    /// </summary>
+    internal List<string> PropertyNames { get; } = [];
+
+    internal void AddClause(PropertyInfo propertyInfo, bool descending, bool isThenBy)
+    {
         Clauses.Add(new(elementType, parameter, propertyInfo, descending, isThenBy));
+        PropertyNames.Add(propertyInfo.Name);
+    }
 }
