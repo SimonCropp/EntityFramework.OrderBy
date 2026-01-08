@@ -1,0 +1,4 @@
+﻿SELECT [d].[Id], [d].[Name], [d].[DisplayOrder], [e].[Id], [e].[DepartmentId], [e].[HireDate], [e].[Name], [e].[Salary]
+FROM [Departments] AS [d]
+LEFT JOIN [Employees] AS [e] ON [d].[Id] = [e].[DepartmentId]
+ORDER BY [d].[DisplayOrder], [d].[Id]

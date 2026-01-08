@@ -26,7 +26,12 @@ sealed class Interceptor : IQueryExpressionInterceptor
             return queryWithOrderedIncludes;
         }
 
-        var elementType = GetQueryElementType(queryWithOrderedIncludes.Type);
+        // For queries with Select projection, we need to get the entity type from the source
+        // BEFORE the Select, not from the result type (which would be the projected type)
+        // Walk through Select/Include to find the actual source entity type
+        var sourceExpression = GetSourceBeforeProjection(queryWithOrderedIncludes);
+
+        var elementType = GetQueryElementType(sourceExpression.Type);
         if (elementType == null)
         {
             return queryWithOrderedIncludes;
@@ -49,6 +54,34 @@ sealed class Interceptor : IQueryExpressionInterceptor
         var visitor = new OrderingDetector();
         visitor.Visit(expression);
         return visitor.HasOrdering;
+    }
+
+    static Expression GetSourceBeforeProjection(Expression expression)
+    {
+        // Walk through Select and Include to find the source entity expression
+        while (expression is MethodCallExpression methodCall)
+        {
+            // Skip over Select projections
+            if (methodCall.Method.DeclaringType == typeof(Queryable) &&
+                methodCall.Method.Name == "Select")
+            {
+                expression = methodCall.Arguments[0];
+                continue;
+            }
+
+            // Skip over Include operations
+            if (methodCall.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions) &&
+                (methodCall.Method.Name == "Include" || methodCall.Method.Name == "ThenInclude"))
+            {
+                expression = methodCall.Arguments[0];
+                continue;
+            }
+
+            // Stop at any other operation
+            break;
+        }
+
+        return expression;
     }
 
     static Type? GetQueryElementType(Type type) =>
@@ -78,6 +111,14 @@ sealed class Interceptor : IQueryExpressionInterceptor
 
     static Expression ApplyOrderingBeforeSelect(Expression query, Configuration configuration)
     {
+        // Check if the query contains Include first - need to apply ordering before Include
+        // to prevent EF Core from replacing it with just Id ordering
+        // This must be checked before Select, because queries can be: OrderBy().Include().Select()
+        if (ContainsInclude(query))
+        {
+            return ApplyOrderingBeforeInclude(query, configuration);
+        }
+
         // Check if the query ends with a Select call
         if (query is MethodCallExpression methodCall &&
             methodCall.Method.DeclaringType == typeof(Queryable) &&
@@ -88,14 +129,7 @@ sealed class Interceptor : IQueryExpressionInterceptor
             return Expression.Call(methodCall.Method, orderedSource, methodCall.Arguments[1]);
         }
 
-        // Check if the query contains Include - need to apply ordering before Include
-        // to prevent EF Core from replacing it with just Id ordering
-        if (ContainsInclude(query))
-        {
-            return ApplyOrderingBeforeInclude(query, configuration);
-        }
-
-        // No Select or Include at the end, apply ordering normally
+        // No Select or Include, apply ordering normally
         return ApplyOrdering(query, configuration);
     }
 
@@ -108,6 +142,16 @@ sealed class Interceptor : IQueryExpressionInterceptor
 
     static Expression ApplyOrderingBeforeInclude(Expression query, Configuration configuration)
     {
+        // Check if the query ends with a Select call (after Include)
+        if (query is MethodCallExpression selectCall &&
+            selectCall.Method.DeclaringType == typeof(Queryable) &&
+            selectCall.Method.Name == "Select")
+        {
+            // Recursively apply ordering before Include in the source, then recreate Select
+            var orderedSource = ApplyOrderingBeforeInclude(selectCall.Arguments[0], configuration);
+            return Expression.Call(selectCall.Method, orderedSource, selectCall.Arguments[1]);
+        }
+
         // Find the last method call before Include
         if (query is MethodCallExpression methodCall &&
             methodCall.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions) &&

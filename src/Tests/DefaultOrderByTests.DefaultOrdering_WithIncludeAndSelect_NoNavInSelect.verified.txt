@@ -1,0 +1,3 @@
+﻿SELECT [d].[Id], [d].[Name], [d].[DisplayOrder]
+FROM [Departments] AS [d]
+ORDER BY [d].[DisplayOrder]
