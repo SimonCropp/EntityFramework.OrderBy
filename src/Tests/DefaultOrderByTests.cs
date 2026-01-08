@@ -805,4 +805,36 @@ public class DefaultOrderByTests
         });
     }
 
+    [Test]
+    public async Task DefaultOrdering_WithIncludeAndSelect_NoNavInSelect()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        // Select that doesn't include the navigation property
+        var query = context.Departments
+            .Include(_ => _.Employees)
+            .Select(_ => new { _.Id, _.Name, _.DisplayOrder });
+
+        var sql = query.ToQueryString();
+
+        await Verify(sql);
+    }
+
+    [Test]
+    public async Task DefaultOrdering_WithIncludeAndSelect_WithNavInSelect()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        // Select that includes the navigation property
+        var query = context.Departments
+            .Include(_ => _.Employees)
+            .Select(_ => new { _.Id, _.Name, _.DisplayOrder, _.Employees });
+
+        var sql = query.ToQueryString();
+
+        await Verify(sql);
+    }
+
 }
