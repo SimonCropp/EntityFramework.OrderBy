@@ -1,8 +1,3 @@
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
-
-namespace EfOrderBy;
-
 /// <summary>
 /// Convention plugin that marks the model as having UseDefaultOrderBy() configured.
 /// </summary>

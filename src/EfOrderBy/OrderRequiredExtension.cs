@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
-
 /// <summary>
 /// Options extension to store default ordering configuration.
 /// </summary>

@@ -6,4 +6,6 @@ global using Microsoft.EntityFrameworkCore.Diagnostics;
 global using Microsoft.EntityFrameworkCore.Infrastructure;
 global using Microsoft.EntityFrameworkCore.Metadata;
 global using Microsoft.EntityFrameworkCore.Metadata.Builders;
+global using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
