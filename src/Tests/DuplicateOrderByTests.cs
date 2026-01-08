@@ -6,6 +6,7 @@ public class DuplicateOrderByTests
     {
         var options = new DbContextOptionsBuilder<OrderByTwiceContext>()
             .UseSqlServer("Server=.;Database=Test;")
+            .UseDefaultOrderBy()
             .Options;
 
         var exception = Assert.Throws<InvalidOperationException>(() =>
@@ -23,6 +24,7 @@ public class DuplicateOrderByTests
     {
         var options = new DbContextOptionsBuilder<OrderByDescendingTwiceContext>()
             .UseSqlServer("Server=.;Database=Test;")
+            .UseDefaultOrderBy()
             .Options;
 
         var exception = Assert.Throws<InvalidOperationException>(() =>
@@ -40,6 +42,7 @@ public class DuplicateOrderByTests
     {
         var options = new DbContextOptionsBuilder<OrderByThenDescendingContext>()
             .UseSqlServer("Server=.;Database=Test;")
+            .UseDefaultOrderBy()
             .Options;
 
         var exception = Assert.Throws<InvalidOperationException>(() =>
@@ -56,6 +59,7 @@ public class DuplicateOrderByTests
     {
         var options = new DbContextOptionsBuilder<OrderByDescendingThenAscContext>()
             .UseSqlServer("Server=.;Database=Test;")
+            .UseDefaultOrderBy()
             .Options;
 
         var exception = Assert.Throws<InvalidOperationException>(() =>
@@ -72,6 +76,7 @@ public class DuplicateOrderByTests
     {
         var options = new DbContextOptionsBuilder<OrderByWithThenByContext>()
             .UseSqlServer("Server=.;Database=Test;")
+            .UseDefaultOrderBy()
             .Options;
 
         Assert.DoesNotThrow(() =>
@@ -86,6 +91,7 @@ public class DuplicateOrderByTests
     {
         var options = new DbContextOptionsBuilder<OrderByDescWithThenByDescContext>()
             .UseSqlServer("Server=.;Database=Test;")
+            .UseDefaultOrderBy()
             .Options;
 
         Assert.DoesNotThrow(() =>
@@ -100,6 +106,7 @@ public class DuplicateOrderByTests
     {
         var options = new DbContextOptionsBuilder<MultipleEntitiesOrderByContext>()
             .UseSqlServer("Server=.;Database=Test;")
+            .UseDefaultOrderBy()
             .Options;
 
         Assert.DoesNotThrow(() =>
@@ -129,7 +136,7 @@ public class AnotherDuplicateTestEntity
 
 #region Test Contexts - Each with unique configuration
 
-public class OrderByTwiceContext(DbContextOptions<OrderByTwiceContext> options) : DbContext(options)
+public class OrderByTwiceContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<DuplicateTestEntity> Entities => Set<DuplicateTestEntity>();
 
@@ -141,7 +148,7 @@ public class OrderByTwiceContext(DbContextOptions<OrderByTwiceContext> options) 
     }
 }
 
-public class OrderByDescendingTwiceContext(DbContextOptions<OrderByDescendingTwiceContext> options) : DbContext(options)
+public class OrderByDescendingTwiceContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<DuplicateTestEntity> Entities => Set<DuplicateTestEntity>();
 
@@ -153,7 +160,7 @@ public class OrderByDescendingTwiceContext(DbContextOptions<OrderByDescendingTwi
     }
 }
 
-public class OrderByThenDescendingContext(DbContextOptions<OrderByThenDescendingContext> options) : DbContext(options)
+public class OrderByThenDescendingContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<DuplicateTestEntity> Entities => Set<DuplicateTestEntity>();
 
@@ -165,7 +172,7 @@ public class OrderByThenDescendingContext(DbContextOptions<OrderByThenDescending
     }
 }
 
-public class OrderByDescendingThenAscContext(DbContextOptions<OrderByDescendingThenAscContext> options) : DbContext(options)
+public class OrderByDescendingThenAscContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<DuplicateTestEntity> Entities => Set<DuplicateTestEntity>();
 
@@ -177,7 +184,7 @@ public class OrderByDescendingThenAscContext(DbContextOptions<OrderByDescendingT
     }
 }
 
-public class OrderByWithThenByContext(DbContextOptions<OrderByWithThenByContext> options) : DbContext(options)
+public class OrderByWithThenByContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<DuplicateTestEntity> Entities => Set<DuplicateTestEntity>();
 
@@ -187,7 +194,7 @@ public class OrderByWithThenByContext(DbContextOptions<OrderByWithThenByContext>
             .ThenBy(_ => _.Priority); // Correct usage
 }
 
-public class OrderByDescWithThenByDescContext(DbContextOptions<OrderByDescWithThenByDescContext> options) : DbContext(options)
+public class OrderByDescWithThenByDescContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<DuplicateTestEntity> Entities => Set<DuplicateTestEntity>();
 
@@ -197,7 +204,7 @@ public class OrderByDescWithThenByDescContext(DbContextOptions<OrderByDescWithTh
             .ThenByDescending(_ => _.Priority); // Correct usage
 }
 
-public class MultipleEntitiesOrderByContext(DbContextOptions<MultipleEntitiesOrderByContext> options) : DbContext(options)
+public class MultipleEntitiesOrderByContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<DuplicateTestEntity> Entities => Set<DuplicateTestEntity>();
     public DbSet<AnotherDuplicateTestEntity> OtherEntities => Set<AnotherDuplicateTestEntity>();
