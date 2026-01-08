@@ -1,0 +1,36 @@
+﻿{
+  target: {
+    sql:
+SELECT [d].[Id], [d].[DisplayOrder], [d].[Name], [e].[Id], [e].[DepartmentId], [e].[HireDate], [e].[Name], [e].[Salary]
+FROM [Departments] AS [d]
+LEFT JOIN [Employees] AS [e] ON [d].[Id] = [e].[DepartmentId]
+ORDER BY [d].[DisplayOrder] DESC, [d].[Id], [e].[HireDate] DESC,
+    departmentOrder: [
+      HR,
+      Sales,
+      Engineering
+    ],
+    employeeCounts: [
+      1,
+      2,
+      3
+    ]
+  },
+  sql: {
+    Text:
+select   d.Id,
+         d.DisplayOrder,
+         d.Name,
+         e.Id,
+         e.DepartmentId,
+         e.HireDate,
+         e.Name,
+         e.Salary
+from     Departments as d
+         left outer join
+         Employees as e
+         on d.Id = e.DepartmentId
+order by d.DisplayOrder desc, d.Id, e.HireDate desc,
+    HasTransaction: false
+  }
+}
