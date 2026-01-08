@@ -654,4 +654,36 @@ public class DefaultOrderByTests
         Assert.That(sql, Does.Contain("WHERE"));
         Assert.That(sql, Does.Contain("ORDER BY"));
     }
+
+    [Test]
+    public async Task IncludeCollectionNavigation_EfCoreAddsParentIdToOrderBy()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+        // When querying with Include for collection navigations,
+        // EF Core automatically adds parent ID to ORDER BY
+        // This is required for proper materialization of parent-child relationships
+        var results = await context.Departments
+            .Include(_ => _.Employees)
+            .ToListAsync();
+
+        // Verify results are correct
+        Assert.That(results, Has.Count.EqualTo(3));
+        Assert.That(results[0].Name, Is.EqualTo("Engineering"));  // DisplayOrder 1
+        Assert.That(results[1].Name, Is.EqualTo("Sales"));        // DisplayOrder 2
+        Assert.That(results[2].Name, Is.EqualTo("HR"));           // DisplayOrder 3
+
+        // Verify nested collections have employees
+        Assert.That(results[0].Employees, Has.Count.EqualTo(3));
+        Assert.That(results[1].Employees, Has.Count.EqualTo(2));
+        Assert.That(results[2].Employees, Has.Count.EqualTo(1));
+
+        // The generated SQL will show:
+        // ORDER BY d.Id, e.HireDate desc
+        // where d.Id is added by EF Core (not by this library)
+        // and e.HireDate desc comes from the configured default ordering
+        await Verify(results);
+    }
 }
