@@ -88,8 +88,62 @@ sealed class Interceptor : IQueryExpressionInterceptor
             return Expression.Call(methodCall.Method, orderedSource, methodCall.Arguments[1]);
         }
 
-        // No Select at the end, apply ordering normally
+        // Check if the query contains Include - need to apply ordering before Include
+        // to prevent EF Core from replacing it with just Id ordering
+        if (ContainsInclude(query))
+        {
+            return ApplyOrderingBeforeInclude(query, configuration);
+        }
+
+        // No Select or Include at the end, apply ordering normally
         return ApplyOrdering(query, configuration);
+    }
+
+    static bool ContainsInclude(Expression expression)
+    {
+        var visitor = new IncludeDetector();
+        visitor.Visit(expression);
+        return visitor.HasInclude;
+    }
+
+    static Expression ApplyOrderingBeforeInclude(Expression query, Configuration configuration)
+    {
+        // Find the last method call before Include
+        if (query is MethodCallExpression methodCall &&
+            methodCall.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions) &&
+            (methodCall.Method.Name == "Include" || methodCall.Method.Name == "ThenInclude"))
+        {
+            // Apply ordering to the source of the Include, then recreate the Include
+            var orderedSource = ApplyOrderingBeforeInclude(methodCall.Arguments[0], configuration);
+
+            // Recreate the Include call with the ordered source
+            var args = new Expression[methodCall.Arguments.Count];
+            args[0] = orderedSource;
+            for (var i = 1; i < methodCall.Arguments.Count; i++)
+            {
+                args[i] = methodCall.Arguments[i];
+            }
+
+            return Expression.Call(methodCall.Method, args);
+        }
+
+        // No Include at this level, apply ordering here
+        return ApplyOrdering(query, configuration);
+    }
+
+    sealed class IncludeDetector : ExpressionVisitor
+    {
+        public bool HasInclude { get; private set; }
+
+        protected override Expression VisitMethodCall(MethodCallExpression node)
+        {
+            if (node.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions) &&
+                (node.Method.Name == "Include" || node.Method.Name == "ThenInclude"))
+            {
+                HasInclude = true;
+            }
+            return base.VisitMethodCall(node);
+        }
     }
 
     static Expression ApplyOrdering(Expression source, Configuration configuration)

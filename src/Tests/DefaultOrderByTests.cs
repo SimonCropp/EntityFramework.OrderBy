@@ -686,4 +686,123 @@ public class DefaultOrderByTests
         // and e.HireDate desc comes from the configured default ordering
         await Verify(results);
     }
+
+    [Test]
+    public async Task ExplicitOrderByWithInclude_WorksCorrectly()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+
+        // When you add explicit OrderBy before Include,
+        // EF Core preserves your ordering and adds parent.Id after it
+
+        var query = context.Departments
+            .OrderByDescending(_ => _.DisplayOrder)  // Explicit ordering
+            .Include(_ => _.Employees)
+            .AsQueryable();
+
+        var sql = query.ToQueryString();
+        var results = await query.ToListAsync();
+
+        // SQL should have: ORDER BY DisplayOrder DESC, d.Id, e.HireDate DESC
+        Assert.That(sql, Does.Contain("DisplayOrder"));
+        Assert.That(sql, Does.Contain("DESC"));
+
+        // Results ordered by DisplayOrder descending
+        Assert.That(results, Has.Count.EqualTo(3));
+        Assert.That(results[0].DisplayOrder, Is.EqualTo(3));  // HR
+        Assert.That(results[1].DisplayOrder, Is.EqualTo(2));  // Sales
+        Assert.That(results[2].DisplayOrder, Is.EqualTo(1));  // Engineering
+
+        // Employee collections properly populated
+        Assert.That(results[0].Employees, Has.Count.EqualTo(1)); // HR
+        Assert.That(results[1].Employees, Has.Count.EqualTo(2)); // Sales
+        Assert.That(results[2].Employees, Has.Count.EqualTo(3)); // Engineering
+
+        await Verify(new
+        {
+            sql,
+            departmentOrder = results.Select(_ => _.Name).ToArray(),
+            employeeCounts = results.Select(_ => _.Employees.Count).ToArray()
+        });
+    }
+
+    [Test]
+    public async Task DefaultOrderingWithInclude_BothParentAndChildOrderingsApplied()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+
+        // When both parent and child have default orderings configured:
+        // - Parent: OrderBy DisplayOrder (from config)
+        // - Child: OrderByDescending HireDate (from config)
+        // And we use Include for the collection navigation
+
+        var results = await context.Departments
+            .Include(_ => _.Employees)
+            .ToListAsync();
+
+        // Parent ordering is applied: DisplayOrder ascending
+        Assert.That(results[0].DisplayOrder, Is.EqualTo(1));  // Engineering
+        Assert.That(results[1].DisplayOrder, Is.EqualTo(2));  // Sales
+        Assert.That(results[2].DisplayOrder, Is.EqualTo(3));  // HR
+
+        // Child ordering is applied within each parent: HireDate descending
+        var engEmployees = results[0].Employees;
+        Assert.That(engEmployees[0].HireDate, Is.EqualTo(new DateTime(2024, 3, 20)));  // Bob (newest)
+        Assert.That(engEmployees[1].HireDate, Is.EqualTo(new DateTime(2024, 1, 15)));  // Alice
+        Assert.That(engEmployees[2].HireDate, Is.EqualTo(new DateTime(2023, 6, 10)));  // Charlie (oldest)
+
+        // The SQL will have: ORDER BY d.DisplayOrder, d.Id, e.HireDate DESC
+        // Where:
+        // - d.DisplayOrder comes from default ordering config
+        // - d.Id is added by EF Core (critical for materialization)
+        // - e.HireDate DESC comes from default ordering config
+
+        await Verify(results);
+    }
+
+    [Test]
+    public async Task DefaultOrdering_IsPreservedWithInclude()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+
+        // Department has default ordering configured: OrderBy DisplayOrder
+        // When we Include employees, the default ordering should be preserved
+        var query = context.Departments
+            .Include(_ => _.Employees);
+
+        var sql = query.ToQueryString();
+        var results = await query.ToListAsync();
+
+        // FIXED: The SQL now shows ORDER BY d.DisplayOrder, d.Id, e.HireDate DESC
+        // The default ordering (DisplayOrder) is PRESERVED!
+        // EF Core adds d.Id after it for materialization, but doesn't replace it
+
+        // Results are ordered by DisplayOrder (configured default), NOT just by Id
+        Assert.That(results[0].DisplayOrder, Is.EqualTo(1));  // Engineering
+        Assert.That(results[1].DisplayOrder, Is.EqualTo(2));  // Sales
+        Assert.That(results[2].DisplayOrder, Is.EqualTo(3));  // HR
+
+        // Verify the SQL contains both DisplayOrder and Id in ORDER BY
+        Assert.That(sql, Does.Contain("ORDER BY"));
+        Assert.That(sql, Does.Contain("DisplayOrder"));
+        Assert.That(sql, Does.Contain("Id"));
+
+        await Verify(new
+        {
+            sql,
+            sqlContainsDisplayOrder = sql.Contains("DisplayOrder"),
+            sqlContainsId = sql.Contains("Id"),
+            orderInResults = results.Select(_ => new { _.Id, _.DisplayOrder, _.Name }).ToArray()
+        });
+    }
+
 }
