@@ -67,11 +67,11 @@ Queries without explicit ordering automatically use the configured default:
 <a id='snippet-QueryWithoutOrderBy'></a>
 ```cs
 // Automatically ordered by HireDate, then Salary descending
-var employees = await context.Set<Employee>()
+var employees = await context.Employees
     .ToListAsync();
 
 // Explicit ordering takes precedence
-var employeesByName = await context.Set<Employee>()
+var employeesByName = await context.Employees
     .OrderBy(_ => _.Name)
     .ToListAsync();
 ```
@@ -88,7 +88,7 @@ Nested collections in `.Include()` expressions are automatically ordered:
 ```cs
 // Departments ordered by DisplayOrder
 // Employees ordered by HireDate, then Salary descending
-var departments = await context.Set<Department>()
+var departments = await context.Departments
     .Include(_ => _.Employees)
     .ToListAsync();
 ```

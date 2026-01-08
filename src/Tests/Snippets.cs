@@ -46,16 +46,16 @@ public class SnippetExamples
 {
     static async Task QueryWithoutOrderBy()
     {
-        DbContext context = null!;
+        AppDbContext context = null!;
 
         #region QueryWithoutOrderBy
 
         // Automatically ordered by HireDate, then Salary descending
-        var employees = await context.Set<Employee>()
+        var employees = await context.Employees
             .ToListAsync();
 
         // Explicit ordering takes precedence
-        var employeesByName = await context.Set<Employee>()
+        var employeesByName = await context.Employees
             .OrderBy(_ => _.Name)
             .ToListAsync();
 
@@ -64,13 +64,13 @@ public class SnippetExamples
 
     static async Task IncludeSupport()
     {
-        DbContext context = null!;
+        AppDbContext context = null!;
 
         #region IncludeSupport
 
         // Departments ordered by DisplayOrder
         // Employees ordered by HireDate, then Salary descending
-        var departments = await context.Set<Department>()
+        var departments = await context.Departments
             .Include(_ => _.Employees)
             .ToListAsync();
 
