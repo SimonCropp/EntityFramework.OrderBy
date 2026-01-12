@@ -134,6 +134,19 @@ The index:
 This eliminates the need to manually create indexes that match the ordering configuration.
 
 
+### Custom Index Names
+
+The auto-generated index name must not exceed 128 characters (SQL Server limit). If an entity name is too long, use `WithIndexName` to specify a custom index name:
+
+```cs
+builder.Entity<EntityWithVeryLongNameThatWouldExceedTheLimit>()
+    .OrderBy(_ => _.Name)
+    .WithIndexName("IX_LongEntity_Order");
+```
+
+If the auto-generated name exceeds 128 characters, an `InvalidOperationException` is thrown with a message suggesting to use `WithIndexName()`.
+
+
 ## Require Ordering for All Entities
 
 Enable validation mode to ensure all entities have default ordering configured:
