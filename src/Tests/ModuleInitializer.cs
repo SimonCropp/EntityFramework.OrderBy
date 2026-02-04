@@ -111,13 +111,24 @@ public static class ModuleInitializer
                         {
                             Name = "Alice",
                             HireDate = new(2024, 1, 15),
-                            Salary = 90000
+                            Salary = 90000,
+                            Tasks =
+                            [
+                                new() { Title = "Design", Priority = 3 },
+                                new() { Title = "Code review", Priority = 1 },
+                                new() { Title = "Testing", Priority = 2 }
+                            ]
                         },
                         new()
                         {
                             Name = "Bob",
                             HireDate = new(2024, 3, 20),
-                            Salary = 85000
+                            Salary = 85000,
+                            Tasks =
+                            [
+                                new() { Title = "Deploy", Priority = 2 },
+                                new() { Title = "Monitor", Priority = 1 }
+                            ]
                         },
                         new()
                         {
