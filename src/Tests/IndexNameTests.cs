@@ -84,7 +84,7 @@ public class IndexNameTests
         var index = entityType.GetIndexes().FirstOrDefault();
         Assert.That(index, Is.Not.Null);
         Assert.That(index?.GetDatabaseName(), Is.EqualTo("IX_Multi_Custom"));
-        Assert.That(index?.Properties.Select(p => p.Name), Is.EquivalentTo(new[] { "Category", "Priority" }));
+        Assert.That(index?.Properties.Select(p => p.Name), Is.EquivalentTo(["Category", "Priority"]));
     }
 }
 
@@ -138,7 +138,7 @@ class ContextWithTooLongCustomIndexName(DbContextOptions options)
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<ShortEntity>()
             .OrderBy(_ => _.Name)
-            .WithIndexName(new string('X', 129)); // 129 characters exceeds limit
+            .WithIndexName(new('X', 129)); // 129 characters exceeds limit
     }
 }
 
