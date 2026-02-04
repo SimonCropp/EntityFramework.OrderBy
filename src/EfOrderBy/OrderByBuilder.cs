@@ -6,22 +6,17 @@ namespace EfOrderBy;
 public sealed class OrderByBuilder<TEntity>
     where TEntity : class
 {
-    const int MaxIndexNameLength = 128;
+    const int maxIndexNameLength = 128;
 
     Configuration configuration;
-    EntityTypeBuilder<TEntity> entityBuilder;
-    string? customIndexName;
 
     internal OrderByBuilder(EntityTypeBuilder<TEntity> builder, PropertyInfo propertyInfo, bool descending)
     {
-        entityBuilder = builder;
         configuration = new(typeof(TEntity));
         configuration.AddClause(propertyInfo, descending, isThenBy: false);
 
         // Store configuration in model annotation
         builder.Metadata.SetAnnotation(OrderByExtensions.AnnotationName, configuration);
-
-        UpdateIndex();
     }
 
     /// <summary>
@@ -31,7 +26,6 @@ public sealed class OrderByBuilder<TEntity>
     {
         var propertyInfo = GetPropertyInfo(property);
         configuration.AddClause(propertyInfo, descending: false, isThenBy: true);
-        UpdateIndex();
         return this;
     }
 
@@ -42,7 +36,6 @@ public sealed class OrderByBuilder<TEntity>
     {
         var propertyInfo = GetPropertyInfo(property);
         configuration.AddClause(propertyInfo, descending: true, isThenBy: true);
-        UpdateIndex();
         return this;
     }
 
@@ -57,43 +50,13 @@ public sealed class OrderByBuilder<TEntity>
             throw new ArgumentException("Index name cannot be null or whitespace.", nameof(indexName));
         }
 
-        if (indexName.Length > MaxIndexNameLength)
+        if (indexName.Length > maxIndexNameLength)
         {
-            throw new ArgumentException($"Index name '{indexName}' exceeds maximum length of {MaxIndexNameLength} characters.", nameof(indexName));
+            throw new ArgumentException($"Index name '{indexName}' exceeds maximum length of {maxIndexNameLength} characters.", nameof(indexName));
         }
 
-        customIndexName = indexName;
-        UpdateIndex();
+        configuration.CustomIndexName = indexName;
         return this;
-    }
-
-    /// <summary>
-    /// Creates or updates a composite index for all ordering properties.
-    /// </summary>
-    void UpdateIndex()
-    {
-        var indexName = customIndexName ?? $"IX_{typeof(TEntity).Name}_DefaultOrder";
-
-        if (indexName.Length > MaxIndexNameLength)
-        {
-            throw new InvalidOperationException(
-                $"The auto-generated index name '{indexName}' exceeds the maximum length of {MaxIndexNameLength} characters. " +
-                $"Use .WithIndexName() to specify a shorter custom index name.");
-        }
-
-        var entityType = entityBuilder.Metadata;
-
-        // Remove existing index with this name (if any) before creating the updated one
-        var existingIndex = entityType.GetIndexes()
-            .FirstOrDefault(i => i.GetDatabaseName() == indexName);
-        if (existingIndex != null)
-        {
-            entityType.RemoveIndex(existingIndex);
-        }
-
-        entityBuilder
-            .HasIndex(configuration.PropertyNames.ToArray())
-            .HasDatabaseName(indexName);
     }
 
     static PropertyInfo GetPropertyInfo<TProperty>(Expression<Func<TEntity, TProperty>> property)

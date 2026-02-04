@@ -14,6 +14,8 @@ sealed class Configuration(Type elementType)
     /// </summary>
     internal List<string> PropertyNames { get; } = [];
 
+    internal string? CustomIndexName { get; set; }
+
     internal void AddClause(PropertyInfo propertyInfo, bool descending, bool isThenBy)
     {
         Clauses.Add(new(elementType, parameter, propertyInfo, descending, isThenBy));
