@@ -259,6 +259,34 @@ public class AppDbContext : DbContext
 <!-- endSnippet -->
 
 
+## Alternative to Verify's OrderEnumerableBy
+
+When using [Verify](https://github.com/VerifyTests/Verify) for snapshot testing, a common pattern is to use [OrderEnumerableBy](https://github.com/VerifyTests/Verify/blob/main/docs/ordering.md#orderenumerableby) to get deterministic ordering of EF entities in snapshots:
+
+```cs
+// Verify's OrderEnumerableBy sorts entities during snapshot serialization
+VerifierSettings.OrderEnumerableBy<Employee>(_ => _.HireDate);
+VerifierSettings.OrderEnumerableBy<Department>(_ => _.DisplayOrder);
+```
+
+EntityFramework.OrderBy is an alternative approach. Instead of sorting during serialization, ordering is applied at the database query level. This means queries return deterministic results without needing Verify-specific configuration.
+
+```cs
+// EntityFramework.OrderBy applies ordering at the query level
+builder.Entity<Employee>()
+    .OrderBy(_ => _.HireDate);
+
+builder.Entity<Department>()
+    .OrderBy(_ => _.DisplayOrder);
+```
+
+Benefits over `OrderEnumerableBy`:
+
+ * Ordering is applied to all queries, not just during snapshot verification
+ * Automatic database index creation for ordering columns improves query performance
+ * Ordering configuration lives with the entity model rather than in test setup
+
+
 ## Icon
 
 [Russian Dolls](https://thenounproject.com/icon/russian-dolls-4020530/) designed by [Edit Pongrácz](https://thenounproject.com/creator/pongraczeditdodo/) from [The Noun Project](https://thenounproject.com)
