@@ -1,23 +1,36 @@
 /// <summary>
 /// Convention plugin that marks the model as having UseDefaultOrderBy() configured.
 /// </summary>
-sealed class UseDefaultOrderByConventionPlugin : IConventionSetPlugin
+sealed class UseDefaultOrderByConventionPlugin(bool createIndexes) : IConventionSetPlugin
 {
     public ConventionSet ModifyConventions(ConventionSet conventionSet)
     {
-        conventionSet.ModelInitializedConventions.Add(new UseDefaultOrderByConvention());
-        conventionSet.ModelFinalizingConventions.Add(new OrderByIndexConvention());
+        conventionSet.ModelInitializedConventions.Add(new UseDefaultOrderByConvention(createIndexes));
+
+        if (createIndexes)
+        {
+            conventionSet.ModelFinalizingConventions.Add(new OrderByIndexConvention());
+        }
+
         return conventionSet;
     }
 }
 
 /// <summary>
-/// Convention that sets an annotation on the model indicating UseDefaultOrderBy() was called.
+/// Convention that sets annotations on the model indicating UseDefaultOrderBy() was called
+/// and whether index creation is enabled.
 /// </summary>
-sealed class UseDefaultOrderByConvention : IModelInitializedConvention
+sealed class UseDefaultOrderByConvention(bool createIndexes) : IModelInitializedConvention
 {
-    public void ProcessModelInitialized(IConventionModelBuilder modelBuilder, IConventionContext<IConventionModelBuilder> context) =>
+    public void ProcessModelInitialized(IConventionModelBuilder modelBuilder, IConventionContext<IConventionModelBuilder> context)
+    {
         modelBuilder.HasAnnotation(OrderByExtensions.InterceptorRegisteredAnnotation, true);
+
+        if (!createIndexes)
+        {
+            modelBuilder.HasAnnotation(OrderByExtensions.IndexCreationDisabledAnnotation, true);
+        }
+    }
 }
 
 /// <summary>

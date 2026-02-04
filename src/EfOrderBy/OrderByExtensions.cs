@@ -7,6 +7,7 @@ public static class OrderByExtensions
 {
     internal const string AnnotationName = "DefaultOrderBy:Configuration";
     internal const string InterceptorRegisteredAnnotation = "DefaultOrderBy:InterceptorRegistered";
+    internal const string IndexCreationDisabledAnnotation = "DefaultOrderBy:IndexCreationDisabled";
     static Interceptor interceptor = new();
 
     /// <summary>
@@ -19,15 +20,20 @@ public static class OrderByExtensions
     /// in the model doesn't have default ordering configured. Validation occurs
     /// once per DbContext type.
     /// </param>
+    /// <param name="createIndexes">
+    /// When true (default), automatically creates database indexes for configured orderings.
+    /// Set to false to disable automatic index creation.
+    /// </param>
     public static DbContextOptionsBuilder UseDefaultOrderBy(
         this DbContextOptionsBuilder builder,
-        bool requireOrderingForAllEntities = false)
+        bool requireOrderingForAllEntities = false,
+        bool? createIndexes = true)
     {
         builder.AddInterceptors(interceptor);
 
         // Always add the extension to register the convention that marks the model
         ((IDbContextOptionsBuilderInfrastructure)builder).AddOrUpdateExtension(
-            new OrderRequiredExtension(requireOrderingForAllEntities));
+            new OrderRequiredExtension(requireOrderingForAllEntities, createIndexes ?? true));
 
         return builder;
     }

@@ -9,9 +9,11 @@ public sealed class OrderByBuilder<TEntity>
     const int maxIndexNameLength = 128;
 
     Configuration configuration;
+    IMutableModel model;
 
     internal OrderByBuilder(EntityTypeBuilder<TEntity> builder, PropertyInfo propertyInfo, bool descending)
     {
+        model = builder.Metadata.Model;
         configuration = new(typeof(TEntity));
         configuration.AddClause(propertyInfo, descending, isThenBy: false);
 
@@ -45,6 +47,13 @@ public sealed class OrderByBuilder<TEntity>
     /// </summary>
     public OrderByBuilder<TEntity> WithIndexName(string indexName)
     {
+        if (model.FindAnnotation(OrderByExtensions.IndexCreationDisabledAnnotation) != null)
+        {
+            throw new InvalidOperationException(
+                "WithIndexName() cannot be used when index creation is disabled. " +
+                "Remove the createIndexes: false option from UseDefaultOrderBy() or remove the WithIndexName() call.");
+        }
+
         if (string.IsNullOrWhiteSpace(indexName))
         {
             throw new ArgumentException("Index name cannot be null or whitespace.", nameof(indexName));

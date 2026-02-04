@@ -76,7 +76,7 @@ var employeesByName = await context.Employees
     .OrderBy(_ => _.Name)
     .ToListAsync();
 ```
-<sup><a href='/src/Tests/Snippets.cs#L51-L62' title='Snippet source file'>snippet source</a> | <a href='#snippet-QueryWithoutOrderBy' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L62-L73' title='Snippet source file'>snippet source</a> | <a href='#snippet-QueryWithoutOrderBy' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -93,7 +93,7 @@ var departments = await context.Departments
     .Include(_ => _.Employees)
     .ToListAsync();
 ```
-<sup><a href='/src/Tests/Snippets.cs#L69-L77' title='Snippet source file'>snippet source</a> | <a href='#snippet-IncludeSupport' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L80-L88' title='Snippet source file'>snippet source</a> | <a href='#snippet-IncludeSupport' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -109,7 +109,7 @@ builder.Entity<Product>()
     .ThenBy(_ => _.Name)
     .ThenByDescending(_ => _.Price);
 ```
-<sup><a href='/src/Tests/Snippets.cs#L82-L89' title='Snippet source file'>snippet source</a> | <a href='#snippet-MultiColumnOrdering' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L93-L100' title='Snippet source file'>snippet source</a> | <a href='#snippet-MultiColumnOrdering' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -145,6 +145,23 @@ builder.Entity<EntityWithVeryLongNameThatWouldExceedTheLimit>()
 ```
 
 If the auto-generated name exceeds 128 characters, an `InvalidOperationException` is thrown with a message suggesting to use `WithIndexName()`.
+
+
+### Disabling Index Creation
+
+To opt out of automatic index creation (for example, if indexes are managed separately):
+
+<!-- snippet: DisableIndexCreation -->
+<a id='snippet-DisableIndexCreation'></a>
+```cs
+protected override void OnConfiguring(DbContextOptionsBuilder builder) =>
+    builder.UseDefaultOrderBy(
+        createIndexes: false);
+```
+<sup><a href='/src/Tests/Snippets.cs#L47-L53' title='Snippet source file'>snippet source</a> | <a href='#snippet-DisableIndexCreation' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+When index creation is disabled, calling `WithIndexName()` throws an `InvalidOperationException`.
 
 
 ## Require Ordering for All Entities
@@ -238,7 +255,7 @@ public class AppDbContext : DbContext
     public DbSet<Employee> Employees => Set<Employee>();
 }
 ```
-<sup><a href='/src/Tests/Snippets.cs#L93-L136' title='Snippet source file'>snippet source</a> | <a href='#snippet-CompleteExample' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L104-L147' title='Snippet source file'>snippet source</a> | <a href='#snippet-CompleteExample' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
