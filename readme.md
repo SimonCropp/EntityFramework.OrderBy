@@ -282,7 +282,7 @@ builder.Entity<Department>()
 
 Benefits over `OrderEnumerableBy`:
 
- * Ordering is applied to all queries, not just during snapshot verification
+ * Ordering is applied to all queries, not only during snapshot verification
  * Automatic database index creation for ordering columns improves query performance
  * Ordering configuration lives with the entity model rather than in test setup
 
