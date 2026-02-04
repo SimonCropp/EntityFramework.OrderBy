@@ -42,6 +42,17 @@ public class RequireOrderingExample : DbContext
     #endregion
 }
 
+public class DisableIndexCreationExample : DbContext
+{
+    #region DisableIndexCreation
+
+    protected override void OnConfiguring(DbContextOptionsBuilder builder) =>
+        builder.UseDefaultOrderBy(
+            createIndexes: false);
+
+    #endregion
+}
+
 public class SnippetExamples
 {
     static async Task QueryWithoutOrderBy()

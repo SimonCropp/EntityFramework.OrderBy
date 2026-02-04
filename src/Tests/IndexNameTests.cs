@@ -1,10 +1,10 @@
 [TestFixture]
 public class IndexNameTests
 {
-    static DbContextOptions CreateOptions() =>
+    static DbContextOptions CreateOptions(bool? createIndexes = true) =>
         new DbContextOptionsBuilder()
             .UseSqlServer("Server=.;Database=Test;Trusted_Connection=True")
-            .UseDefaultOrderBy()
+            .UseDefaultOrderBy(createIndexes: createIndexes)
             .Options;
 
     [Test]
@@ -70,6 +70,29 @@ public class IndexNameTests
         })!;
 
         Assert.That(exception.Message, Does.Contain("cannot be null or whitespace"));
+    }
+
+    [Test]
+    public void CreateIndexes_False_NoIndexCreated()
+    {
+        using var context = new ContextWithIndexCreationDisabled(CreateOptions(createIndexes: false));
+        _ = context.Model;
+
+        var entityType = context.Model.FindEntityType(typeof(ShortEntity))!;
+        var indexes = entityType.GetIndexes().ToList();
+        Assert.That(indexes, Is.Empty);
+    }
+
+    [Test]
+    public void CreateIndexes_False_WithIndexName_ThrowsInvalidOperationException()
+    {
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+        {
+            using var context = new ContextWithIndexCreationDisabledAndWithIndexName(CreateOptions(createIndexes: false));
+            _ = context.Model;
+        })!;
+
+        Assert.That(exception.Message, Does.Contain("index creation is disabled"));
     }
 
     [Test]
@@ -168,6 +191,33 @@ class ContextWithChainedIndexName(DbContextOptions options)
             .OrderBy(_ => _.Category)
             .ThenBy(_ => _.Priority)
             .WithIndexName("IX_Multi_Custom");
+    }
+}
+
+class ContextWithIndexCreationDisabled(DbContextOptions options)
+    : DbContext(options)
+{
+    public DbSet<ShortEntity> Entities => Set<ShortEntity>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<ShortEntity>()
+            .OrderBy(_ => _.Name);
+    }
+}
+
+class ContextWithIndexCreationDisabledAndWithIndexName(DbContextOptions options)
+    : DbContext(options)
+{
+    public DbSet<ShortEntity> Entities => Set<ShortEntity>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<ShortEntity>()
+            .OrderBy(_ => _.Name)
+            .WithIndexName("IX_Custom");
     }
 }
 
