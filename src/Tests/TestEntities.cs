@@ -42,4 +42,14 @@ public class Employee
     public string Name { get; set; } = "";
     public DateTime HireDate { get; set; }
     public int Salary { get; set; }
+    public List<EmployeeTask> Tasks { get; set; } = [];
+}
+
+public class EmployeeTask
+{
+    public int Id { get; set; }
+    public int EmployeeId { get; set; }
+    public Employee Employee { get; set; } = null!;
+    public string Title { get; set; } = "";
+    public int Priority { get; set; }
 }

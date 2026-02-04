@@ -59,14 +59,15 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
                     var orderedNavigation = ApplyOrdering(lambda.Body, configuration);
                     var orderedLambda = Expression.Lambda(orderedNavigation, lambda.Parameters);
 
-                    // Get the Include method with the new return type
-                    // Original: Include<Department, List<Employee>>(...)
-                    // New: Include<Department, IOrderedEnumerable<Employee>>(...)
-                    var sourceType = includeCall.Method.GetGenericArguments()[0]; // TEntity
-                    var newPropertyType = orderedNavigation.Type; // IOrderedEnumerable<Employee>
+                    // Get the Include/ThenInclude method with the new return type
+                    // Include has 2 generic args: <TEntity, TProperty>
+                    // ThenInclude has 3: <TEntity, TPreviousProperty, TProperty>
+                    // In both cases, the last generic arg is the property type to replace
+                    var genericArgs = includeCall.Method.GetGenericArguments().ToArray();
+                    genericArgs[^1] = orderedNavigation.Type;
 
                     var includeMethod = includeCall.Method.GetGenericMethodDefinition()
-                        .MakeGenericMethod(sourceType, newPropertyType);
+                        .MakeGenericMethod(genericArgs);
 
                     // Recreate the Include call with the new method and ordered lambda
                     return Expression.Call(

@@ -65,6 +65,30 @@ CREATE NONCLUSTERED INDEX [IX_Employees_DepartmentId] ON [dbo].[Employees]
 ) ON [PRIMARY]
 ```
 
+### EmployeeTasks
+
+```sql
+CREATE TABLE [dbo].[EmployeeTasks](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[EmployeeId] [int] NOT NULL,
+	[Title] [nvarchar](max) NOT NULL,
+	[Priority] [int] NOT NULL,
+ CONSTRAINT [PK_EmployeeTasks] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_EmployeeTask_DefaultOrder] ON [dbo].[EmployeeTasks]
+(
+	[Priority] ASC
+) ON [PRIMARY]
+CREATE NONCLUSTERED INDEX [IX_EmployeeTasks_EmployeeId] ON [dbo].[EmployeeTasks]
+(
+	[EmployeeId] ASC
+) ON [PRIMARY]
+```
+
 ### EntitiesWithMultipleOrderings
 
 ```sql

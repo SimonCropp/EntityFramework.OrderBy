@@ -7,6 +7,7 @@ public class TestDbContext(DbContextOptions<TestDbContext> options) :
     public DbSet<EntityWithMultipleOrderings> EntitiesWithMultipleOrderings => Set<EntityWithMultipleOrderings>();
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<Employee> Employees => Set<Employee>();
+    public DbSet<EmployeeTask> EmployeeTasks => Set<EmployeeTask>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -41,5 +42,16 @@ public class TestDbContext(DbContextOptions<TestDbContext> options) :
         // Default ordering for Employee: HireDate descending (newest first)
         modelBuilder.Entity<Employee>()
             .OrderByDescending(_ => _.HireDate);
+
+        // Configure Employee-EmployeeTask relationship
+        modelBuilder.Entity<EmployeeTask>()
+            .HasOne(_ => _.Employee)
+            .WithMany(_ => _.Tasks)
+            .HasForeignKey(_ => _.EmployeeId)
+            .IsRequired();
+
+        // Default ordering for EmployeeTask: Priority ascending
+        modelBuilder.Entity<EmployeeTask>()
+            .OrderBy(_ => _.Priority);
     }
 }

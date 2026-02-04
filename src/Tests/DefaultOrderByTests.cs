@@ -158,6 +158,41 @@ public class DefaultOrderByTests
     }
 
     [Test]
+    public async Task ThenInclude_AppliesDefaultOrderingToThirdLevel()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+        var results = await context.Departments
+            .Include(_ => _.Employees)
+            .ThenInclude(_ => _.Tasks)
+            .AsSplitQuery()
+            .ToListAsync();
+
+        // Departments ordered by DisplayOrder
+        Assert.That(results[0].Name, Is.EqualTo("Engineering"));
+
+        // Employees ordered by HireDate descending
+        var engEmployees = results[0].Employees;
+        Assert.That(engEmployees[0].Name, Is.EqualTo("Bob"));
+
+        // Tasks ordered by Priority ascending (via ThenInclude)
+        var aliceTasks = engEmployees[1].Tasks; // Alice
+        Assert.That(aliceTasks, Has.Count.EqualTo(3));
+        Assert.That(aliceTasks[0].Title, Is.EqualTo("Code review")); // Priority 1
+        Assert.That(aliceTasks[1].Title, Is.EqualTo("Testing"));     // Priority 2
+        Assert.That(aliceTasks[2].Title, Is.EqualTo("Design"));      // Priority 3
+
+        var bobTasks = engEmployees[0].Tasks; // Bob
+        Assert.That(bobTasks, Has.Count.EqualTo(2));
+        Assert.That(bobTasks[0].Title, Is.EqualTo("Monitor")); // Priority 1
+        Assert.That(bobTasks[1].Title, Is.EqualTo("Deploy"));  // Priority 2
+
+        await Verify(results);
+    }
+
+    [Test]
     public async Task IncludeWithExplicitOrdering_DoesNotApplyDefaultToNestedCollection()
     {
         await using var database = await ModuleInitializer.SqlInstance.Build();

@@ -12,7 +12,7 @@ sealed class OrderRequiredExtension(bool requireOrderingForAllEntities, bool cre
     public void ApplyServices(IServiceCollection services)
     {
         var createIndexes = CreateIndexes;
-        services.AddSingleton<IConventionSetPlugin>(_ => new UseDefaultOrderByConventionPlugin(createIndexes));
+        services.AddSingleton<IConventionSetPlugin>(_ => new ConventionPlugin(createIndexes));
     }
 
     public void Validate(IDbContextOptions options)
