@@ -27,7 +27,8 @@ select   t.Id,
          t.CreatedDate,
          t.Name
 from     TestEntities as t
-order by t.CreatedDate, t.Name,
+order by t.CreatedDate,
+         t.Name,
     HasTransaction: false
   }
 }

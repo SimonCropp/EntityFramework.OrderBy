@@ -30,7 +30,9 @@ from     Departments as d
          left outer join
          Employees as e
          on d.Id = e.DepartmentId
-order by d.DisplayOrder desc, d.Id, e.HireDate desc,
+order by d.DisplayOrder desc,
+         d.Id,
+         e.HireDate desc,
     HasTransaction: false
   }
 }

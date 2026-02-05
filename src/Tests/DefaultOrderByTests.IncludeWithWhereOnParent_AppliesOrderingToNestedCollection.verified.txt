@@ -79,7 +79,9 @@ from     Departments as d
          Employees as e
          on d.Id = e.DepartmentId
 where    d.Name <> N''
-order by d.DisplayOrder, d.Id, e.HireDate desc,
+order by d.DisplayOrder,
+         d.Id,
+         e.HireDate desc,
     HasTransaction: false
   }
 }

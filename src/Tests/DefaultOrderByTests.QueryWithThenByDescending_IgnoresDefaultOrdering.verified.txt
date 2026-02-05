@@ -38,7 +38,8 @@ select   e.Id,
          e.Name,
          e.Priority
 from     EntitiesWithMultipleOrderings as e
-order by e.Category, e.Name desc,
+order by e.Category,
+         e.Name desc,
     HasTransaction: false
   }
 }

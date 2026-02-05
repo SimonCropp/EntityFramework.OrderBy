@@ -105,7 +105,8 @@ select   d.Id,
          d.DisplayOrder,
          d.Name
 from     Departments as d
-order by d.DisplayOrder, d.Id,
+order by d.DisplayOrder,
+         d.Id,
       HasTransaction: false
     },
     {
@@ -120,7 +121,10 @@ from     Departments as d
          inner join
          Employees as e
          on d.Id = e.DepartmentId
-order by d.DisplayOrder, d.Id, e.HireDate desc, e.Id,
+order by d.DisplayOrder,
+         d.Id,
+         e.HireDate desc,
+         e.Id,
       HasTransaction: false
     },
     {
@@ -138,7 +142,11 @@ from     Departments as d
          inner join
          EmployeeTasks as e0
          on e.Id = e0.EmployeeId
-order by d.DisplayOrder, d.Id, e.HireDate desc, e.Id, e0.Priority,
+order by d.DisplayOrder,
+         d.Id,
+         e.HireDate desc,
+         e.Id,
+         e0.Priority,
       HasTransaction: false
     }
   ]
