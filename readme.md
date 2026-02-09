@@ -16,6 +16,7 @@ https://nuget.org/packages/EfOrderBy/
 
 - **Automatic ordering**: Queries without explicit `OrderBy` automatically use configured default ordering
 - **Include() support**: Nested collections in `.Include()` expressions are automatically ordered
+- **Inheritance support**: Ordering configured on a base entity type is automatically inherited by derived types (TPH)
 - **Fluent configuration**: Configure default ordering using the familiar EF Core fluent API
 - **Multi-column ordering**: Chain multiple ordering clauses with `ThenBy` and `ThenByDescending`
 - **Automatic indexes**: Database indexes are automatically created for ordering columns
@@ -95,6 +96,67 @@ var departments = await context.Departments
 ```
 <sup><a href='/src/Tests/Snippets.cs#L80-L88' title='Snippet source file'>snippet source</a> | <a href='#snippet-IncludeSupport' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
+
+
+## Inheritance Support
+
+When using TPH (Table Per Hierarchy) inheritance, ordering configured on a base entity type is automatically inherited by derived types. This eliminates the need to duplicate `.OrderBy()` on every derived type.
+
+<!-- snippet: InheritanceOrdering -->
+<a id='snippet-InheritanceOrdering'></a>
+```cs
+public class BaseEntity
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public int SortOrder { get; set; }
+}
+
+public class DerivedEntityA : BaseEntity
+{
+    public string ExtraA { get; set; } = "";
+}
+
+public class DerivedEntityB : BaseEntity
+{
+    public string ExtraB { get; set; } = "";
+}
+
+public class InheritanceDbContext : DbContext
+{
+    protected override void OnConfiguring(DbContextOptionsBuilder builder)
+    {
+        builder
+            .UseSqlServer("connection-string")
+            .UseDefaultOrderBy();
+    }
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        // Configure ordering on the base entity
+        // DerivedEntityA and DerivedEntityB automatically inherit this ordering
+        builder.Entity<BaseEntity>()
+            .OrderBy(_ => _.SortOrder);
+
+        // Optionally, a derived type can override with its own ordering
+        builder.Entity<DerivedEntityB>()
+            .OrderByDescending(_ => _.Name);
+    }
+
+    public DbSet<BaseEntity> BaseEntities => Set<BaseEntity>();
+    public DbSet<DerivedEntityA> DerivedEntitiesA => Set<DerivedEntityA>();
+    public DbSet<DerivedEntityB> DerivedEntitiesB => Set<DerivedEntityB>();
+}
+```
+<sup><a href='/src/Tests/Snippets.cs#L156-L201' title='Snippet source file'>snippet source</a> | <a href='#snippet-InheritanceOrdering' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+Behavior:
+
+- `context.DerivedEntitiesA.ToListAsync()` is ordered by `SortOrder` (inherited from `BaseEntity`)
+- `context.DerivedEntitiesB.ToListAsync()` is ordered by `Name` descending (its own explicit configuration)
+- Derived types with their own `.OrderBy()` take precedence over the base type's ordering
+- Inherited orderings do not create duplicate database indexes (the base type's index covers the same columns)
 
 
 ## Multi-Column Ordering
