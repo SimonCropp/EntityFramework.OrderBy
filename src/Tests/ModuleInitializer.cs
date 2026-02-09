@@ -177,6 +177,22 @@ public static class ModuleInitializer
 
                 context.Departments.AddRange(dept1, dept2, dept3);
 
+                // Test data for TPH inheritance ordering
+                context.BaseEntities.AddRange(
+                    new BaseEntity { Name = "Base1", SortOrder = 3 },
+                    new BaseEntity { Name = "Base2", SortOrder = 1 },
+                    new BaseEntity { Name = "Base3", SortOrder = 2 }
+                );
+                context.DerivedEntitiesA.AddRange(
+                    new DerivedEntityA { Name = "DerivedA1", SortOrder = 2, ExtraA = "A1" },
+                    new DerivedEntityA { Name = "DerivedA2", SortOrder = 1, ExtraA = "A2" },
+                    new DerivedEntityA { Name = "DerivedA3", SortOrder = 3, ExtraA = "A3" }
+                );
+                context.DerivedEntitiesB.AddRange(
+                    new DerivedEntityB { Name = "DerivedB1", SortOrder = 3, ExtraB = "B1" },
+                    new DerivedEntityB { Name = "DerivedB2", SortOrder = 1, ExtraB = "B2" }
+                );
+
                 await context.SaveChangesAsync();
             });
         VerifierSettings.DontScrubDateTimes();

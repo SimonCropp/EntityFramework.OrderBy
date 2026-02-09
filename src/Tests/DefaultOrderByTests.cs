@@ -907,6 +907,55 @@ public class DefaultOrderByTests
     }
 
     [Test]
+    public async Task DerivedType_InheritsBaseOrdering()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+        var results = await context.DerivedEntitiesA.ToListAsync();
+
+        // Should be ordered by SortOrder ascending (inherited from BaseEntity)
+        Assert.That(results, Has.Count.EqualTo(3));
+        Assert.That(results[0].Name, Is.EqualTo("DerivedA2")); // SortOrder 1
+        Assert.That(results[1].Name, Is.EqualTo("DerivedA1")); // SortOrder 2
+        Assert.That(results[2].Name, Is.EqualTo("DerivedA3")); // SortOrder 3
+        await Verify(results);
+    }
+
+    [Test]
+    public async Task BaseType_StillWorksWithOrdering()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+        var results = await context.BaseEntities.ToListAsync();
+
+        // Should be ordered by SortOrder ascending (all types in TPH table)
+        Assert.That(results[0].SortOrder, Is.LessThanOrEqualTo(results[1].SortOrder));
+        await Verify(results);
+    }
+
+    [Test]
+    public async Task DerivedType_WithExplicitOrderBy_OverridesInherited()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+        var results = await context.DerivedEntitiesA
+            .OrderByDescending(_ => _.Name)
+            .ToListAsync();
+
+        // Should be ordered by Name descending (explicit), not SortOrder (inherited default)
+        Assert.That(results[0].Name, Is.EqualTo("DerivedA3"));
+        Assert.That(results[1].Name, Is.EqualTo("DerivedA2"));
+        Assert.That(results[2].Name, Is.EqualTo("DerivedA1"));
+        await Verify(results);
+    }
+
+    [Test]
     public async Task SelectWithOrderByInProjection_AppliesDefaultOrderToParent_ResultsVerification()
     {
         // Runtime verification that the fix works correctly with actual query execution

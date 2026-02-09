@@ -53,3 +53,20 @@ public class EmployeeTask
     public string Title { get; set; } = "";
     public int Priority { get; set; }
 }
+
+public class BaseEntity
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public int SortOrder { get; set; }
+}
+
+public class DerivedEntityA : BaseEntity
+{
+    public string ExtraA { get; set; } = "";
+}
+
+public class DerivedEntityB : BaseEntity
+{
+    public string ExtraB { get; set; } = "";
+}

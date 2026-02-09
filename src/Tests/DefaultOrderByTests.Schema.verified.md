@@ -1,4 +1,4 @@
-## Tables
+﻿## Tables
 
 ### AnotherEntities
 
@@ -18,6 +18,28 @@ SET ANSI_PADDING ON
 CREATE NONCLUSTERED INDEX [IX_AnotherEntity_DefaultOrder] ON [dbo].[AnotherEntities]
 (
 	[Name] ASC
+) ON [PRIMARY]
+```
+
+### BaseEntities
+
+```sql
+CREATE TABLE [dbo].[BaseEntities](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Name] [nvarchar](max) NOT NULL,
+	[SortOrder] [int] NOT NULL,
+	[Discriminator] [nvarchar](8) NOT NULL,
+	[ExtraA] [nvarchar](max) NULL,
+	[ExtraB] [nvarchar](max) NULL,
+ CONSTRAINT [PK_BaseEntities] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_BaseEntity_DefaultOrder] ON [dbo].[BaseEntities]
+(
+	[SortOrder] ASC
 ) ON [PRIMARY]
 ```
 

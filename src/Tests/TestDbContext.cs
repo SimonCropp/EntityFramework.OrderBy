@@ -8,6 +8,9 @@ public class TestDbContext(DbContextOptions<TestDbContext> options) :
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<EmployeeTask> EmployeeTasks => Set<EmployeeTask>();
+    public DbSet<BaseEntity> BaseEntities => Set<BaseEntity>();
+    public DbSet<DerivedEntityA> DerivedEntitiesA => Set<DerivedEntityA>();
+    public DbSet<DerivedEntityB> DerivedEntitiesB => Set<DerivedEntityB>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -53,5 +56,16 @@ public class TestDbContext(DbContextOptions<TestDbContext> options) :
         // Default ordering for EmployeeTask: Priority ascending
         modelBuilder.Entity<EmployeeTask>()
             .OrderBy(_ => _.Priority);
+
+        // Configure TPH inheritance for BaseEntity hierarchy
+        modelBuilder.Entity<BaseEntity>()
+            .HasDiscriminator<string>("Discriminator")
+            .HasValue<BaseEntity>("Base")
+            .HasValue<DerivedEntityA>("DerivedA")
+            .HasValue<DerivedEntityB>("DerivedB");
+
+        // Configure default ordering on base entity only - should inherit to derived types
+        modelBuilder.Entity<BaseEntity>()
+            .OrderBy(_ => _.SortOrder);
     }
 }

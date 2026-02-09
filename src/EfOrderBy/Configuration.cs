@@ -16,9 +16,46 @@ sealed class Configuration(Type elementType)
 
     internal string? CustomIndexName { get; set; }
 
+    /// <summary>
+    /// Whether this configuration was inherited from a base entity type.
+    /// Inherited configurations skip index creation (the base type's index covers the same columns).
+    /// </summary>
+    internal bool IsInherited { get; init; }
+
+    /// <summary>
+    /// Metadata for each clause, enabling replay on derived types.
+    /// </summary>
+    internal List<ClauseMetadata> ClauseMetadataList { get; } = [];
+
     internal void AddClause(PropertyInfo propertyInfo, bool descending, bool isThenBy)
     {
         Clauses.Add(new(elementType, parameter, propertyInfo, descending, isThenBy));
         PropertyNames.Add(propertyInfo.Name);
+        ClauseMetadataList.Add(new(propertyInfo.Name, descending, isThenBy));
     }
+
+    /// <summary>
+    /// Creates a new Configuration for a derived type by replaying the clause metadata.
+    /// The derived type must have the same properties (inherited from the base).
+    /// </summary>
+    internal Configuration CreateForDerivedType(Type derivedType)
+    {
+        var derived = new Configuration(derivedType) { IsInherited = true };
+        foreach (var meta in ClauseMetadataList)
+        {
+            var prop = derivedType.GetProperty(meta.PropertyName);
+            if (prop == null)
+            {
+                throw new InvalidOperationException(
+                    $"Property '{meta.PropertyName}' not found on derived type '{derivedType.Name}'. " +
+                    $"Cannot inherit ordering from base type '{elementType.Name}'.");
+            }
+
+            derived.AddClause(prop, meta.Descending, meta.IsThenBy);
+        }
+
+        return derived;
+    }
+
+    internal readonly record struct ClauseMetadata(string PropertyName, bool Descending, bool IsThenBy);
 }
