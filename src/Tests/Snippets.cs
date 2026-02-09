@@ -152,3 +152,50 @@ class Product
     public string Name { get; set; } = "";
     public decimal Price { get; set; }
 }
+
+#region InheritanceOrdering
+
+public class BaseEntity
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public int SortOrder { get; set; }
+}
+
+public class DerivedEntityA : BaseEntity
+{
+    public string ExtraA { get; set; } = "";
+}
+
+public class DerivedEntityB : BaseEntity
+{
+    public string ExtraB { get; set; } = "";
+}
+
+public class InheritanceDbContext : DbContext
+{
+    protected override void OnConfiguring(DbContextOptionsBuilder builder)
+    {
+        builder
+            .UseSqlServer("connection-string")
+            .UseDefaultOrderBy();
+    }
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        // Configure ordering on the base entity
+        // DerivedEntityA and DerivedEntityB automatically inherit this ordering
+        builder.Entity<BaseEntity>()
+            .OrderBy(_ => _.SortOrder);
+
+        // Optionally, a derived type can override with its own ordering
+        builder.Entity<DerivedEntityB>()
+            .OrderByDescending(_ => _.Name);
+    }
+
+    public DbSet<BaseEntity> BaseEntities => Set<BaseEntity>();
+    public DbSet<DerivedEntityA> DerivedEntitiesA => Set<DerivedEntityA>();
+    public DbSet<DerivedEntityB> DerivedEntitiesB => Set<DerivedEntityB>();
+}
+
+#endregion
