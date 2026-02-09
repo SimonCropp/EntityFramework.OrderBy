@@ -1,0 +1,28 @@
+﻿{
+  target: [
+    {
+      ExtraB: B2,
+      Id: 8,
+      Name: DerivedB2,
+      SortOrder: 1
+    },
+    {
+      ExtraB: B1,
+      Id: 7,
+      Name: DerivedB1,
+      SortOrder: 3
+    }
+  ],
+  sql: {
+    Text:
+select   b.Id,
+         b.Discriminator,
+         b.Name,
+         b.SortOrder,
+         b.ExtraB
+from     BaseEntities as b
+where    b.Discriminator = N'DerivedB'
+order by b.Name desc,
+    HasTransaction: false
+  }
+}

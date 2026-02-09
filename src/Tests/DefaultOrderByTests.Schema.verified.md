@@ -26,7 +26,7 @@ CREATE NONCLUSTERED INDEX [IX_AnotherEntity_DefaultOrder] ON [dbo].[AnotherEntit
 ```sql
 CREATE TABLE [dbo].[BaseEntities](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Name] [nvarchar](max) NOT NULL,
+	[Name] [nvarchar](450) NOT NULL,
 	[SortOrder] [int] NOT NULL,
 	[Discriminator] [nvarchar](8) NOT NULL,
 	[ExtraA] [nvarchar](max) NULL,
@@ -40,6 +40,12 @@ CREATE TABLE [dbo].[BaseEntities](
 CREATE NONCLUSTERED INDEX [IX_BaseEntity_DefaultOrder] ON [dbo].[BaseEntities]
 (
 	[SortOrder] ASC
+) ON [PRIMARY]
+SET ANSI_PADDING ON
+
+CREATE NONCLUSTERED INDEX [IX_DerivedEntityB_DefaultOrder] ON [dbo].[BaseEntities]
+(
+	[Name] ASC
 ) ON [PRIMARY]
 ```
 

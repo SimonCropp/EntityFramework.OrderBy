@@ -67,5 +67,9 @@ public class TestDbContext(DbContextOptions<TestDbContext> options) :
         // Configure default ordering on base entity only - should inherit to derived types
         modelBuilder.Entity<BaseEntity>()
             .OrderBy(_ => _.SortOrder);
+
+        // DerivedEntityB has its own explicit ordering that should take precedence over base
+        modelBuilder.Entity<DerivedEntityB>()
+            .OrderByDescending(_ => _.Name);
     }
 }

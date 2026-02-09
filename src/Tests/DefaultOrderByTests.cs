@@ -938,7 +938,7 @@ public class DefaultOrderByTests
     }
 
     [Test]
-    public async Task DerivedType_WithExplicitOrderBy_OverridesInherited()
+    public async Task DerivedType_WithExplicitQueryOrderBy_OverridesInherited()
     {
         await using var database = await ModuleInitializer.SqlInstance.Build();
         await using var context = database.NewDbContext();
@@ -948,10 +948,27 @@ public class DefaultOrderByTests
             .OrderByDescending(_ => _.Name)
             .ToListAsync();
 
-        // Should be ordered by Name descending (explicit), not SortOrder (inherited default)
+        // Should be ordered by Name descending (explicit query), not SortOrder (inherited default)
         Assert.That(results[0].Name, Is.EqualTo("DerivedA3"));
         Assert.That(results[1].Name, Is.EqualTo("DerivedA2"));
         Assert.That(results[2].Name, Is.EqualTo("DerivedA1"));
+        await Verify(results);
+    }
+
+    [Test]
+    public async Task DerivedType_WithConfiguredOrderBy_OverridesBaseOrdering()
+    {
+        await using var database = await ModuleInitializer.SqlInstance.Build();
+        await using var context = database.NewDbContext();
+
+        Recording.Start();
+        var results = await context.DerivedEntitiesB.ToListAsync();
+
+        // DerivedEntityB has its own .OrderByDescending(_ => _.Name) configured in OnModelCreating
+        // This should take precedence over BaseEntity's .OrderBy(_ => _.SortOrder)
+        Assert.That(results, Has.Count.EqualTo(2));
+        Assert.That(results[0].Name, Is.EqualTo("DerivedB2")); // Name DESC: B2 > B1
+        Assert.That(results[1].Name, Is.EqualTo("DerivedB1"));
         await Verify(results);
     }
 
