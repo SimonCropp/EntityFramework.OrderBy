@@ -1,7 +1,8 @@
 /// <summary>
 /// Visitor that applies default ordering to nested collections in Include().
 /// </summary>
-sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
+sealed class IncludeOrderingApplicator(IModel model) :
+    ExpressionVisitor
 {
     static readonly ConcurrentDictionary<Type, Type?> collectionElementTypeCache = new();
 
@@ -129,6 +130,11 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
     Configuration? GetConfiguration(Type element)
     {
         var entity = model.FindEntityType(element);
-        return entity != null ? Configuration.TryGet(element) : null;
+        if (entity == null)
+        {
+            return null;
+        }
+
+        return Configuration.TryGet(element);
     }
 }
