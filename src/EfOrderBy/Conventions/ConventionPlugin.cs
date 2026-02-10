@@ -1,7 +1,8 @@
 /// <summary>
 /// Convention plugin that marks the model as having UseDefaultOrderBy() configured.
 /// </summary>
-class ConventionPlugin(bool createIndexes, int? maxIndexableStringLength) : IConventionSetPlugin
+class ConventionPlugin(bool createIndexes, int? maxIndexableStringLength) :
+    IConventionSetPlugin
 {
     public ConventionSet ModifyConventions(ConventionSet conventions)
     {
