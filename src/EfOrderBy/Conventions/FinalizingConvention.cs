@@ -1,6 +1,6 @@
 /// <summary>
-/// Convention that propagates inherited ordering and creates database indexes
-/// for all configured default orderings during model finalization.
+/// Convention that propagates inherited ordering, creates database indexes,
+/// caches configurations, and removes annotations so they don't interfere with migration scaffolding.
 /// </summary>
 class FinalizingConvention : IModelFinalizingConvention
 {
@@ -8,8 +8,11 @@ class FinalizingConvention : IModelFinalizingConvention
 
     public void ProcessModelFinalizing(IConventionModelBuilder modelBuilder, IConventionContext<IConventionModelBuilder> context)
     {
+        var model = modelBuilder.Metadata;
+        var createIndexes = model.FindAnnotation(OrderByExtensions.IndexCreationDisabledAnnotation) == null;
+
         // First pass: propagate ordering from base types to derived types
-        foreach (var entity in modelBuilder.Metadata.GetEntityTypes())
+        foreach (var entity in model.GetEntityTypes())
         {
             // Skip if this entity already has its own ordering configured
             if (entity.FindAnnotation(OrderByExtensions.AnnotationName)?.Value is Configuration)
@@ -32,8 +35,8 @@ class FinalizingConvention : IModelFinalizingConvention
             }
         }
 
-        // Second pass: create indexes for non-inherited configurations
-        foreach (var entity in modelBuilder.Metadata.GetEntityTypes())
+        // Second pass: create indexes (if enabled), cache configs, and remove annotations
+        foreach (var entity in model.GetEntityTypes())
         {
             var annotation = entity.FindAnnotation(OrderByExtensions.AnnotationName);
             if (annotation?.Value is not Configuration config)
@@ -41,26 +44,30 @@ class FinalizingConvention : IModelFinalizingConvention
                 continue;
             }
 
-            // Skip index creation for inherited configurations
-            // (the base type's index already covers the same columns in TPH)
-            if (config.IsInherited)
+            if (createIndexes && !config.IsInherited)
             {
-                continue;
+                var index = config.CustomIndexName ?? $"IX_{entity.ClrType.Name}_DefaultOrder";
+
+                if (index.Length > maxIndexNameLength)
+                {
+                    throw new InvalidOperationException(
+                        $"""
+                         The auto-generated index name '{index}' exceeds the maximum length of {maxIndexNameLength} characters.
+                         Use .WithIndexName() to specify a shorter custom index name.
+                         """);
+                }
+
+                var builder = entity.Builder.HasIndex(config.PropertyNames, fromDataAnnotation: false);
+                builder?.HasDatabaseName(index, fromDataAnnotation: false);
             }
 
-            var index = config.CustomIndexName ?? $"IX_{entity.ClrType.Name}_DefaultOrder";
-
-            if (index.Length > maxIndexNameLength)
-            {
-                throw new InvalidOperationException(
-                    $"""
-                     The auto-generated index name '{index}' exceeds the maximum length of {maxIndexNameLength} characters.
-                     Use .WithIndexName() to specify a shorter custom index name.
-                     """);
-            }
-
-            var builder = entity.Builder.HasIndex(config.PropertyNames, fromDataAnnotation: false);
-            builder?.HasDatabaseName(index, fromDataAnnotation: false);
+            // Cache configuration for runtime use and remove annotation to prevent migration scaffold crash
+            Configuration.Cache(entity.ClrType, config);
+            entity.RemoveAnnotation(OrderByExtensions.AnnotationName);
         }
+
+        // Remove model-level annotations (only needed during OnModelCreating)
+        model.RemoveAnnotation(OrderByExtensions.InterceptorRegisteredAnnotation);
+        model.RemoveAnnotation(OrderByExtensions.IndexCreationDisabledAnnotation);
     }
 }

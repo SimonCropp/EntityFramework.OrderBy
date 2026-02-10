@@ -8,11 +8,7 @@ class ConventionPlugin(bool createIndexes) : IConventionSetPlugin
     public ConventionSet ModifyConventions(ConventionSet conventions)
     {
         conventions.ModelInitializedConventions.Add(new InitializedConvention(createIndexes));
-
-        if (createIndexes)
-        {
-            conventions.ModelFinalizingConventions.Add(finalizingConvention);
-        }
+        conventions.ModelFinalizingConventions.Add(finalizingConvention);
 
         return conventions;
     }

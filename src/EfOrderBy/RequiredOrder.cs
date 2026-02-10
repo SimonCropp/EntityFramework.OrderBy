@@ -38,8 +38,7 @@ static class RequiredOrder
             }
 
             // Check if this entity type has default ordering configured
-            var hasOrdering = entity.FindAnnotation(OrderByExtensions.AnnotationName)?.Value
-                is Configuration { Clauses.Count: > 0 };
+            var hasOrdering = Configuration.TryGet(entity.ClrType) is { Clauses.Count: > 0 };
 
             if (!hasOrdering)
             {
