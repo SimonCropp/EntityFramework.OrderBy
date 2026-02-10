@@ -2,7 +2,7 @@
 /// Convention that propagates inherited ordering, creates database indexes,
 /// caches configurations, and removes annotations so they don't interfere with migration scaffolding.
 /// </summary>
-class FinalizingConvention : IModelFinalizingConvention
+class FinalizingConvention(int? maxIndexableStringLength) : IModelFinalizingConvention
 {
     const int maxIndexNameLength = 128;
 
@@ -44,7 +44,7 @@ class FinalizingConvention : IModelFinalizingConvention
                 continue;
             }
 
-            if (createIndexes && !config.IsInherited && !HasLargeStringProperty(entity, config))
+            if (createIndexes && !config.IsInherited && !HasLargeStringProperty(entity, config, maxIndexableStringLength))
             {
                 var index = config.CustomIndexName ?? $"IX_{entity.ClrType.Name}_DefaultOrder";
 
@@ -73,12 +73,19 @@ class FinalizingConvention : IModelFinalizingConvention
         model.RemoveAnnotation(OrderByExtensions.IndexCreationDisabledAnnotation);
     }
 
-    // SQL Server limits index keys to 900 bytes. For nvarchar columns (2 bytes per char),
-    // that means max 450 characters. EF Core will silently cap string columns to 450 chars
-    // when an index is added. To avoid this surprise, skip index creation if any string
-    // property has no max length or a max length exceeding 450.
-    static bool HasLargeStringProperty(IConventionEntityType entity, Configuration config)
+    // Some database providers silently cap string column lengths when an index is added.
+    // For example, SQL Server caps nvarchar to 450 chars due to the 900-byte index key limit.
+    // https://github.com/dotnet/efcore/issues/31167
+    // The maxIndexableStringLength is derived from the provider's own RelationalTypeMappingSource
+    // by querying FindMapping(typeof(string), keyOrIndex: true).Size.
+    // When null, the provider has no limit and we never skip.
+    static bool HasLargeStringProperty(IConventionEntityType entity, Configuration config, int? maxIndexableLength)
     {
+        if (maxIndexableLength is null)
+        {
+            return false;
+        }
+
         foreach (var propertyName in config.PropertyNames)
         {
             var property = entity.FindProperty(propertyName);
@@ -88,7 +95,7 @@ class FinalizingConvention : IModelFinalizingConvention
             }
 
             var maxLength = property.GetMaxLength();
-            if (maxLength is null or > 450)
+            if (maxLength is null || maxLength > maxIndexableLength)
             {
                 return true;
             }

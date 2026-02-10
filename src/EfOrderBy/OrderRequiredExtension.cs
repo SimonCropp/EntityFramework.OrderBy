@@ -12,7 +12,18 @@ sealed class OrderRequiredExtension(bool requireOrderingForAllEntities, bool cre
     public void ApplyServices(IServiceCollection services)
     {
         var createIndexes = CreateIndexes;
-        services.AddSingleton<IConventionSetPlugin>(_ => new ConventionPlugin(createIndexes));
+        services.AddSingleton<IConventionSetPlugin>(sp =>
+        {
+            // Ask the provider's type mapping source what size it uses for indexed strings.
+            // For example, SQL Server's SqlServerTypeMappingSource returns 450 (nvarchar)
+            // because of the 900-byte index key limit. Providers without a limit (e.g.
+            // PostgreSQL, SQLite) return a mapping with Size = null.
+            // https://github.com/dotnet/efcore/issues/31167
+            var mappingSource = (RelationalTypeMappingSource)sp.GetRequiredService<IRelationalTypeMappingSource>();
+            var indexedStringMapping = mappingSource.FindMapping(typeof(string), storeTypeName: null, keyOrIndex: true);
+            var maxIndexableStringLength = indexedStringMapping!.Size;
+            return new ConventionPlugin(createIndexes, maxIndexableStringLength);
+        });
     }
 
     public void Validate(IDbContextOptions options)
