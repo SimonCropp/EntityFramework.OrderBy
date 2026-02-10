@@ -113,9 +113,9 @@ class ContextAllOrdering(DbContextOptions<ContextAllOrdering> options)
     {
         base.OnModelCreating(modelBuilder);
 
-        // All entities have ordering configured
+        // All entities have ordering configured (must match TestDbContext's ordering)
         modelBuilder.Entity<TestEntity>()
-            .OrderBy(_ => _.CreatedDate);
+            .OrderByDescending(_ => _.CreatedDate);
     }
 }
 

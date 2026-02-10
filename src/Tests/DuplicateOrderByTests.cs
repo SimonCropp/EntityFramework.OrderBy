@@ -132,6 +132,20 @@ public class AnotherDuplicateTestEntity
     public string Value { get; set; } = "";
 }
 
+public class ThenByEntity
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public int Priority { get; set; }
+}
+
+public class ThenByDescEntity
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public int Priority { get; set; }
+}
+
 #endregion
 
 #region Test Contexts - Each with unique configuration
@@ -186,20 +200,20 @@ public class OrderByDescendingThenAscContext(DbContextOptions options) : DbConte
 
 public class OrderByWithThenByContext(DbContextOptions options) : DbContext(options)
 {
-    public DbSet<DuplicateTestEntity> Entities => Set<DuplicateTestEntity>();
+    public DbSet<ThenByEntity> Entities => Set<ThenByEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
-        modelBuilder.Entity<DuplicateTestEntity>()
+        modelBuilder.Entity<ThenByEntity>()
             .OrderBy(_ => _.Name)
             .ThenBy(_ => _.Priority); // Correct usage
 }
 
 public class OrderByDescWithThenByDescContext(DbContextOptions options) : DbContext(options)
 {
-    public DbSet<DuplicateTestEntity> Entities => Set<DuplicateTestEntity>();
+    public DbSet<ThenByDescEntity> Entities => Set<ThenByDescEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
-        modelBuilder.Entity<DuplicateTestEntity>()
+        modelBuilder.Entity<ThenByDescEntity>()
             .OrderByDescending(_ => _.Name)
             .ThenByDescending(_ => _.Priority); // Correct usage
 }
