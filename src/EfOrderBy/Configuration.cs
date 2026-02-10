@@ -3,6 +3,16 @@
 /// </summary>
 sealed class Configuration(Type elementType)
 {
+    // Keyed by entity CLR type. EF Core transforms the model between finalization and runtime
+    // (convention model → RuntimeModel), so we can't key by model object reference.
+    static readonly ConcurrentDictionary<Type, Configuration> cache = new();
+
+    internal static void Cache(Type entityType, Configuration configuration)
+        => cache[entityType] = configuration;
+
+    internal static Configuration? TryGet(Type entityType)
+        => cache.GetValueOrDefault(entityType);
+
     // Reusable parameter expression for this entity type (e.g., "p" in "p => p.Property").
     // Created once and reused across all clauses for better performance.
     ParameterExpression parameter = Expression.Parameter(elementType, "p");

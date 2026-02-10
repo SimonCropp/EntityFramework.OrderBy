@@ -129,6 +129,6 @@ sealed class IncludeOrderingApplicator(IModel model) : ExpressionVisitor
     Configuration? GetConfiguration(Type element)
     {
         var entity = model.FindEntityType(element);
-        return entity?.FindAnnotation(OrderByExtensions.AnnotationName)?.Value as Configuration;
+        return entity != null ? Configuration.TryGet(element) : null;
     }
 }

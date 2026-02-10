@@ -37,9 +37,10 @@ sealed class Interceptor : IQueryExpressionInterceptor
             return queryWithOrderedIncludes;
         }
 
-        var entityType = model.FindEntityType(elementType);
-        if (entityType?.FindAnnotation(OrderByExtensions.AnnotationName)?.Value is not
-                Configuration configuration || configuration.Clauses.Count == 0)
+        var configuration = model.FindEntityType(elementType) != null
+            ? Configuration.TryGet(elementType)
+            : null;
+        if (configuration is not { Clauses.Count: > 0 })
         {
             return queryWithOrderedIncludes;
         }
