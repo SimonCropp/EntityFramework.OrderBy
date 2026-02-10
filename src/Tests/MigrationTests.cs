@@ -96,14 +96,13 @@ public class MigrationTests
         // "Cannot scaffold C# literals of type 'Configuration'"
         foreach (var entityType in designTimeModel.GetEntityTypes())
         {
-            var annotation = entityType.FindAnnotation("DefaultOrderBy:Configuration");
-            Assert.That(annotation, Is.Null,
+            Assert.That(entityType.GetOrderByConfiguration(), Is.Null,
                 $"Entity {entityType.ClrType.Name} still has DefaultOrderBy:Configuration annotation");
         }
 
         // Model-level annotations should also be removed
-        Assert.That(designTimeModel.FindAnnotation("DefaultOrderBy:InterceptorRegistered"), Is.Null);
-        Assert.That(designTimeModel.FindAnnotation("DefaultOrderBy:IndexCreationDisabled"), Is.Null);
+        Assert.That(designTimeModel.IsInterceptorRegistered(), Is.False);
+        Assert.That(designTimeModel.IsIndexCreationDisabled(), Is.False);
     }
 
     [Test]

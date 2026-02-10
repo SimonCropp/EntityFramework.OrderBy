@@ -6,11 +6,11 @@ class InitializedConvention(bool createIndexes) : IModelInitializedConvention
 {
     public void ProcessModelInitialized(IConventionModelBuilder builder, IConventionContext<IConventionModelBuilder> context)
     {
-        builder.HasAnnotation(OrderByExtensions.InterceptorRegisteredAnnotation, true);
+        builder.MarkInterceptorRegistered();
 
         if (!createIndexes)
         {
-            builder.HasAnnotation(OrderByExtensions.IndexCreationDisabledAnnotation, true);
+            builder.MarkIndexCreationDisabled();
         }
     }
 }

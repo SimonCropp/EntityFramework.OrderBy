@@ -17,8 +17,7 @@ public sealed class OrderByBuilder<TEntity>
         configuration = new(typeof(TEntity));
         configuration.AddClause(propertyInfo, descending, isThenBy: false);
 
-        // Store configuration in model annotation
-        builder.Metadata.SetAnnotation(OrderByExtensions.AnnotationName, configuration);
+        builder.Metadata.SetOrderByConfiguration(configuration);
     }
 
     /// <summary>
@@ -47,7 +46,7 @@ public sealed class OrderByBuilder<TEntity>
     /// </summary>
     public OrderByBuilder<TEntity> WithIndexName(string indexName)
     {
-        if (model.FindAnnotation(OrderByExtensions.IndexCreationDisabledAnnotation) != null)
+        if (model.IsIndexCreationDisabled())
         {
             throw new InvalidOperationException(
                 "WithIndexName() cannot be used when index creation is disabled. " +

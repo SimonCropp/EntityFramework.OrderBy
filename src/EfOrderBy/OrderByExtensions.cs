@@ -5,9 +5,6 @@ namespace EfOrderBy;
 /// </summary>
 public static class OrderByExtensions
 {
-    internal const string AnnotationName = "DefaultOrderBy:Configuration";
-    internal const string InterceptorRegisteredAnnotation = "DefaultOrderBy:InterceptorRegistered";
-    internal const string IndexCreationDisabledAnnotation = "DefaultOrderBy:IndexCreationDisabled";
     static Interceptor interceptor = new();
 
     /// <summary>
@@ -84,6 +81,45 @@ public static class OrderByExtensions
         return new(builder, propertyInfo, descending: true);
     }
 
+    // Entity-level annotation helpers
+
+    const string annotationName = "DefaultOrderBy:Configuration";
+    internal static Configuration? GetOrderByConfiguration(this IReadOnlyEntityType entity) =>
+        entity.FindAnnotation(annotationName)?.Value as Configuration;
+
+    internal static void SetOrderByConfiguration(this IMutableEntityType entity, Configuration config) =>
+        entity.SetAnnotation(annotationName, config);
+
+    internal static void SetOrderByConfiguration(this IConventionEntityType entity, Configuration config) =>
+        entity.SetAnnotation(annotationName, config);
+
+    internal static void RemoveOrderByConfiguration(this IConventionEntityType entity) =>
+        entity.RemoveAnnotation(annotationName);
+
+    // Model-level annotation helpers
+
+    const string interceptorRegisteredAnnotation = "DefaultOrderBy:InterceptorRegistered";
+    internal static bool IsInterceptorRegistered(this IReadOnlyModel model) =>
+        model.FindAnnotation(interceptorRegisteredAnnotation) != null;
+
+    const string indexCreationDisabledAnnotation = "DefaultOrderBy:IndexCreationDisabled";
+    internal static bool IsIndexCreationDisabled(this IReadOnlyModel model) =>
+        model.FindAnnotation(indexCreationDisabledAnnotation) != null;
+
+    internal static void RemoveOrderByAnnotations(this IConventionModel model)
+    {
+        model.RemoveAnnotation(interceptorRegisteredAnnotation);
+        model.RemoveAnnotation(indexCreationDisabledAnnotation);
+    }
+
+    // Convention model builder helpers
+
+    internal static void MarkInterceptorRegistered(this IConventionModelBuilder builder) =>
+        builder.HasAnnotation(interceptorRegisteredAnnotation, true);
+
+    internal static void MarkIndexCreationDisabled(this IConventionModelBuilder builder) =>
+        builder.HasAnnotation(indexCreationDisabledAnnotation, true);
+
     static PropertyInfo GetPropertyInfo<TEntity, TProperty>(Expression<Func<TEntity, TProperty>> property)
     {
         if (property.Body is MemberExpression { Member: PropertyInfo propertyInfo })
@@ -97,8 +133,7 @@ public static class OrderByExtensions
     static void ThrowIfInterceptorNotRegistered<TEntity>(EntityTypeBuilder<TEntity> builder)
         where TEntity : class
     {
-        var model = builder.Metadata.Model;
-        if (model.FindAnnotation(InterceptorRegisteredAnnotation) != null)
+        if (builder.Metadata.Model.IsInterceptorRegistered())
         {
             return;
         }
@@ -113,12 +148,9 @@ public static class OrderByExtensions
     static void ThrowIfOrderingAlreadyConfigured<TEntity>(EntityTypeBuilder<TEntity> builder)
         where TEntity : class
     {
-        if (builder.Metadata.FindAnnotation(AnnotationName) != null)
+        if (builder.Metadata.GetOrderByConfiguration() is not null)
         {
-            throw new InvalidOperationException(
-                $"Default ordering has already been configured for entity '{typeof(TEntity).Name}'. " +
-                $"Use ThenBy or ThenByDescending to add additional ordering columns, " +
-                $"or ensure OrderBy/OrderByDescending is only called once per entity type.");
+            throw new InvalidOperationException($"Default ordering has already been configured for entity '{typeof(TEntity).Name}'. Use ThenBy or ThenByDescending to add additional ordering columns, or ensure OrderBy/OrderByDescending is only called once per entity type.");
         }
     }
 }

@@ -13,14 +13,12 @@ sealed class Configuration(Type elementType)
             configuration,
             (type, existing) =>
             {
-                if (!existing.ClauseMetadataList.SequenceEqual(configuration.ClauseMetadataList))
+                if (existing.ClauseMetadataList.SequenceEqual(configuration.ClauseMetadataList))
                 {
-                    throw new InvalidOperationException(
-                        $"Conflicting default ordering configurations for entity type '{type.Name}'. " +
-                        $"When multiple DbContext types share the same entity, they must configure the same default ordering.");
+                    return existing;
                 }
 
-                return existing;
+                throw new InvalidOperationException($"Conflicting default ordering configurations for entity type '{type.Name}'. When multiple DbContext types share the same entity, they must configure the same default ordering.");
             });
 
     internal static Configuration? TryGet(Type entityType)
@@ -67,14 +65,13 @@ sealed class Configuration(Type elementType)
         foreach (var meta in ClauseMetadataList)
         {
             var prop = derivedType.GetProperty(meta.PropertyName);
-            if (prop == null)
+            if (prop != null)
             {
-                throw new InvalidOperationException(
-                    $"Property '{meta.PropertyName}' not found on derived type '{derivedType.Name}'. " +
-                    $"Cannot inherit ordering from base type '{elementType.Name}'.");
+                derived.AddClause(prop, meta.Descending, meta.IsThenBy);
+                continue;
             }
 
-            derived.AddClause(prop, meta.Descending, meta.IsThenBy);
+            throw new InvalidOperationException($"Property '{meta.PropertyName}' not found on derived type '{derivedType.Name}'. Cannot inherit ordering from base type '{elementType.Name}'.");
         }
 
         return derived;

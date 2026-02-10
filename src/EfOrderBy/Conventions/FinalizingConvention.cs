@@ -9,13 +9,13 @@ class FinalizingConvention(int? maxIndexableStringLength) : IModelFinalizingConv
     public void ProcessModelFinalizing(IConventionModelBuilder modelBuilder, IConventionContext<IConventionModelBuilder> context)
     {
         var model = modelBuilder.Metadata;
-        var createIndexes = model.FindAnnotation(OrderByExtensions.IndexCreationDisabledAnnotation) == null;
+        var createIndexes = !model.IsIndexCreationDisabled();
 
         // First pass: propagate ordering from base types to derived types
         foreach (var entity in model.GetEntityTypes())
         {
             // Skip if this entity already has its own ordering configured
-            if (entity.FindAnnotation(OrderByExtensions.AnnotationName)?.Value is Configuration)
+            if (entity.GetOrderByConfiguration() is not null)
             {
                 continue;
             }
@@ -24,10 +24,10 @@ class FinalizingConvention(int? maxIndexableStringLength) : IModelFinalizingConv
             var baseType = entity.BaseType;
             while (baseType != null)
             {
-                if (baseType.FindAnnotation(OrderByExtensions.AnnotationName)?.Value is Configuration baseConfig)
+                if (baseType.GetOrderByConfiguration() is { } baseConfig)
                 {
                     var derivedConfig = baseConfig.CreateForDerivedType(entity.ClrType);
-                    entity.SetAnnotation(OrderByExtensions.AnnotationName, derivedConfig);
+                    entity.SetOrderByConfiguration(derivedConfig);
                     break;
                 }
 
@@ -38,8 +38,8 @@ class FinalizingConvention(int? maxIndexableStringLength) : IModelFinalizingConv
         // Second pass: create indexes (if enabled), cache configs, and remove annotations
         foreach (var entity in model.GetEntityTypes())
         {
-            var annotation = entity.FindAnnotation(OrderByExtensions.AnnotationName);
-            if (annotation?.Value is not Configuration config)
+            var config = entity.GetOrderByConfiguration();
+            if (config is null)
             {
                 continue;
             }
@@ -65,12 +65,11 @@ class FinalizingConvention(int? maxIndexableStringLength) : IModelFinalizingConv
             // EF Core transforms the model between finalization and runtime (convention model → RuntimeModel),
             // so we can't attach data to the model object. Static cache keyed by entity CLR type is used instead.
             Configuration.Cache(entity.ClrType, config);
-            entity.RemoveAnnotation(OrderByExtensions.AnnotationName);
+            entity.RemoveOrderByConfiguration();
         }
 
         // Remove model-level annotations (only needed during OnModelCreating)
-        model.RemoveAnnotation(OrderByExtensions.InterceptorRegisteredAnnotation);
-        model.RemoveAnnotation(OrderByExtensions.IndexCreationDisabledAnnotation);
+        model.RemoveOrderByAnnotations();
     }
 
     // Some database providers silently cap string column lengths when an index is added.
