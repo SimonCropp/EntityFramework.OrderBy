@@ -8,7 +8,20 @@ sealed class Configuration(Type elementType)
     static readonly ConcurrentDictionary<Type, Configuration> cache = new();
 
     internal static void Cache(Type entityType, Configuration configuration)
-        => cache[entityType] = configuration;
+        => cache.AddOrUpdate(
+            entityType,
+            configuration,
+            (type, existing) =>
+            {
+                if (!existing.ClauseMetadataList.SequenceEqual(configuration.ClauseMetadataList))
+                {
+                    throw new InvalidOperationException(
+                        $"Conflicting default ordering configurations for entity type '{type.Name}'. " +
+                        $"When multiple DbContext types share the same entity, they must configure the same default ordering.");
+                }
+
+                return existing;
+            });
 
     internal static Configuration? TryGet(Type entityType)
         => cache.GetValueOrDefault(entityType);

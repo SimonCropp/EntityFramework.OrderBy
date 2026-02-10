@@ -105,4 +105,59 @@ public class MigrationTests
         Assert.That(designTimeModel.FindAnnotation("DefaultOrderBy:InterceptorRegistered"), Is.Null);
         Assert.That(designTimeModel.FindAnnotation("DefaultOrderBy:IndexCreationDisabled"), Is.Null);
     }
+
+    [Test]
+    public void ConflictingOrderingAcrossContexts_Throws()
+    {
+        // First context configures SharedEntity with OrderBy(Name)
+        var options1 = new DbContextOptionsBuilder<ContextWithNameOrdering>()
+            .UseSqlServer("Server=.;Database=Test;Trusted_Connection=True")
+            .UseDefaultOrderBy()
+            .Options;
+
+        using (var context = new ContextWithNameOrdering(options1))
+        {
+            _ = context.Model;
+        }
+
+        // Second context configures SharedEntity with OrderByDescending(Value) - should throw
+        var options2 = new DbContextOptionsBuilder<ContextWithValueOrdering>()
+            .UseSqlServer("Server=.;Database=Test;Trusted_Connection=True")
+            .UseDefaultOrderBy()
+            .Options;
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+        {
+            using var context = new ContextWithValueOrdering(options2);
+            _ = context.Model;
+        });
+
+        Assert.That(exception!.Message, Does.Contain("SharedEntity"));
+        Assert.That(exception.Message, Does.Contain("Conflicting"));
+    }
+}
+
+public class SharedEntity
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public string Value { get; set; } = "";
+}
+
+class ContextWithNameOrdering(DbContextOptions options) : DbContext(options)
+{
+    public DbSet<SharedEntity> Entities => Set<SharedEntity>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+        modelBuilder.Entity<SharedEntity>()
+            .OrderBy(_ => _.Name);
+}
+
+class ContextWithValueOrdering(DbContextOptions options) : DbContext(options)
+{
+    public DbSet<SharedEntity> Entities => Set<SharedEntity>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+        modelBuilder.Entity<SharedEntity>()
+            .OrderByDescending(_ => _.Value);
 }
