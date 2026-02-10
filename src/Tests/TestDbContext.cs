@@ -21,9 +21,15 @@ public class TestDbContext(DbContextOptions<TestDbContext> options) :
             .OrderByDescending(_ => _.CreatedDate);
 
         model.Entity<AnotherEntity>()
+            .Property(_ => _.Name).HasMaxLength(450);
+        model.Entity<AnotherEntity>()
             .OrderBy(_ => _.Name);
 
         // Multiple orderings: Category ASC, then Priority DESC, then Name ASC
+        model.Entity<EntityWithMultipleOrderings>()
+            .Property(_ => _.Category).HasMaxLength(450);
+        model.Entity<EntityWithMultipleOrderings>()
+            .Property(_ => _.Name).HasMaxLength(450);
         model.Entity<EntityWithMultipleOrderings>()
             .OrderBy(_ => _.Category)
             .ThenByDescending(_ => _.Priority)
@@ -69,6 +75,8 @@ public class TestDbContext(DbContextOptions<TestDbContext> options) :
             .OrderBy(_ => _.SortOrder);
 
         // DerivedEntityB has its own explicit ordering that should take precedence over base
+        model.Entity<DerivedEntityB>()
+            .Property(_ => _.Name).HasMaxLength(450);
         model.Entity<DerivedEntityB>()
             .OrderByDescending(_ => _.Name);
     }

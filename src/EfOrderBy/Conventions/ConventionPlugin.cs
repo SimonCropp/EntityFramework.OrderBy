@@ -1,14 +1,13 @@
 /// <summary>
 /// Convention plugin that marks the model as having UseDefaultOrderBy() configured.
 /// </summary>
-class ConventionPlugin(bool createIndexes) : IConventionSetPlugin
+class ConventionPlugin(bool createIndexes, int? maxIndexableStringLength) :
+    IConventionSetPlugin
 {
-    static FinalizingConvention finalizingConvention = new();
-
     public ConventionSet ModifyConventions(ConventionSet conventions)
     {
         conventions.ModelInitializedConventions.Add(new InitializedConvention(createIndexes));
-        conventions.ModelFinalizingConventions.Add(finalizingConvention);
+        conventions.ModelFinalizingConventions.Add(new FinalizingConvention(maxIndexableStringLength));
 
         return conventions;
     }

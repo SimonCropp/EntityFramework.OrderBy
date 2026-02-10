@@ -1,25 +1,30 @@
-/// <summary>
-/// Options extension to store default ordering configuration.
-/// </summary>
 sealed class OrderRequiredExtension(bool requireOrderingForAllEntities, bool createIndexes) :
     IDbContextOptionsExtension
 {
     public bool RequireOrderingForAllEntities { get; } = requireOrderingForAllEntities;
-    public bool CreateIndexes { get; } = createIndexes;
+    bool CreateIndexes { get; } = createIndexes;
 
     public DbContextOptionsExtensionInfo Info => new ExtensionInfo(this);
 
-    public void ApplyServices(IServiceCollection services)
-    {
-        var createIndexes = CreateIndexes;
-        services.AddSingleton<IConventionSetPlugin>(_ => new ConventionPlugin(createIndexes));
-    }
+    public void ApplyServices(IServiceCollection services) =>
+        services.AddSingleton<IConventionSetPlugin>(services =>
+        {
+            // Ask the provider's type mapping source what size it uses for indexed strings.
+            // For example, SQL Server's SqlServerTypeMappingSource returns 450 (nvarchar)
+            // because of the 900-byte index key limit. Providers without a limit (e.g.
+            // PostgreSQL, SQLite) return a mapping with Size = null.
+            // https://github.com/dotnet/efcore/issues/31167
+            var mappingSource = (RelationalTypeMappingSource)services.GetRequiredService<IRelationalTypeMappingSource>();
+            var stringMapping = mappingSource.FindMapping(typeof(string), storeTypeName: null, keyOrIndex: true)!;
+            return new ConventionPlugin(CreateIndexes, stringMapping.Size);
+        });
 
     public void Validate(IDbContextOptions options)
     {
     }
 
-    class ExtensionInfo(IDbContextOptionsExtension extension) : DbContextOptionsExtensionInfo(extension)
+    class ExtensionInfo(IDbContextOptionsExtension extension) :
+        DbContextOptionsExtensionInfo(extension)
     {
         new OrderRequiredExtension Extension => (OrderRequiredExtension)base.Extension;
 

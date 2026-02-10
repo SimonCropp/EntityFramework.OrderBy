@@ -109,6 +109,80 @@ public class IndexNameTests
         Assert.That(index?.GetDatabaseName(), Is.EqualTo("IX_Multi_Custom"));
         Assert.That(index?.Properties.Select(p => p.Name), Is.EquivalentTo(["Category", "Priority"]));
     }
+
+    [Test]
+    public void StringWithNoMaxLength_SkipsIndex()
+    {
+        using var context = new ContextWithStringNoMaxLength(CreateOptions());
+        _ = context.Model;
+
+        var entityType = context.Model.FindEntityType(typeof(StringNoMaxLengthEntity))!;
+        var indexes = entityType.GetIndexes().ToList();
+        Assert.That(indexes, Is.Empty);
+    }
+
+    [Test]
+    public void StringWithLargeMaxLength_SkipsIndex()
+    {
+        using var context = new ContextWithStringLargeMaxLength(CreateOptions());
+        _ = context.Model;
+
+        var entityType = context.Model.FindEntityType(typeof(StringLargeMaxLengthEntity))!;
+        var indexes = entityType.GetIndexes().ToList();
+        Assert.That(indexes, Is.Empty);
+    }
+
+    [Test]
+    public void StringWithSmallMaxLength_CreatesIndex()
+    {
+        using var context = new ContextWithStringSmallMaxLength(CreateOptions());
+        _ = context.Model;
+
+        var entityType = context.Model.FindEntityType(typeof(StringSmallMaxLengthEntity))!;
+        var index = entityType.GetIndexes().FirstOrDefault();
+        Assert.That(index, Is.Not.Null);
+    }
+
+    [Test]
+    public void NonStringProperty_AlwaysCreatesIndex()
+    {
+        using var context = new ContextWithNonStringOrder(CreateOptions());
+        _ = context.Model;
+
+        var entityType = context.Model.FindEntityType(typeof(NonStringOrderEntity))!;
+        var index = entityType.GetIndexes().FirstOrDefault();
+        Assert.That(index, Is.Not.Null);
+    }
+
+    [Test]
+    public void CompositeIndex_WithStringNoMaxLength_SkipsIndex()
+    {
+        // Even if one property in a composite index is a string without max length,
+        // the entire index is skipped
+        using var context = new ContextWithMixedStringNoMaxLength(CreateOptions());
+        _ = context.Model;
+
+        var entityType = context.Model.FindEntityType(typeof(MixedStringNoMaxLengthEntity))!;
+        var indexes = entityType.GetIndexes().ToList();
+        Assert.That(indexes, Is.Empty);
+    }
+
+    [Test]
+    public void SqliteProvider_StringWithNoMaxLength_CreatesIndex()
+    {
+        // SQLite has no index key size limit, so strings without max length should still get indexes
+        var options = new DbContextOptionsBuilder()
+            .UseSqlite("Data Source=:memory:")
+            .UseDefaultOrderBy()
+            .Options;
+
+        using var context = new ContextWithStringNoMaxLength(options);
+        _ = context.Model;
+
+        var entityType = context.Model.FindEntityType(typeof(StringNoMaxLengthEntity))!;
+        var index = entityType.GetIndexes().FirstOrDefault();
+        Assert.That(index, Is.Not.Null);
+    }
 }
 
 class ContextWithShortEntityName(DbContextOptions options)
@@ -119,6 +193,8 @@ class ContextWithShortEntityName(DbContextOptions options)
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<ShortEntity>()
+            .Property(_ => _.Name).HasMaxLength(450);
         modelBuilder.Entity<ShortEntity>()
             .OrderBy(_ => _.Name);
     }
@@ -133,6 +209,8 @@ class ContextWithLongEntityName(DbContextOptions options)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<EntityWithAnExtremelyLongNameThatWillDefinitelyExceedTheMaximumIndexNameLengthOfOneHundredTwentyEightCharactersWhenCombinedWithThePrefix>()
+            .Property(_ => _.Name).HasMaxLength(450);
+        modelBuilder.Entity<EntityWithAnExtremelyLongNameThatWillDefinitelyExceedTheMaximumIndexNameLengthOfOneHundredTwentyEightCharactersWhenCombinedWithThePrefix>()
             .OrderBy(_ => _.Name);
     }
 }
@@ -145,6 +223,8 @@ class ContextWithCustomIndexName(DbContextOptions options)
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<EntityWithVeryLongNameThatWouldExceedTheLimitIfWeDidNotUseCustomIndexNameHere>()
+            .Property(_ => _.Name).HasMaxLength(450);
         modelBuilder.Entity<EntityWithVeryLongNameThatWouldExceedTheLimitIfWeDidNotUseCustomIndexNameHere>()
             .OrderBy(_ => _.Name)
             .WithIndexName("IX_LongEntity_Order");
@@ -160,6 +240,8 @@ class ContextWithTooLongCustomIndexName(DbContextOptions options)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<ShortEntity>()
+            .Property(_ => _.Name).HasMaxLength(450);
+        modelBuilder.Entity<ShortEntity>()
             .OrderBy(_ => _.Name)
             .WithIndexName(new('X', 129)); // 129 characters exceeds limit
     }
@@ -174,6 +256,8 @@ class ContextWithEmptyCustomIndexName(DbContextOptions options)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<ShortEntity>()
+            .Property(_ => _.Name).HasMaxLength(450);
+        modelBuilder.Entity<ShortEntity>()
             .OrderBy(_ => _.Name)
             .WithIndexName("");
     }
@@ -187,6 +271,8 @@ class ContextWithChainedIndexName(DbContextOptions options)
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<MultiPropertyEntity>()
+            .Property(_ => _.Category).HasMaxLength(450);
         modelBuilder.Entity<MultiPropertyEntity>()
             .OrderBy(_ => _.Category)
             .ThenBy(_ => _.Priority)
@@ -221,6 +307,76 @@ class ContextWithIndexCreationDisabledAndWithIndexName(DbContextOptions options)
     }
 }
 
+class ContextWithStringNoMaxLength(DbContextOptions options)
+    : DbContext(options)
+{
+    public DbSet<StringNoMaxLengthEntity> Entities => Set<StringNoMaxLengthEntity>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<StringNoMaxLengthEntity>()
+            .OrderBy(_ => _.Name);
+    }
+}
+
+class ContextWithStringLargeMaxLength(DbContextOptions options)
+    : DbContext(options)
+{
+    public DbSet<StringLargeMaxLengthEntity> Entities => Set<StringLargeMaxLengthEntity>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<StringLargeMaxLengthEntity>()
+            .Property(_ => _.Name).HasMaxLength(1000);
+        modelBuilder.Entity<StringLargeMaxLengthEntity>()
+            .OrderBy(_ => _.Name);
+    }
+}
+
+class ContextWithStringSmallMaxLength(DbContextOptions options)
+    : DbContext(options)
+{
+    public DbSet<StringSmallMaxLengthEntity> Entities => Set<StringSmallMaxLengthEntity>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<StringSmallMaxLengthEntity>()
+            .Property(_ => _.Name).HasMaxLength(200);
+        modelBuilder.Entity<StringSmallMaxLengthEntity>()
+            .OrderBy(_ => _.Name);
+    }
+}
+
+class ContextWithNonStringOrder(DbContextOptions options)
+    : DbContext(options)
+{
+    public DbSet<NonStringOrderEntity> Entities => Set<NonStringOrderEntity>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<NonStringOrderEntity>()
+            .OrderBy(_ => _.Priority);
+    }
+}
+
+class ContextWithMixedStringNoMaxLength(DbContextOptions options)
+    : DbContext(options)
+{
+    public DbSet<MixedStringNoMaxLengthEntity> Entities => Set<MixedStringNoMaxLengthEntity>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<MixedStringNoMaxLengthEntity>()
+            .OrderBy(_ => _.Priority)
+            .ThenBy(_ => _.Name);
+    }
+}
+
 public class ShortEntity
 {
     public int Id { get; set; }
@@ -244,4 +400,36 @@ public class MultiPropertyEntity
     public int Id { get; set; }
     public string Category { get; set; } = "";
     public int Priority { get; set; }
+}
+
+public class StringNoMaxLengthEntity
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+}
+
+public class StringLargeMaxLengthEntity
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+}
+
+public class StringSmallMaxLengthEntity
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+}
+
+public class NonStringOrderEntity
+{
+    public int Id { get; set; }
+    public int Priority { get; set; }
+    public string Name { get; set; } = "";
+}
+
+public class MixedStringNoMaxLengthEntity
+{
+    public int Id { get; set; }
+    public int Priority { get; set; }
+    public string Name { get; set; } = "";
 }
