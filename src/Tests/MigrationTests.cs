@@ -82,4 +82,27 @@ public class MigrationTests
         });
         await Verify(snapshot);
     }
+
+    [Test]
+    public void DesignTimeModelHasNoConfigurationAnnotations()
+    {
+        using var context = new TestDbContext(CreateOptions());
+        _ = context.Model;
+
+        var designTimeModel = context.GetService<IDesignTimeModel>().Model;
+
+        // Configuration annotations must be removed during model finalization.
+        // If they leak into the design-time model, migration scaffolding crashes with:
+        // "Cannot scaffold C# literals of type 'Configuration'"
+        foreach (var entityType in designTimeModel.GetEntityTypes())
+        {
+            var annotation = entityType.FindAnnotation("DefaultOrderBy:Configuration");
+            Assert.That(annotation, Is.Null,
+                $"Entity {entityType.ClrType.Name} still has DefaultOrderBy:Configuration annotation");
+        }
+
+        // Model-level annotations should also be removed
+        Assert.That(designTimeModel.FindAnnotation("DefaultOrderBy:InterceptorRegistered"), Is.Null);
+        Assert.That(designTimeModel.FindAnnotation("DefaultOrderBy:IndexCreationDisabled"), Is.Null);
+    }
 }
