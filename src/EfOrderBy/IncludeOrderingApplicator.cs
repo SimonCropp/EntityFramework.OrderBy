@@ -79,7 +79,7 @@ sealed class IncludeOrderingApplicator(IModel model) :
             static key =>
             {
                 var (method, orderedType) = key;
-                var genericArgs = method.GetGenericArguments().ToArray();
+                var genericArgs = method.GetGenericArguments();
                 genericArgs[^1] = orderedType;
                 return method.GetGenericMethodDefinition()
                     .MakeGenericMethod(genericArgs);
