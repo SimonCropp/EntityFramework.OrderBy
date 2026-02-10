@@ -1,7 +1,8 @@
-﻿sealed class OrderingDetector :
+﻿sealed class QueryAnalyzer :
     ExpressionVisitor
 {
     public bool HasOrdering { get; private set; }
+    public bool HasInclude { get; private set; }
 
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
@@ -12,6 +13,7 @@
         if (type == typeof(EntityFrameworkQueryableExtensions) &&
             name is "Include" or "ThenInclude")
         {
+            HasInclude = true;
             // Visit the source (first argument) but skip the lambda (second argument)
             // to avoid detecting ordering within Include(_ => _.Collection.OrderBy(...))
             Visit(node.Arguments[0]);

@@ -20,8 +20,11 @@ sealed class Interceptor : IQueryExpressionInterceptor
         var visitor = new IncludeOrderingApplicator(model);
         var queryWithOrderedIncludes = visitor.Visit(query);
 
-        // Then, check if the top-level query needs default ordering
-        if (HasOrdering(queryWithOrderedIncludes))
+        // Analyze the query for ordering and includes in a single pass
+        var analyzer = new QueryAnalyzer();
+        analyzer.Visit(queryWithOrderedIncludes);
+
+        if (analyzer.HasOrdering)
         {
             return queryWithOrderedIncludes;
         }
@@ -50,14 +53,14 @@ sealed class Interceptor : IQueryExpressionInterceptor
 
         // Apply default ordering to the top-level query
         // If there's a Select projection at the end, we need to insert OrderBy before it
-        return ApplyOrderingBeforeSelect(queryWithOrderedIncludes, configuration);
+        return ApplyOrderingBeforeSelect(queryWithOrderedIncludes, configuration, analyzer.HasInclude);
     }
 
     public static bool HasOrdering(Expression expression)
     {
-        var visitor = new OrderingDetector();
-        visitor.Visit(expression);
-        return visitor.HasOrdering;
+        var analyzer = new QueryAnalyzer();
+        analyzer.Visit(expression);
+        return analyzer.HasOrdering;
     }
 
     static Expression GetSourceBeforeProjection(Expression expression)
@@ -116,12 +119,12 @@ sealed class Interceptor : IQueryExpressionInterceptor
             return null;
         });
 
-    static Expression ApplyOrderingBeforeSelect(Expression query, Configuration configuration)
+    static Expression ApplyOrderingBeforeSelect(Expression query, Configuration configuration, bool hasInclude)
     {
         // Check if the query contains Include first - need to apply ordering before Include
         // to prevent EF Core from replacing it with just Id ordering
         // This must be checked before Select, because queries can be: OrderBy().Include().Select()
-        if (ContainsInclude(query))
+        if (hasInclude)
         {
             return ApplyOrderingBeforeInclude(query, configuration);
         }
@@ -138,13 +141,6 @@ sealed class Interceptor : IQueryExpressionInterceptor
 
         // No Select or Include, apply ordering normally
         return ApplyOrdering(query, configuration);
-    }
-
-    static bool ContainsInclude(Expression expression)
-    {
-        var visitor = new IncludeDetector();
-        visitor.Visit(expression);
-        return visitor.HasInclude;
     }
 
     static Expression ApplyOrderingBeforeInclude(Expression query, Configuration configuration)
@@ -180,23 +176,6 @@ sealed class Interceptor : IQueryExpressionInterceptor
 
         // No Include at this level, apply ordering here
         return ApplyOrdering(query, configuration);
-    }
-
-    sealed class IncludeDetector :
-        ExpressionVisitor
-    {
-        public bool HasInclude { get; private set; }
-
-        protected override Expression VisitMethodCall(MethodCallExpression node)
-        {
-            if (node.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions) &&
-                node.Method.Name is "Include" or "ThenInclude")
-            {
-                HasInclude = true;
-            }
-
-            return base.VisitMethodCall(node);
-        }
     }
 
     static Expression ApplyOrdering(Expression source, Configuration configuration)

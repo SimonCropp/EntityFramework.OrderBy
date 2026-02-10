@@ -5,6 +5,7 @@ sealed class IncludeOrderingApplicator(IModel model) :
     ExpressionVisitor
 {
     static readonly ConcurrentDictionary<Type, Type?> collectionElementTypeCache = new();
+    static readonly ConcurrentDictionary<(MethodInfo, Type), MethodInfo> includeMethodCache = new();
 
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
@@ -64,11 +65,16 @@ sealed class IncludeOrderingApplicator(IModel model) :
                     // Include has 2 generic args: <TEntity, TProperty>
                     // ThenInclude has 3: <TEntity, TPreviousProperty, TProperty>
                     // In both cases, the last generic arg is the property type to replace
-                    var genericArgs = includeCall.Method.GetGenericArguments().ToArray();
-                    genericArgs[^1] = orderedNavigation.Type;
-
-                    var includeMethod = includeCall.Method.GetGenericMethodDefinition()
-                        .MakeGenericMethod(genericArgs);
+                    var includeMethod = includeMethodCache.GetOrAdd(
+                        (includeCall.Method, orderedNavigation.Type),
+                        static key =>
+                        {
+                            var (method, orderedType) = key;
+                            var genericArgs = method.GetGenericArguments().ToArray();
+                            genericArgs[^1] = orderedType;
+                            return method.GetGenericMethodDefinition()
+                                .MakeGenericMethod(genericArgs);
+                        });
 
                     // Recreate the Include call with the new method and ordered lambda
                     return Expression.Call(
