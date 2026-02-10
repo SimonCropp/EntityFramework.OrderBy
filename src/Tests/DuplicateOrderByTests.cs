@@ -9,7 +9,7 @@ public class DuplicateOrderByTests
             .UseDefaultOrderBy()
             .Options;
 
-        var exception = Assert.Throws<InvalidOperationException>(() =>
+        var exception = Assert.Throws<Exception>(() =>
         {
             using var context = new OrderByTwiceContext(options);
             _ = context.Model;
@@ -27,7 +27,7 @@ public class DuplicateOrderByTests
             .UseDefaultOrderBy()
             .Options;
 
-        var exception = Assert.Throws<InvalidOperationException>(() =>
+        var exception = Assert.Throws<Exception>(() =>
         {
             using var context = new OrderByDescendingTwiceContext(options);
             _ = context.Model;
@@ -45,7 +45,7 @@ public class DuplicateOrderByTests
             .UseDefaultOrderBy()
             .Options;
 
-        var exception = Assert.Throws<InvalidOperationException>(() =>
+        var exception = Assert.Throws<Exception>(() =>
         {
             using var context = new OrderByThenDescendingContext(options);
             _ = context.Model;
@@ -62,7 +62,7 @@ public class DuplicateOrderByTests
             .UseDefaultOrderBy()
             .Options;
 
-        var exception = Assert.Throws<InvalidOperationException>(() =>
+        var exception = Assert.Throws<Exception>(() =>
         {
             using var context = new OrderByDescendingThenAscContext(options);
             _ = context.Model;

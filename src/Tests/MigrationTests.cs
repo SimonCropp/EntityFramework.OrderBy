@@ -125,7 +125,7 @@ public class MigrationTests
             .UseDefaultOrderBy()
             .Options;
 
-        var exception = Assert.Throws<InvalidOperationException>(() =>
+        var exception = Assert.Throws<Exception>(() =>
         {
             using var context = new ContextWithValueOrdering(options2);
             _ = context.Model;

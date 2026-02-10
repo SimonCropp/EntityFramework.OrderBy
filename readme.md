@@ -206,7 +206,7 @@ builder.Entity<EntityWithVeryLongNameThatWouldExceedTheLimit>()
     .WithIndexName("IX_LongEntity_Order");
 ```
 
-If the auto-generated name exceeds 128 characters, an `InvalidOperationException` is thrown with a message suggesting to use `WithIndexName()`.
+If the auto-generated name exceeds 128 characters, an `Exception` is thrown with a message suggesting to use `WithIndexName()`.
 
 
 ### String Column Indexes
@@ -255,7 +255,7 @@ protected override void OnConfiguring(DbContextOptionsBuilder builder) =>
 <sup><a href='/src/Tests/Snippets.cs#L47-L53' title='Snippet source file'>snippet source</a> | <a href='#snippet-DisableIndexCreation' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-When index creation is disabled, calling `WithIndexName()` throws an `InvalidOperationException`.
+When index creation is disabled, calling `WithIndexName()` throws an `Exception`.
 
 
 ## Require Ordering for All Entities
@@ -285,10 +285,10 @@ Validation occurs once per `DbContext` type for performance.
 
 ## Configuration Errors
 
-Calling `OrderBy` or `OrderByDescending` multiple times for the same entity type throws an `InvalidOperationException`:
+Calling `OrderBy` or `OrderByDescending` multiple times for the same entity type throws an `Exception`:
 
 ```cs
-// WRONG - throws InvalidOperationException
+// WRONG - throws Exception
 builder.Entity<Employee>()
     .OrderBy(_ => _.HireDate);
 builder.Entity<Employee>()

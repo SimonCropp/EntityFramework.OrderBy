@@ -48,9 +48,7 @@ public sealed class OrderByBuilder<TEntity>
     {
         if (model.IsIndexCreationDisabled())
         {
-            throw new InvalidOperationException(
-                "WithIndexName() cannot be used when index creation is disabled. " +
-                "Remove the createIndexes: false option from UseDefaultOrderBy() or remove the WithIndexName() call.");
+            throw new("WithIndexName() cannot be used when index creation is disabled. Remove the createIndexes: false option from UseDefaultOrderBy() or remove the WithIndexName() call.");
         }
 
         if (string.IsNullOrWhiteSpace(indexName))

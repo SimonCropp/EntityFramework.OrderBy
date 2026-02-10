@@ -43,7 +43,7 @@ public static class OrderByExtensions
     /// <param name="builder">The entity type builder.</param>
     /// <param name="property">A lambda expression representing the property to order by.</param>
     /// <returns>An <see cref="OrderByBuilder{TEntity}"/> for chaining additional ordering operations.</returns>
-    /// <exception cref="InvalidOperationException">
+    /// <exception cref="Exception">
     /// Thrown when OrderBy or OrderByDescending has already been configured for this entity type.
     /// Use ThenBy/ThenByDescending for additional ordering columns.
     /// </exception>
@@ -66,7 +66,7 @@ public static class OrderByExtensions
     /// <param name="builder">The entity type builder.</param>
     /// <param name="property">A lambda expression representing the property to order by.</param>
     /// <returns>An <see cref="OrderByBuilder{TEntity}"/> for chaining additional ordering operations.</returns>
-    /// <exception cref="InvalidOperationException">
+    /// <exception cref="Exception">
     /// Thrown when OrderBy or OrderByDescending has already been configured for this entity type.
     /// Use ThenBy/ThenByDescending for additional ordering columns.
     /// </exception>
@@ -150,7 +150,7 @@ public static class OrderByExtensions
     {
         if (builder.Metadata.GetOrderByConfiguration() is not null)
         {
-            throw new InvalidOperationException($"Default ordering has already been configured for entity '{typeof(TEntity).Name}'. Use ThenBy or ThenByDescending to add additional ordering columns, or ensure OrderBy/OrderByDescending is only called once per entity type.");
+            throw new($"Default ordering has already been configured for entity '{typeof(TEntity).Name}'. Use ThenBy or ThenByDescending to add additional ordering columns, or ensure OrderBy/OrderByDescending is only called once per entity type.");
         }
     }
 }

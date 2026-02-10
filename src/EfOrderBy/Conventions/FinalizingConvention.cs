@@ -50,7 +50,7 @@ class FinalizingConvention(int? maxIndexableStringLength) : IModelFinalizingConv
 
                 if (index.Length > maxIndexNameLength)
                 {
-                    throw new InvalidOperationException(
+                    throw new(
                         $"""
                          The auto-generated index name '{index}' exceeds the maximum length of {maxIndexNameLength} characters.
                          Use .WithIndexName() to specify a shorter custom index name.
