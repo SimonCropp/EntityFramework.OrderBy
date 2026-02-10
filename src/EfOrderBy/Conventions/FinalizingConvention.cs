@@ -44,7 +44,7 @@ class FinalizingConvention : IModelFinalizingConvention
                 continue;
             }
 
-            if (createIndexes && !config.IsInherited)
+            if (createIndexes && !config.IsInherited && !HasLargeStringProperty(entity, config))
             {
                 var index = config.CustomIndexName ?? $"IX_{entity.ClrType.Name}_DefaultOrder";
 
@@ -71,5 +71,29 @@ class FinalizingConvention : IModelFinalizingConvention
         // Remove model-level annotations (only needed during OnModelCreating)
         model.RemoveAnnotation(OrderByExtensions.InterceptorRegisteredAnnotation);
         model.RemoveAnnotation(OrderByExtensions.IndexCreationDisabledAnnotation);
+    }
+
+    // SQL Server limits index keys to 900 bytes. For nvarchar columns (2 bytes per char),
+    // that means max 450 characters. EF Core will silently cap string columns to 450 chars
+    // when an index is added. To avoid this surprise, skip index creation if any string
+    // property has no max length or a max length exceeding 450.
+    static bool HasLargeStringProperty(IConventionEntityType entity, Configuration config)
+    {
+        foreach (var propertyName in config.PropertyNames)
+        {
+            var property = entity.FindProperty(propertyName);
+            if (property?.ClrType != typeof(string))
+            {
+                continue;
+            }
+
+            var maxLength = property.GetMaxLength();
+            if (maxLength is null or > 450)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
