@@ -44,10 +44,8 @@ sealed class OrderRequiredExtension(bool requireOrderingForAllEntities, bool cre
 
         public override void PopulateDebugInfo(IDictionary<string, string> debugInfo)
         {
-            debugInfo["DefaultOrderBy:RequireOrderingForAllEntities"] =
-                Extension.RequireOrderingForAllEntities.ToString();
-            debugInfo["DefaultOrderBy:CreateIndexes"] =
-                Extension.CreateIndexes.ToString();
+            debugInfo["DefaultOrderBy:RequireOrderingForAllEntities"] = Extension.RequireOrderingForAllEntities.ToString();
+            debugInfo["DefaultOrderBy:CreateIndexes"] = Extension.CreateIndexes.ToString();
         }
     }
 }

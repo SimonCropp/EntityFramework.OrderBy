@@ -1,7 +1,5 @@
 // ReSharper disable All
 #pragma warning disable IDE0022
-using Microsoft.EntityFrameworkCore;
-
 namespace Snippets;
 
 public class EnableInterceptorExample : DbContext

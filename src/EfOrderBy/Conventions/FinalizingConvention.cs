@@ -21,17 +21,17 @@ class FinalizingConvention(int? maxIndexableStringLength) : IModelFinalizingConv
             }
 
             // Walk up the base type chain to find inherited ordering
-            var baseType = entity.BaseType;
-            while (baseType != null)
+            var type = entity.BaseType;
+            while (type != null)
             {
-                if (baseType.GetOrderByConfiguration() is { } baseConfig)
+                if (type.GetOrderByConfiguration() is { } baseConfig)
                 {
                     var derivedConfig = baseConfig.CreateForDerivedType(entity.ClrType);
                     entity.SetOrderByConfiguration(derivedConfig);
                     break;
                 }
 
-                baseType = baseType.BaseType;
+                type = type.BaseType;
             }
         }
 
@@ -44,7 +44,9 @@ class FinalizingConvention(int? maxIndexableStringLength) : IModelFinalizingConv
                 continue;
             }
 
-            if (createIndexes && !config.IsInherited && !HasLargeStringProperty(entity, config, maxIndexableStringLength))
+            if (createIndexes &&
+                !config.IsInherited &&
+                !HasLargeStringProperty(entity, config, maxIndexableStringLength))
             {
                 var index = config.CustomIndexName ?? $"IX_{entity.ClrType.Name}_DefaultOrder";
 
@@ -75,12 +77,12 @@ class FinalizingConvention(int? maxIndexableStringLength) : IModelFinalizingConv
     // Some database providers silently cap string column lengths when an index is added.
     // For example, SQL Server caps nvarchar to 450 chars due to the 900-byte index key limit.
     // https://github.com/dotnet/efcore/issues/31167
-    // The maxIndexableStringLength is derived from the provider's own RelationalTypeMappingSource
+    // The maxIndexLength is derived from the provider's own RelationalTypeMappingSource
     // by querying FindMapping(typeof(string), keyOrIndex: true).Size.
     // When null, the provider has no limit and we never skip.
-    static bool HasLargeStringProperty(IConventionEntityType entity, Configuration config, int? maxIndexableLength)
+    static bool HasLargeStringProperty(IConventionEntityType entity, Configuration config, int? maxIndexLength)
     {
-        if (maxIndexableLength is null)
+        if (maxIndexLength is null)
         {
             return false;
         }
@@ -94,7 +96,8 @@ class FinalizingConvention(int? maxIndexableStringLength) : IModelFinalizingConv
             }
 
             var maxLength = property.GetMaxLength();
-            if (maxLength is null || maxLength > maxIndexableLength)
+            if (maxLength is null ||
+                maxLength > maxIndexLength)
             {
                 return true;
             }

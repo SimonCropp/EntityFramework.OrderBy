@@ -37,9 +37,12 @@ sealed class Interceptor : IQueryExpressionInterceptor
             return queryWithOrderedIncludes;
         }
 
-        var configuration = model.FindEntityType(elementType) != null
-            ? Configuration.TryGet(elementType)
-            : null;
+        if (model.FindEntityType(elementType) == null)
+        {
+            return queryWithOrderedIncludes;
+        }
+
+        var configuration = Configuration.TryGet(elementType);
         if (configuration is not { Clauses.Count: > 0 })
         {
             return queryWithOrderedIncludes;
@@ -60,21 +63,24 @@ sealed class Interceptor : IQueryExpressionInterceptor
     static Expression GetSourceBeforeProjection(Expression expression)
     {
         // Walk through Select and Include to find the source entity expression
-        while (expression is MethodCallExpression methodCall)
+        while (expression is MethodCallExpression call)
         {
+            var method = call.Method.Name;
+            var declaringType = call.Method.DeclaringType;
+
             // Skip over Select projections
-            if (methodCall.Method.DeclaringType == typeof(Queryable) &&
-                methodCall.Method.Name == "Select")
+            if (declaringType == typeof(Queryable) &&
+                method == "Select")
             {
-                expression = methodCall.Arguments[0];
+                expression = call.Arguments[0];
                 continue;
             }
 
             // Skip over Include operations
-            if (methodCall.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions) &&
-                methodCall.Method.Name is "Include" or "ThenInclude")
+            if (declaringType == typeof(EntityFrameworkQueryableExtensions) &&
+                method is "Include" or "ThenInclude")
             {
-                expression = methodCall.Arguments[0];
+                expression = call.Arguments[0];
                 continue;
             }
 
@@ -121,13 +127,13 @@ sealed class Interceptor : IQueryExpressionInterceptor
         }
 
         // Check if the query ends with a Select call
-        if (query is MethodCallExpression methodCall &&
-            methodCall.Method.DeclaringType == typeof(Queryable) &&
-            methodCall.Method.Name == "Select")
+        if (query is MethodCallExpression call &&
+            call.Method.DeclaringType == typeof(Queryable) &&
+            call.Method.Name == "Select")
         {
             // Apply ordering to the source of the Select, then recreate the Select
-            var orderedSource = ApplyOrdering(methodCall.Arguments[0], configuration);
-            return Expression.Call(methodCall.Method, orderedSource, methodCall.Arguments[1]);
+            var orderedSource = ApplyOrdering(call.Arguments[0], configuration);
+            return Expression.Call(call.Method, orderedSource, call.Arguments[1]);
         }
 
         // No Select or Include, apply ordering normally
@@ -176,7 +182,8 @@ sealed class Interceptor : IQueryExpressionInterceptor
         return ApplyOrdering(query, configuration);
     }
 
-    sealed class IncludeDetector : ExpressionVisitor
+    sealed class IncludeDetector :
+        ExpressionVisitor
     {
         public bool HasInclude { get; private set; }
 
@@ -187,6 +194,7 @@ sealed class Interceptor : IQueryExpressionInterceptor
             {
                 HasInclude = true;
             }
+
             return base.VisitMethodCall(node);
         }
     }

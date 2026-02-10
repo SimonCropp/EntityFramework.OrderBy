@@ -32,7 +32,8 @@ static class RequiredOrder
         foreach (var entity in model.GetEntityTypes())
         {
             // Skip entity types that are not queryable (owned types, etc.)
-            if (entity.IsOwned() || entity.HasSharedClrType)
+            if (entity.IsOwned() ||
+                entity.HasSharedClrType)
             {
                 continue;
             }
@@ -46,9 +47,11 @@ static class RequiredOrder
             }
         }
 
-        if (entitiesWithoutOrdering.Count > 0)
+        if (entitiesWithoutOrdering.Count == 0)
         {
-            throw new($"Default ordering is required for all entity types but the following entities do not have ordering configured: {string.Join(", ", entitiesWithoutOrdering)}. Use modelBuilder.Entity<T>().OrderBy() to configure default ordering.");
+            return;
         }
+
+        throw new($"Default ordering is required for all entity types but the following entities do not have ordering configured: {string.Join(", ", entitiesWithoutOrdering)}. Use modelBuilder.Entity<T>().OrderBy() to configure default ordering.");
     }
 }

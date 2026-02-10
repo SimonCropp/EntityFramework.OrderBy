@@ -5,10 +5,12 @@
 
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
-        var method = node.Method;
+        var name = node.Method.Name;
+        var type = node.Method.DeclaringType;
+
         // Check if this is an Include/ThenInclude - don't look for ordering inside its lambda
-        if (method.DeclaringType == typeof(EntityFrameworkQueryableExtensions) &&
-            method.Name is "Include" or "ThenInclude")
+        if (type == typeof(EntityFrameworkQueryableExtensions) &&
+            name is "Include" or "ThenInclude")
         {
             // Visit the source (first argument) but skip the lambda (second argument)
             // to avoid detecting ordering within Include(_ => _.Collection.OrderBy(...))
@@ -17,8 +19,8 @@
         }
 
         // Check if this is a Select - don't look for ordering inside its lambda
-        if (method.DeclaringType == typeof(Queryable) &&
-            method.Name == "Select")
+        if (type == typeof(Queryable) &&
+            name == "Select")
         {
             // Visit the source (first argument) but skip the lambda (second argument)
             // to avoid detecting ordering within Select(_ => new { ... _.Children.OrderBy(...) })
@@ -26,8 +28,9 @@
             return node;
         }
 
-        if ((method.DeclaringType == typeof(Queryable) || method.DeclaringType == typeof(Enumerable)) &&
-            method.Name is
+        if ((type == typeof(Queryable) ||
+             type == typeof(Enumerable)) &&
+            name is
                 "OrderBy" or
                 "OrderByDescending" or
                 "ThenBy" or
@@ -35,6 +38,7 @@
         {
             HasOrdering = true;
         }
+
         return base.VisitMethodCall(node);
     }
 }
