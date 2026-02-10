@@ -39,53 +39,57 @@ sealed class IncludeOrderingApplicator(IModel model) :
         var argument = includeCall.Arguments[1];
 
         // Check if the navigation lambda returns a collection
-        if (argument is UnaryExpression {Operand: LambdaExpression lambda})
+        if (argument is not UnaryExpression { Operand: LambdaExpression lambda })
         {
-            // Check if the navigation already has ordering
-            if (Interceptor.HasOrdering(lambda.Body))
-            {
-                // Already has explicit ordering, don't apply default
-                return includeCall;
-            }
-
-            // Get the element type of the collection
-            var collectionType = lambda.Body.Type;
-            var elementType = GetCollectionElementType(collectionType);
-
-            if (elementType != null)
-            {
-                var configuration = GetConfiguration(elementType);
-                if (configuration is {Clauses.Count: > 0})
-                {
-                    // Build OrderBy expression: _ => _.Employees.OrderBy(...).ThenBy(...)
-                    var orderedNavigation = ApplyOrdering(lambda.Body, configuration);
-                    var orderedLambda = Expression.Lambda(orderedNavigation, lambda.Parameters);
-
-                    // Get the Include/ThenInclude method with the new return type
-                    // Include has 2 generic args: <TEntity, TProperty>
-                    // ThenInclude has 3: <TEntity, TPreviousProperty, TProperty>
-                    // In both cases, the last generic arg is the property type to replace
-                    var includeMethod = includeMethodCache.GetOrAdd(
-                        (includeCall.Method, orderedNavigation.Type),
-                        static key =>
-                        {
-                            var (method, orderedType) = key;
-                            var genericArgs = method.GetGenericArguments().ToArray();
-                            genericArgs[^1] = orderedType;
-                            return method.GetGenericMethodDefinition()
-                                .MakeGenericMethod(genericArgs);
-                        });
-
-                    // Recreate the Include call with the new method and ordered lambda
-                    return Expression.Call(
-                        includeMethod,
-                        includeCall.Arguments[0],
-                        Expression.Quote(orderedLambda));
-                }
-            }
+            return includeCall;
         }
 
-        return includeCall;
+        // Check if the navigation already has ordering
+        if (Interceptor.HasOrdering(lambda.Body))
+        {
+            // Already has explicit ordering, don't apply default
+            return includeCall;
+        }
+
+        // Get the element type of the collection
+        var collectionType = lambda.Body.Type;
+        var elementType = GetCollectionElementType(collectionType);
+
+        if (elementType == null)
+        {
+            return includeCall;
+        }
+
+        var configuration = GetConfiguration(elementType);
+        if (configuration is not { Clauses.Count: > 0 })
+        {
+            return includeCall;
+        }
+
+        // Build OrderBy expression: _ => _.Employees.OrderBy(...).ThenBy(...)
+        var orderedNavigation = ApplyOrdering(lambda.Body, configuration);
+        var orderedLambda = Expression.Lambda(orderedNavigation, lambda.Parameters);
+
+        // Get the Include/ThenInclude method with the new return type
+        // Include has 2 generic args: <TEntity, TProperty>
+        // ThenInclude has 3: <TEntity, TPreviousProperty, TProperty>
+        // In both cases, the last generic arg is the property type to replace
+        var includeMethod = includeMethodCache.GetOrAdd(
+            (includeCall.Method, orderedNavigation.Type),
+            static key =>
+            {
+                var (method, orderedType) = key;
+                var genericArgs = method.GetGenericArguments().ToArray();
+                genericArgs[^1] = orderedType;
+                return method.GetGenericMethodDefinition()
+                    .MakeGenericMethod(genericArgs);
+            });
+
+        // Recreate the Include call with the new method and ordered lambda
+        return Expression.Call(
+            includeMethod,
+            includeCall.Arguments[0],
+            Expression.Quote(orderedLambda));
     }
 
     static Expression ApplyOrdering(Expression source, Configuration configuration)
