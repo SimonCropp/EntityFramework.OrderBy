@@ -209,6 +209,38 @@ builder.Entity<EntityWithVeryLongNameThatWouldExceedTheLimit>()
 If the auto-generated name exceeds 128 characters, an `InvalidOperationException` is thrown with a message suggesting to use `WithIndexName()`.
 
 
+### String Column Indexes
+
+Some database providers silently cap string column lengths when an index is added. For example, [SQL Server limits index keys to 900 bytes](https://github.com/dotnet/efcore/issues/31167), so EF Core's SQL Server provider automatically reduces `nvarchar` columns to 450 characters when indexed.
+
+To prevent this unexpected column modification, automatic index creation is skipped for `string` properties that have no `MaxLength` configured or a `MaxLength` exceeding the provider's limit. The limit is determined by querying the provider's `RelationalTypeMappingSource`, so it automatically adapts to any database engine.
+
+To include a string column in the automatic index, configure a `MaxLength` within the provider's limit:
+
+```cs
+builder.Entity<Product>()
+    .Property(_ => _.Category).HasMaxLength(450);
+
+builder.Entity<Product>()
+    .OrderBy(_ => _.Category);
+
+// Index is created because Category has MaxLength ≤ 450
+```
+
+If the `MaxLength` is not configured or exceeds the limit, the ordering still works — only the automatic index is skipped:
+
+```cs
+builder.Entity<Product>()
+    .OrderBy(_ => _.Category);
+
+// No index created (Category has no MaxLength), but ordering is still applied to queries
+```
+
+For composite indexes, if any string column exceeds the limit, the entire index is skipped.
+
+Providers without a string index size limit (e.g. PostgreSQL, SQLite) always create the index regardless of `MaxLength`.
+
+
 ### Disabling Index Creation
 
 To opt out of automatic index creation (for example, if indexes are managed separately):

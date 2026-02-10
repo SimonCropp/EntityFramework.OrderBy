@@ -166,6 +166,23 @@ public class IndexNameTests
         var indexes = entityType.GetIndexes().ToList();
         Assert.That(indexes, Is.Empty);
     }
+
+    [Test]
+    public void SqliteProvider_StringWithNoMaxLength_CreatesIndex()
+    {
+        // SQLite has no index key size limit, so strings without max length should still get indexes
+        var options = new DbContextOptionsBuilder()
+            .UseSqlite("Data Source=:memory:")
+            .UseDefaultOrderBy()
+            .Options;
+
+        using var context = new ContextWithStringNoMaxLength(options);
+        _ = context.Model;
+
+        var entityType = context.Model.FindEntityType(typeof(StringNoMaxLengthEntity))!;
+        var index = entityType.GetIndexes().FirstOrDefault();
+        Assert.That(index, Is.Not.Null);
+    }
 }
 
 class ContextWithShortEntityName(DbContextOptions options)
