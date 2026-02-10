@@ -61,7 +61,9 @@ class FinalizingConvention : IModelFinalizingConvention
                 builder?.HasDatabaseName(index, fromDataAnnotation: false);
             }
 
-            // Cache configuration for runtime use and remove annotation to prevent migration scaffold crash
+            // Cache configuration for runtime use and remove annotation to prevent migration scaffold crash.
+            // EF Core transforms the model between finalization and runtime (convention model → RuntimeModel),
+            // so we can't attach data to the model object. Static cache keyed by entity CLR type is used instead.
             Configuration.Cache(entity.ClrType, config);
             entity.RemoveAnnotation(OrderByExtensions.AnnotationName);
         }

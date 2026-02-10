@@ -3,6 +3,8 @@
 /// </summary>
 sealed class Configuration(Type elementType)
 {
+    // Keyed by entity CLR type. EF Core transforms the model between finalization and runtime
+    // (convention model → RuntimeModel), so we can't key by model object reference.
     static readonly ConcurrentDictionary<Type, Configuration> cache = new();
 
     internal static void Cache(Type entityType, Configuration configuration)
