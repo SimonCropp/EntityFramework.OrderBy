@@ -1,0 +1,68 @@
+﻿[
+  {
+    Name: IX_AnotherEntity_DefaultOrder,
+    Table: AnotherEntities,
+    Columns: [
+      Name
+    ],
+    IsUnique: false
+  },
+  {
+    Name: IX_BaseEntity_DefaultOrder,
+    Table: BaseEntities,
+    Columns: [
+      SortOrder
+    ],
+    IsUnique: false
+  },
+  {
+    Name: IX_Department_DefaultOrder,
+    Table: Departments,
+    Columns: [
+      DisplayOrder
+    ],
+    IsUnique: false
+  },
+  {
+    Name: IX_DerivedEntityB_DefaultOrder,
+    Table: BaseEntities,
+    Columns: [
+      Name
+    ],
+    IsUnique: false
+  },
+  {
+    Name: IX_Employee_DefaultOrder,
+    Table: Employees,
+    Columns: [
+      HireDate
+    ],
+    IsUnique: false
+  },
+  {
+    Name: IX_EmployeeTask_DefaultOrder,
+    Table: EmployeeTasks,
+    Columns: [
+      Priority
+    ],
+    IsUnique: false
+  },
+  {
+    Name: IX_EntityWithMultipleOrderings_DefaultOrder,
+    Table: EntitiesWithMultipleOrderings,
+    Columns: [
+      Category,
+      Priority,
+      Name
+    ],
+    IsUnique: false
+  },
+  {
+    Name: IX_TestEntity_DefaultOrder,
+    Table: TestEntities,
+    Columns: [
+      CreatedDate
+    ],
+    IsUnique: false
+  }
+]
