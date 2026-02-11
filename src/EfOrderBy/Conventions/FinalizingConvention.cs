@@ -59,8 +59,7 @@ class FinalizingConvention(int? maxIndexableStringLength) : IModelFinalizingConv
                          """);
                 }
 
-                var builder = entity.Builder.HasIndex(config.PropertyNames, index, fromDataAnnotation: false);
-                builder?.HasDatabaseName(index, fromDataAnnotation: false);
+                entity.Builder.HasIndex(config.PropertyNames, index, fromDataAnnotation: false);
             }
 
             // Cache configuration for runtime use and remove annotation to prevent migration scaffold crash.
