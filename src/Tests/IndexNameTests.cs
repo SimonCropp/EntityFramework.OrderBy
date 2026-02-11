@@ -183,6 +183,24 @@ public class IndexNameTests
         var index = entityType.GetIndexes().FirstOrDefault();
         Assert.That(index, Is.Not.Null);
     }
+
+    [Test]
+    public void OrderByAndExplicitIndex_ProducesTwoDistinctIndexes()
+    {
+        using var context = new ContextWithOrderByAndExplicitIndex(CreateOptions());
+        _ = context.Model;
+
+        var entityType = context.Model.FindEntityType(typeof(EntityWithBothIndexes))!;
+        var indexes = entityType.GetIndexes().ToList();
+        Assert.That(indexes, Has.Count.EqualTo(2));
+
+        var uniqueIndex = indexes.Single(_ => _.IsUnique);
+        Assert.That(uniqueIndex.Properties.Select(_ => _.Name), Is.EquivalentTo(["Name"]));
+
+        var orderByIndex = indexes.Single(_ => !_.IsUnique);
+        Assert.That(orderByIndex.GetDatabaseName(), Is.EqualTo("IX_EntityWithBothIndexes_DefaultOrder"));
+        Assert.That(orderByIndex.Properties.Select(_ => _.Name), Is.EquivalentTo(["Name"]));
+    }
 }
 
 class ContextWithShortEntityName(DbContextOptions options)
@@ -431,5 +449,27 @@ public class MixedStringNoMaxLengthEntity
 {
     public int Id { get; set; }
     public int Priority { get; set; }
+    public string Name { get; set; } = "";
+}
+
+class ContextWithOrderByAndExplicitIndex(DbContextOptions options)
+    : DbContext(options)
+{
+    public DbSet<EntityWithBothIndexes> Entities => Set<EntityWithBothIndexes>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        var builder = modelBuilder.Entity<EntityWithBothIndexes>();
+        builder.Property(_ => _.Name).HasMaxLength(450);
+        builder.OrderBy(_ => _.Name);
+        builder.HasIndex(_ => _.Name)
+            .IsUnique();
+    }
+}
+
+public class EntityWithBothIndexes
+{
+    public int Id { get; set; }
     public string Name { get; set; } = "";
 }
