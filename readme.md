@@ -189,6 +189,7 @@ builder.Entity<Product>()
 ```
 
 The index:
+
 - Is named `IX_{EntityName}_DefaultOrder`
 - Contains all columns in the ordering chain as a composite index
 - Is automatically updated when using `ThenBy`/`ThenByDescending`
@@ -219,7 +220,8 @@ To include a string column in the automatic index, configure a `MaxLength` withi
 
 ```cs
 builder.Entity<Product>()
-    .Property(_ => _.Category).HasMaxLength(450);
+    .Property(_ => _.Category)
+    .HasMaxLength(450);
 
 builder.Entity<Product>()
     .OrderBy(_ => _.Category);
