@@ -26,27 +26,22 @@
         quotedLambda = Expression.Quote(lambda);
     }
 
-    static MethodInfo GetQueryableMethod(string name) =>
-        typeof(Queryable)
-            .GetMethods()
-            .First(_ => _.Name == name &&
-                        _.GetParameters().Length == 2);
+    static MethodInfo FindMethod(MethodInfo[] methods, string name) =>
+        methods.First(_ => _.Name == name &&
+                           _.GetParameters().Length == 2);
 
-    static MethodInfo GetEnumerableMethod(string name) =>
-        typeof(Enumerable)
-            .GetMethods()
-            .First(_ => _.Name == name &&
-                        _.GetParameters().Length == 2);
+    static MethodInfo[] queryableMethods = typeof(Queryable).GetMethods();
+    static MethodInfo[] enumerableMethods = typeof(Enumerable).GetMethods();
 
-    static MethodInfo queryableOrderBy = GetQueryableMethod(nameof(Queryable.OrderBy));
-    static MethodInfo queryableOrderByDescending = GetQueryableMethod(nameof(Queryable.OrderByDescending));
-    static MethodInfo queryableThenBy = GetQueryableMethod(nameof(Queryable.ThenBy));
-    static MethodInfo queryableThenByDescending = GetQueryableMethod(nameof(Queryable.ThenByDescending));
+    static MethodInfo queryableOrderBy = FindMethod(queryableMethods, nameof(Queryable.OrderBy));
+    static MethodInfo queryableOrderByDescending = FindMethod(queryableMethods, nameof(Queryable.OrderByDescending));
+    static MethodInfo queryableThenBy = FindMethod(queryableMethods, nameof(Queryable.ThenBy));
+    static MethodInfo queryableThenByDescending = FindMethod(queryableMethods, nameof(Queryable.ThenByDescending));
 
-    static MethodInfo enumerableOrderBy = GetEnumerableMethod(nameof(Enumerable.OrderBy));
-    static MethodInfo enumerableOrderByDescending = GetEnumerableMethod(nameof(Enumerable.OrderByDescending));
-    static MethodInfo enumerableThenBy = GetEnumerableMethod(nameof(Enumerable.ThenBy));
-    static MethodInfo enumerableThenByDescending = GetEnumerableMethod(nameof(Enumerable.ThenByDescending));
+    static MethodInfo enumerableOrderBy = FindMethod(enumerableMethods, nameof(Enumerable.OrderBy));
+    static MethodInfo enumerableOrderByDescending = FindMethod(enumerableMethods, nameof(Enumerable.OrderByDescending));
+    static MethodInfo enumerableThenBy = FindMethod(enumerableMethods, nameof(Enumerable.ThenBy));
+    static MethodInfo enumerableThenByDescending = FindMethod(enumerableMethods, nameof(Enumerable.ThenByDescending));
     LambdaExpression lambda;
 
     // The fully generic Enumerable method (e.g., OrderBy<ParentEntity, string>)
