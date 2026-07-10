@@ -16,7 +16,7 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
     <PackageVersion Include="ProjectDefaults" Version="1.0.174" />
     <PackageVersion Include="Verify.NUnit" Version="31.22.0" />
-    <PackageVersion Include="Verify.EntityFramework" Version="15.2.0" />
+    <PackageVersion Include="Verify.EntityFramework" Version="15.3.0" />
     <PackageVersion Include="Verify.SqlServer" Version="12.2.0" />
     <PackageVersion Include="Argon" Version="0.35.0" />
     <PackageVersion Include="DiffEngine" Version="19.3.1" />
