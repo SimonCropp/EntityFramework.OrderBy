@@ -23,10 +23,9 @@ sealed class Interceptor : IQueryExpressionInterceptor
         var queryWithOrderedIncludes = visitor.Visit(query);
 
         // Analyze the query for ordering and includes in a single pass
-        var analyzer = new QueryAnalyzer();
-        analyzer.Visit(queryWithOrderedIncludes);
+        var (hasOrdering, hasInclude) = QueryAnalyzer.Analyze(queryWithOrderedIncludes);
 
-        if (analyzer.HasOrdering)
+        if (hasOrdering)
         {
             if (detectRedundantOrdering)
             {
@@ -60,14 +59,7 @@ sealed class Interceptor : IQueryExpressionInterceptor
 
         // Apply default ordering to the top-level query
         // If there's a Select projection at the end, we need to insert OrderBy before it
-        return ApplyOrderingBeforeSelect(queryWithOrderedIncludes, configuration, analyzer.HasInclude);
-    }
-
-    public static bool HasOrdering(Expression expression)
-    {
-        var analyzer = new QueryAnalyzer();
-        analyzer.Visit(expression);
-        return analyzer.HasOrdering;
+        return ApplyOrderingBeforeSelect(queryWithOrderedIncludes, configuration, hasInclude);
     }
 
     static Expression GetSourceBeforeProjection(Expression expression)

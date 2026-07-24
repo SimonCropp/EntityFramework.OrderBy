@@ -45,7 +45,7 @@ sealed class IncludeOrderingApplicator(IModel model, bool detectRedundantOrderin
         }
 
         // Check if the navigation already has ordering
-        if (Interceptor.HasOrdering(lambda.Body))
+        if (QueryAnalyzer.HasOrdering(lambda.Body))
         {
             // Already has explicit ordering, don't apply default
             if (detectRedundantOrdering)
