@@ -1,6 +1,6 @@
 static class RequiredOrder
 {
-    static ConcurrentDictionary<Type, bool> validated = [];
+    static readonly ConcurrentDictionary<Type, bool> validated = [];
 
     public static void Validate(DbContext context, OrderRequiredExtension? extension)
     {

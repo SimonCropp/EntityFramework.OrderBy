@@ -55,8 +55,7 @@ static class RedundantOrder
                     return null;
                 }
 
-                // The chain is walked outermost first, so each clause found is applied before the previous
-                clauses.Insert(0, new(propertyName, descending, isThenBy));
+                clauses.Add(new(propertyName, descending, isThenBy));
                 elementType = method.GetGenericArguments()[0];
                 expression = call.Arguments[0];
                 continue;
@@ -81,6 +80,8 @@ static class RedundantOrder
             return null;
         }
 
+        // The chain is walked outermost first, so the clauses come out in reverse of how they apply
+        clauses.Reverse();
         return (elementType, clauses);
     }
 

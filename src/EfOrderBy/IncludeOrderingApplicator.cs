@@ -4,7 +4,7 @@
 sealed class IncludeOrderingApplicator(IModel model, bool detectRedundantOrdering) :
     ExpressionVisitor
 {
-    static readonly ConcurrentDictionary<Type, Type?> collectionElementTypeCache = new();
+    // MakeGenericMethod is expensive enough to be worth caching, unlike the element type lookup
     static readonly ConcurrentDictionary<(MethodInfo, Type), MethodInfo> includeMethodCache = new();
 
     protected override Expression VisitMethodCall(MethodCallExpression node)
@@ -112,35 +112,36 @@ sealed class IncludeOrderingApplicator(IModel model, bool detectRedundantOrderin
         return result;
     }
 
-    static Type? GetCollectionElementType(Type type) =>
-        collectionElementTypeCache.GetOrAdd(type,
-            static type =>
+    // Not cached. A navigation is declared as one of the types below, so the fast path is a
+    // handful of type comparisons, which is cheaper than a dictionary lookup and does not pin
+    // every type it is handed for the life of the process.
+    static Type? GetCollectionElementType(Type type)
+    {
+        // Check for IEnumerable<T>
+        if (type.IsGenericType)
+        {
+            var genericDef = type.GetGenericTypeDefinition();
+            if (genericDef == typeof(IEnumerable<>) ||
+                genericDef == typeof(ICollection<>) ||
+                genericDef == typeof(IList<>) ||
+                genericDef == typeof(List<>))
             {
-                // Check for IEnumerable<T>
-                if (type.IsGenericType)
-                {
-                    var genericDef = type.GetGenericTypeDefinition();
-                    if (genericDef == typeof(IEnumerable<>) ||
-                        genericDef == typeof(ICollection<>) ||
-                        genericDef == typeof(IList<>) ||
-                        genericDef == typeof(List<>))
-                    {
-                        return type.GetGenericArguments()[0];
-                    }
-                }
+                return type.GetGenericArguments()[0];
+            }
+        }
 
-                // Check interfaces
-                foreach (var iface in type.GetInterfaces())
-                {
-                    if (iface.IsGenericType &&
-                        iface.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-                    {
-                        return iface.GetGenericArguments()[0];
-                    }
-                }
+        // Check interfaces
+        foreach (var iface in type.GetInterfaces())
+        {
+            if (iface.IsGenericType &&
+                iface.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+            {
+                return iface.GetGenericArguments()[0];
+            }
+        }
 
-                return null;
-            });
+        return null;
+    }
 
     Configuration? GetConfiguration(Type element)
     {

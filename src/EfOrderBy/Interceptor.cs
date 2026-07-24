@@ -3,8 +3,6 @@
 /// </summary>
 sealed class Interceptor : IQueryExpressionInterceptor
 {
-    static readonly ConcurrentDictionary<Type, Type?> queryElementTypeCache = new();
-
     public Expression QueryCompilationStarting(Expression query, QueryExpressionEventData eventData)
     {
         var context = eventData.Context;
@@ -129,30 +127,32 @@ sealed class Interceptor : IQueryExpressionInterceptor
         return expression;
     }
 
-    static Type? GetQueryElementType(Type type) =>
-        queryElementTypeCache.GetOrAdd(type, static type =>
+    // Not cached. A query root is already IQueryable<T>, so the fast path below is two type
+    // comparisons, which is cheaper than a dictionary lookup and does not pin every type it
+    // is handed for the life of the process.
+    static Type? GetQueryElementType(Type type)
+    {
+        if (type.IsGenericType)
         {
-            if (type.IsGenericType)
+            var genericDef = type.GetGenericTypeDefinition();
+            if (genericDef == typeof(IQueryable<>) ||
+                genericDef == typeof(IOrderedQueryable<>))
             {
-                var genericDef = type.GetGenericTypeDefinition();
-                if (genericDef == typeof(IQueryable<>) ||
-                    genericDef == typeof(IOrderedQueryable<>))
-                {
-                    return type.GetGenericArguments()[0];
-                }
+                return type.GetGenericArguments()[0];
             }
+        }
 
-            foreach (var iface in type.GetInterfaces())
+        foreach (var iface in type.GetInterfaces())
+        {
+            if (iface.IsGenericType &&
+                iface.GetGenericTypeDefinition() == typeof(IQueryable<>))
             {
-                if (iface.IsGenericType &&
-                    iface.GetGenericTypeDefinition() == typeof(IQueryable<>))
-                {
-                    return iface.GetGenericArguments()[0];
-                }
+                return iface.GetGenericArguments()[0];
             }
+        }
 
-            return null;
-        });
+        return null;
+    }
 
     static Expression ApplyOrdering(Expression query, Configuration configuration)
     {

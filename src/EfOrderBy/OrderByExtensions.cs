@@ -5,7 +5,7 @@ namespace EfOrderBy;
 /// </summary>
 public static class OrderByExtensions
 {
-    static Interceptor interceptor = new();
+    static readonly Interceptor interceptor = new();
 
     /// <summary>
     /// Adds the default ordering interceptor to automatically apply ordering to queries
