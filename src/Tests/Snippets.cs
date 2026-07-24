@@ -40,6 +40,17 @@ public class RequireOrderingExample : DbContext
     #endregion
 }
 
+public class ThrowOnRedundantOrderByExample : DbContext
+{
+    #region ThrowOnRedundantOrderBy
+
+    protected override void OnConfiguring(DbContextOptionsBuilder builder) =>
+        builder.UseDefaultOrderBy(
+            throwOnRedundantOrderBy: true);
+
+    #endregion
+}
+
 public class DisableIndexCreationExample : DbContext
 {
     #region DisableIndexCreation

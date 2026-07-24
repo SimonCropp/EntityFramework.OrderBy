@@ -1,7 +1,8 @@
-sealed class OrderRequiredExtension(bool requireOrderingForAllEntities, bool createIndexes) :
+sealed class OrderRequiredExtension(bool requireOrderingForAllEntities, bool createIndexes, bool throwOnRedundantOrderBy) :
     IDbContextOptionsExtension
 {
     public bool RequireOrderingForAllEntities { get; } = requireOrderingForAllEntities;
+    public bool ThrowOnRedundantOrderBy { get; } = throwOnRedundantOrderBy;
     bool CreateIndexes { get; } = createIndexes;
 
     public DbContextOptionsExtensionInfo Info => new ExtensionInfo(this);
@@ -32,20 +33,23 @@ sealed class OrderRequiredExtension(bool requireOrderingForAllEntities, bool cre
 
         public override string LogFragment =>
             $"{(Extension.RequireOrderingForAllEntities ? "RequireOrderingForAllEntities " : "")}" +
-            $"{(Extension.CreateIndexes ? "" : "CreateIndexes=false ")}";
+            $"{(Extension.CreateIndexes ? "" : "CreateIndexes=false ")}" +
+            $"{(Extension.ThrowOnRedundantOrderBy ? "ThrowOnRedundantOrderBy " : "")}";
 
         public override int GetServiceProviderHashCode() =>
-            HashCode.Combine(Extension.RequireOrderingForAllEntities, Extension.CreateIndexes);
+            HashCode.Combine(Extension.RequireOrderingForAllEntities, Extension.CreateIndexes, Extension.ThrowOnRedundantOrderBy);
 
         public override bool ShouldUseSameServiceProvider(DbContextOptionsExtensionInfo other) =>
             other is ExtensionInfo otherInfo &&
             Extension.RequireOrderingForAllEntities == otherInfo.Extension.RequireOrderingForAllEntities &&
-            Extension.CreateIndexes == otherInfo.Extension.CreateIndexes;
+            Extension.CreateIndexes == otherInfo.Extension.CreateIndexes &&
+            Extension.ThrowOnRedundantOrderBy == otherInfo.Extension.ThrowOnRedundantOrderBy;
 
         public override void PopulateDebugInfo(IDictionary<string, string> debugInfo)
         {
             debugInfo["DefaultOrderBy:RequireOrderingForAllEntities"] = Extension.RequireOrderingForAllEntities.ToString();
             debugInfo["DefaultOrderBy:CreateIndexes"] = Extension.CreateIndexes.ToString();
+            debugInfo["DefaultOrderBy:ThrowOnRedundantOrderBy"] = Extension.ThrowOnRedundantOrderBy.ToString();
         }
     }
 }
