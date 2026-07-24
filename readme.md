@@ -22,7 +22,7 @@ https://nuget.org/packages/EfOrderBy/
 - **Multi-column ordering**: Chain multiple ordering clauses with `ThenBy` and `ThenByDescending`
 - **Automatic indexes**: Database indexes are automatically created for ordering columns
 - **Validation mode**: Optionally require all entities to have default ordering configured
-- **Redundant ordering detection**: Optionally throw when a query explicitly applies the same ordering as the configured default
+- **Redundant ordering detection**: Optionally throw when a query explicitly applies the same ordering as the configured default, per context or process wide
 
 
 ## Usage
@@ -79,7 +79,7 @@ var employeesByName = await context.Employees
     .OrderBy(_ => _.Name)
     .ToListAsync();
 ```
-<sup><a href='/src/Tests/Snippets.cs#L71-L82' title='Snippet source file'>snippet source</a> | <a href='#snippet-QueryWithoutOrderBy' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L83-L94' title='Snippet source file'>snippet source</a> | <a href='#snippet-QueryWithoutOrderBy' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -104,7 +104,7 @@ var secondPage = await context.Employees
 var first = await context.Employees
     .FirstAsync();
 ```
-<sup><a href='/src/Tests/Snippets.cs#L89-L103' title='Snippet source file'>snippet source</a> | <a href='#snippet-PagingAndSingleResults' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L101-L115' title='Snippet source file'>snippet source</a> | <a href='#snippet-PagingAndSingleResults' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Without this, a page would be an arbitrary set of rows that happens to be sorted, and pages
@@ -127,7 +127,7 @@ var departments = await context.Departments
     .Include(_ => _.Employees)
     .ToListAsync();
 ```
-<sup><a href='/src/Tests/Snippets.cs#L110-L118' title='Snippet source file'>snippet source</a> | <a href='#snippet-IncludeSupport' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L122-L130' title='Snippet source file'>snippet source</a> | <a href='#snippet-IncludeSupport' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -181,7 +181,7 @@ public class InheritanceDbContext : DbContext
     public DbSet<DerivedEntityB> DerivedEntitiesB => Set<DerivedEntityB>();
 }
 ```
-<sup><a href='/src/Tests/Snippets.cs#L186-L231' title='Snippet source file'>snippet source</a> | <a href='#snippet-InheritanceOrdering' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L198-L243' title='Snippet source file'>snippet source</a> | <a href='#snippet-InheritanceOrdering' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Behavior:
@@ -204,7 +204,7 @@ builder.Entity<Product>()
     .ThenBy(_ => _.Name)
     .ThenByDescending(_ => _.Price);
 ```
-<sup><a href='/src/Tests/Snippets.cs#L123-L130' title='Snippet source file'>snippet source</a> | <a href='#snippet-MultiColumnOrdering' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L135-L142' title='Snippet source file'>snippet source</a> | <a href='#snippet-MultiColumnOrdering' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -287,7 +287,7 @@ protected override void OnConfiguring(DbContextOptionsBuilder builder) =>
     builder.UseDefaultOrderBy(
         createIndexes: false);
 ```
-<sup><a href='/src/Tests/Snippets.cs#L56-L62' title='Snippet source file'>snippet source</a> | <a href='#snippet-DisableIndexCreation' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L68-L74' title='Snippet source file'>snippet source</a> | <a href='#snippet-DisableIndexCreation' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 When index creation is disabled, calling `WithIndexName()` throws an `Exception`.
@@ -388,6 +388,36 @@ var departments = await context.Departments
 Detection happens during query compilation, so it applies to every distinct query the application executes, whether or not the query hits the database.
 
 
+### Enabling for a whole test project
+
+Setting it on every `DbContext` gets tedious in a test project that has several. `OrderBySettings.ThrowOnRedundantOrderBy` is a process wide default, so a module initializer turns it on for all of them:
+
+<!-- snippet: ThrowOnRedundantOrderBySetting -->
+<a id='snippet-ThrowOnRedundantOrderBySetting'></a>
+```cs
+[ModuleInitializer]
+public static void Initialize() =>
+    OrderBySettings.ThrowOnRedundantOrderBy = true;
+```
+<sup><a href='/src/Settings.Tests/ModuleInitializer.cs#L6-L12' title='Snippet source file'>snippet source</a> | <a href='#snippet-ThrowOnRedundantOrderBySetting' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+`UseDefaultOrderBy` reads this setting only when its `throwOnRedundantOrderBy` parameter is left unset. Passing a value always wins, so an individual context can opt out:
+
+<!-- snippet: OptOutOfThrowOnRedundantOrderBy -->
+<a id='snippet-OptOutOfThrowOnRedundantOrderBy'></a>
+```cs
+// Passing false explicitly overrides OrderBySettings.ThrowOnRedundantOrderBy
+protected override void OnConfiguring(DbContextOptionsBuilder builder) =>
+    builder.UseDefaultOrderBy(
+        throwOnRedundantOrderBy: false);
+```
+<sup><a href='/src/Tests/Snippets.cs#L56-L63' title='Snippet source file'>snippet source</a> | <a href='#snippet-OptOutOfThrowOnRedundantOrderBy' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+The setting is read during query compilation rather than when the options are built, so it applies to contexts whose options were built before the initializer ran.
+
+
 ## Configuration Errors
 
 Calling `OrderBy` or `OrderByDescending` multiple times for the same entity type throws an `Exception`:
@@ -454,7 +484,7 @@ public class AppDbContext : DbContext
     public DbSet<Employee> Employees => Set<Employee>();
 }
 ```
-<sup><a href='/src/Tests/Snippets.cs#L134-L177' title='Snippet source file'>snippet source</a> | <a href='#snippet-CompleteExample' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L146-L189' title='Snippet source file'>snippet source</a> | <a href='#snippet-CompleteExample' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
