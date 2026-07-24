@@ -59,15 +59,22 @@ sealed class Configuration(Type elementType)
     /// Creates a new Configuration for a derived type by replaying the clause metadata.
     /// The derived type must have the same properties (inherited from the base).
     /// </summary>
+    // The default lookup omits non public properties, which an entity can map,
+    // so without these the ordering fails to inherit for those properties.
+    const BindingFlags propertyFlags =
+        BindingFlags.Public |
+        BindingFlags.NonPublic |
+        BindingFlags.Instance;
+
     internal Configuration CreateForDerivedType(Type derivedType)
     {
         var derived = new Configuration(derivedType) { IsInherited = true };
         foreach (var meta in ClauseMetadataList)
         {
-            var prop = derivedType.GetProperty(meta.PropertyName);
-            if (prop != null)
+            var property = derivedType.GetProperty(meta.PropertyName, propertyFlags);
+            if (property != null)
             {
-                derived.AddClause(prop, meta.Descending, meta.IsThenBy);
+                derived.AddClause(property, meta.Descending, meta.IsThenBy);
                 continue;
             }
 
