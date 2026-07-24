@@ -3,8 +3,6 @@
 /// </summary>
 sealed class Interceptor : IQueryExpressionInterceptor
 {
-    static readonly ConcurrentDictionary<Type, Type?> queryElementTypeCache = new();
-
     public Expression QueryCompilationStarting(Expression query, QueryExpressionEventData eventData)
     {
         var context = eventData.Context;
@@ -14,19 +12,30 @@ sealed class Interceptor : IQueryExpressionInterceptor
         }
 
         var model = context.Model;
-        RequiredOrder.Validate(context);
 
-        var detectRedundantOrdering = RedundantOrder.IsEnabled(context);
+        // Both of the options below live on the same extension, so resolve it once
+        var extension = context.GetService<IDbContextOptions>()
+            .FindExtension<OrderRequiredExtension>();
 
-        // First, process Include nodes to add ordering to nested collections
-        var visitor = new IncludeOrderingApplicator(model, detectRedundantOrdering);
-        var queryWithOrderedIncludes = visitor.Visit(query);
+        RequiredOrder.Validate(context, extension);
+
+        var detectRedundantOrdering = extension?.ThrowOnRedundantOrderBy ?? false;
 
         // Analyze the query for ordering and includes in a single pass
-        var analyzer = new QueryAnalyzer();
-        analyzer.Visit(queryWithOrderedIncludes);
+        var (hasOrdering, hasInclude) = QueryAnalyzer.Analyze(query);
 
-        if (analyzer.HasOrdering)
+        var queryWithOrderedIncludes = query;
+
+        // Ordering nested collections rewrites the whole tree, so only do it when there is an
+        // Include to rewrite. Neither flag above can change as a result, since the rewrite only
+        // touches the inside of Include lambdas.
+        if (hasInclude)
+        {
+            var visitor = new IncludeOrderingApplicator(model, detectRedundantOrdering);
+            queryWithOrderedIncludes = visitor.Visit(query);
+        }
+
+        if (hasOrdering)
         {
             if (detectRedundantOrdering)
             {
@@ -36,12 +45,11 @@ sealed class Interceptor : IQueryExpressionInterceptor
             return queryWithOrderedIncludes;
         }
 
-        // For queries with Select projection, we need to get the entity type from the source
-        // BEFORE the Select, not from the result type (which would be the projected type)
-        // Walk through Select/Include to find the actual source entity type
-        var sourceExpression = GetSourceBeforeProjection(queryWithOrderedIncludes);
+        // The entity type has to come from the source the ordering will be applied to, not from
+        // the result type, which may be a projection, a single entity, or a limited page
+        var source = GetOrderingSource(queryWithOrderedIncludes);
 
-        var elementType = GetQueryElementType(sourceExpression.Type);
+        var elementType = GetQueryElementType(source.Type);
         if (elementType == null)
         {
             return queryWithOrderedIncludes;
@@ -58,134 +66,109 @@ sealed class Interceptor : IQueryExpressionInterceptor
             return queryWithOrderedIncludes;
         }
 
-        // Apply default ordering to the top-level query
-        // If there's a Select projection at the end, we need to insert OrderBy before it
-        return ApplyOrderingBeforeSelect(queryWithOrderedIncludes, configuration, analyzer.HasInclude);
+        return ApplyOrdering(queryWithOrderedIncludes, configuration);
     }
 
-    public static bool HasOrdering(Expression expression)
+    /// <summary>
+    /// Operators the default ordering has to be applied beneath rather than after.
+    /// </summary>
+    /// <remarks>
+    /// Skip, Take and the single result operators choose which rows come back, so ordering
+    /// them afterwards sorts an arbitrary subset instead of choosing from an ordered one.
+    /// Select projects the entity away. EF Core replaces ordering that sits outside an Include
+    /// with key ordering. The rest only tag the query and pass their source through unchanged.
+    /// </remarks>
+    static bool ShouldOrderBefore(MethodCallExpression call)
     {
-        var analyzer = new QueryAnalyzer();
-        analyzer.Visit(expression);
-        return analyzer.HasOrdering;
-    }
+        var declaringType = call.Method.DeclaringType;
+        var name = call.Method.Name;
 
-    static Expression GetSourceBeforeProjection(Expression expression)
-    {
-        // Walk through Select and Include to find the source entity expression
-        while (expression is MethodCallExpression call)
+        if (declaringType == typeof(Queryable))
         {
-            var method = call.Method.Name;
-            var declaringType = call.Method.DeclaringType;
+            return name is
+                "Select" or
+                "Skip" or
+                "Take" or
+                "First" or
+                "FirstOrDefault" or
+                "Last" or
+                "LastOrDefault" or
+                "ElementAt" or
+                "ElementAtOrDefault";
+        }
 
-            // Skip over Select projections
-            if (declaringType == typeof(Queryable) &&
-                method == "Select")
-            {
-                expression = call.Arguments[0];
-                continue;
-            }
+        if (declaringType == typeof(EntityFrameworkQueryableExtensions))
+        {
+            return name is
+                "Include" or
+                "ThenInclude" or
+                "AsTracking" or
+                "AsNoTracking" or
+                "AsNoTrackingWithIdentityResolution" or
+                "AsSingleQuery" or
+                "AsSplitQuery" or
+                "IgnoreAutoIncludes" or
+                "IgnoreQueryFilters" or
+                "TagWith" or
+                "TagWithCallSite";
+        }
 
-            // Skip over Include operations
-            if (declaringType == typeof(EntityFrameworkQueryableExtensions) &&
-                method is "Include" or "ThenInclude")
-            {
-                expression = call.Arguments[0];
-                continue;
-            }
+        return false;
+    }
 
-            // Stop at any other operation
-            break;
+    static Expression GetOrderingSource(Expression expression)
+    {
+        while (expression is MethodCallExpression call &&
+               ShouldOrderBefore(call))
+        {
+            expression = call.Arguments[0];
         }
 
         return expression;
     }
 
-    static Type? GetQueryElementType(Type type) =>
-        queryElementTypeCache.GetOrAdd(type, static type =>
-        {
-            if (type.IsGenericType)
-            {
-                var genericDef = type.GetGenericTypeDefinition();
-                if (genericDef == typeof(IQueryable<>) ||
-                    genericDef == typeof(IOrderedQueryable<>))
-                {
-                    return type.GetGenericArguments()[0];
-                }
-            }
-
-            foreach (var iface in type.GetInterfaces())
-            {
-                if (iface.IsGenericType &&
-                    iface.GetGenericTypeDefinition() == typeof(IQueryable<>))
-                {
-                    return iface.GetGenericArguments()[0];
-                }
-            }
-
-            return null;
-        });
-
-    static Expression ApplyOrderingBeforeSelect(Expression query, Configuration configuration, bool hasInclude)
+    // Not cached. A query root is already IQueryable<T>, so the fast path below is two type
+    // comparisons, which is cheaper than a dictionary lookup and does not pin every type it
+    // is handed for the life of the process.
+    static Type? GetQueryElementType(Type type)
     {
-        // Check if the query contains Include first - need to apply ordering before Include
-        // to prevent EF Core from replacing it with just Id ordering
-        // This must be checked before Select, because queries can be: OrderBy().Include().Select()
-        if (hasInclude)
+        if (type.IsGenericType)
         {
-            return ApplyOrderingBeforeInclude(query, configuration);
+            var genericDef = type.GetGenericTypeDefinition();
+            if (genericDef == typeof(IQueryable<>) ||
+                genericDef == typeof(IOrderedQueryable<>))
+            {
+                return type.GetGenericArguments()[0];
+            }
         }
 
-        // Check if the query ends with a Select call
+        foreach (var iface in type.GetInterfaces())
+        {
+            if (iface.IsGenericType &&
+                iface.GetGenericTypeDefinition() == typeof(IQueryable<>))
+            {
+                return iface.GetGenericArguments()[0];
+            }
+        }
+
+        return null;
+    }
+
+    static Expression ApplyOrdering(Expression query, Configuration configuration)
+    {
+        // Push past everything the ordering has to precede, then rebuild the chain around it
         if (query is MethodCallExpression call &&
-            call.Method.DeclaringType == typeof(Queryable) &&
-            call.Method.Name == "Select")
+            ShouldOrderBefore(call))
         {
-            // Apply ordering to the source of the Select, then recreate the Select
-            var orderedSource = ApplyOrdering(call.Arguments[0], configuration);
-            return Expression.Call(call.Method, orderedSource, call.Arguments[1]);
+            var arguments = call.Arguments.ToArray();
+            arguments[0] = ApplyOrdering(arguments[0], configuration);
+            return call.Update(call.Object, arguments);
         }
 
-        // No Select or Include, apply ordering normally
-        return ApplyOrdering(query, configuration);
+        return AppendOrdering(query, configuration);
     }
 
-    static Expression ApplyOrderingBeforeInclude(Expression query, Configuration configuration)
-    {
-        // Check if the query ends with a Select call (after Include)
-        if (query is MethodCallExpression selectCall &&
-            selectCall.Method.DeclaringType == typeof(Queryable) &&
-            selectCall.Method.Name == "Select")
-        {
-            // Recursively apply ordering before Include in the source, then recreate Select
-            var orderedSource = ApplyOrderingBeforeInclude(selectCall.Arguments[0], configuration);
-            return Expression.Call(selectCall.Method, orderedSource, selectCall.Arguments[1]);
-        }
-
-        // Find the last method call before Include
-        if (query is MethodCallExpression methodCall &&
-            methodCall.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions) &&
-            methodCall.Method.Name is "Include" or "ThenInclude")
-        {
-            // Apply ordering to the source of the Include, then recreate the Include
-            var orderedSource = ApplyOrderingBeforeInclude(methodCall.Arguments[0], configuration);
-
-            // Recreate the Include call with the ordered source
-            var args = new Expression[methodCall.Arguments.Count];
-            args[0] = orderedSource;
-            for (var i = 1; i < methodCall.Arguments.Count; i++)
-            {
-                args[i] = methodCall.Arguments[i];
-            }
-
-            return Expression.Call(methodCall.Method, args);
-        }
-
-        // No Include at this level, apply ordering here
-        return ApplyOrdering(query, configuration);
-    }
-
-    static Expression ApplyOrdering(Expression source, Configuration configuration)
+    static Expression AppendOrdering(Expression source, Configuration configuration)
     {
         var result = source;
 

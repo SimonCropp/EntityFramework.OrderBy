@@ -3,12 +3,6 @@
 /// </summary>
 static class RedundantOrder
 {
-    public static bool IsEnabled(DbContext context) =>
-        context.GetService<IDbContextOptions>()
-            .FindExtension<OrderRequiredExtension>()
-            ?.ThrowOnRedundantOrderBy ??
-        false;
-
     public static void Validate(Expression expression)
     {
         if (FindOrdering(expression) is not { } ordering)
@@ -61,8 +55,7 @@ static class RedundantOrder
                     return null;
                 }
 
-                // The chain is walked outermost first, so each clause found is applied before the previous
-                clauses.Insert(0, new(propertyName, descending, isThenBy));
+                clauses.Add(new(propertyName, descending, isThenBy));
                 elementType = method.GetGenericArguments()[0];
                 expression = call.Arguments[0];
                 continue;
@@ -87,15 +80,39 @@ static class RedundantOrder
             return null;
         }
 
+        // The chain is walked outermost first, so the clauses come out in reverse of how they apply
+        clauses.Reverse();
         return (elementType, clauses);
     }
+
+    // Operators that combine two sequences. Their first argument is only one side of the
+    // query, and the default ordering is never applied to the combined result, so ordering
+    // found down that side is not made redundant by it.
+    static readonly HashSet<string> combining =
+    [
+        "Concat",
+        "Except",
+        "ExceptBy",
+        "GroupJoin",
+        "Intersect",
+        "IntersectBy",
+        "Join",
+        "LeftJoin",
+        "RightJoin",
+        "SequenceEqual",
+        "Union",
+        "UnionBy",
+        "Zip"
+    ];
 
     // Ordering can sit behind calls like Where, AsNoTracking, or TagWith,
     // all of which take the query being composed as their first argument.
     static Expression? FindSource(MethodCallExpression call)
     {
-        if (call.Method.IsStatic &&
+        var method = call.Method;
+        if (method.IsStatic &&
             call.Arguments.Count > 0 &&
+            !combining.Contains(method.Name) &&
             typeof(IEnumerable).IsAssignableFrom(call.Arguments[0].Type))
         {
             return call.Arguments[0];

@@ -1,0 +1,9 @@
+﻿{
+  target: 6,
+  sql: {
+    Text:
+select COUNT(*)
+from   Employees as e,
+    HasTransaction: false
+  }
+}

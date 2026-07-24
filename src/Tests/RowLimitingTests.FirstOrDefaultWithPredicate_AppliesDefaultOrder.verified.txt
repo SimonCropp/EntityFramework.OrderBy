@@ -1,0 +1,21 @@
+﻿{
+  target: {
+    Id: 2,
+    DepartmentId: 1,
+    Name: Bob,
+    HireDate: 2024-03-20,
+    Salary: 85000
+  },
+  sql: {
+    Text:
+select   top (1) e.Id,
+                 e.DepartmentId,
+                 e.HireDate,
+                 e.Name,
+                 e.Salary
+from     Employees as e
+where    e.Salary > 70000
+order by e.HireDate desc,
+    HasTransaction: false
+  }
+}

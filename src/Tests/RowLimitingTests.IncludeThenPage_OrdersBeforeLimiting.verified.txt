@@ -1,0 +1,52 @@
+﻿{
+  target: [
+    {
+      Id: 2,
+      Name: Sales,
+      DisplayOrder: 2,
+      Employees: [
+        {
+          Id: 4,
+          DepartmentId: 2,
+          Name: Diana,
+          HireDate: 2024-02-05,
+          Salary: 70000
+        },
+        {
+          Id: 5,
+          DepartmentId: 2,
+          Name: Eve,
+          HireDate: 2023-11-01,
+          Salary: 72000
+        }
+      ]
+    }
+  ],
+  sql: {
+    Text:
+select   d0.Id,
+         d0.DisplayOrder,
+         d0.Name,
+         e.Id,
+         e.DepartmentId,
+         e.HireDate,
+         e.Name,
+         e.Salary
+from     (select   d.Id,
+                   d.DisplayOrder,
+                   d.Name
+          from     Departments as d
+          order by d.DisplayOrder
+          offset @p rows fetch next @p rows only) as d0
+         left outer join
+         Employees as e
+         on d0.Id = e.DepartmentId
+order by d0.DisplayOrder,
+         d0.Id,
+         e.HireDate desc,
+    Parameters: {
+      @p: 1
+    },
+    HasTransaction: false
+  }
+}

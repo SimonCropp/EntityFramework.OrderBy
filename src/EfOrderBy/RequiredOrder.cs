@@ -1,8 +1,8 @@
 static class RequiredOrder
 {
-    static ConcurrentDictionary<Type, bool> validated = [];
+    static readonly ConcurrentDictionary<Type, bool> validated = [];
 
-    public static void Validate(DbContext context)
+    public static void Validate(DbContext context, OrderRequiredExtension? extension)
     {
         var contextType = context.GetType();
 
@@ -12,12 +12,8 @@ static class RequiredOrder
             return;
         }
 
-        // Check if this DbContext requires ordering for all entities (opt-in feature)
-        var requireOrdering = context.GetService<IDbContextOptions>()
-            .FindExtension<OrderRequiredExtension>()
-            ?.RequireOrderingForAllEntities ?? false;
-
-        if (requireOrdering)
+        // Requiring ordering for all entities is opt-in
+        if (extension is { RequireOrderingForAllEntities: true })
         {
             ValidateAllEntitiesHaveOrdering(context.Model);
         }

@@ -26,38 +26,40 @@
         quotedLambda = Expression.Quote(lambda);
     }
 
-    static MethodInfo FindMethod(MethodInfo[] methods, string name) =>
-        methods.First(_ => _.Name == name &&
-                           _.GetParameters().Length == 2);
+    // The overload taking a comparer cannot be expressed as configuration, so match on the
+    // two parameter one. The method table is not held in a field, since keeping it alive for
+    // the life of the process buys nothing once these eight have been resolved.
+    static MethodInfo FindMethod(Type type, string name) =>
+        type.GetMethods()
+            .First(_ => _.Name == name &&
+                        _.GetParameters().Length == 2);
 
-    static MethodInfo[] queryableMethods = typeof(Queryable).GetMethods();
-    static MethodInfo[] enumerableMethods = typeof(Enumerable).GetMethods();
+    static readonly MethodInfo queryableOrderBy = FindMethod(typeof(Queryable), nameof(Queryable.OrderBy));
+    static readonly MethodInfo queryableOrderByDescending = FindMethod(typeof(Queryable), nameof(Queryable.OrderByDescending));
+    static readonly MethodInfo queryableThenBy = FindMethod(typeof(Queryable), nameof(Queryable.ThenBy));
+    static readonly MethodInfo queryableThenByDescending = FindMethod(typeof(Queryable), nameof(Queryable.ThenByDescending));
 
-    static MethodInfo queryableOrderBy = FindMethod(queryableMethods, nameof(Queryable.OrderBy));
-    static MethodInfo queryableOrderByDescending = FindMethod(queryableMethods, nameof(Queryable.OrderByDescending));
-    static MethodInfo queryableThenBy = FindMethod(queryableMethods, nameof(Queryable.ThenBy));
-    static MethodInfo queryableThenByDescending = FindMethod(queryableMethods, nameof(Queryable.ThenByDescending));
+    static readonly MethodInfo enumerableOrderBy = FindMethod(typeof(Enumerable), nameof(Enumerable.OrderBy));
+    static readonly MethodInfo enumerableOrderByDescending = FindMethod(typeof(Enumerable), nameof(Enumerable.OrderByDescending));
+    static readonly MethodInfo enumerableThenBy = FindMethod(typeof(Enumerable), nameof(Enumerable.ThenBy));
+    static readonly MethodInfo enumerableThenByDescending = FindMethod(typeof(Enumerable), nameof(Enumerable.ThenByDescending));
 
-    static MethodInfo enumerableOrderBy = FindMethod(enumerableMethods, nameof(Enumerable.OrderBy));
-    static MethodInfo enumerableOrderByDescending = FindMethod(enumerableMethods, nameof(Enumerable.OrderByDescending));
-    static MethodInfo enumerableThenBy = FindMethod(enumerableMethods, nameof(Enumerable.ThenBy));
-    static MethodInfo enumerableThenByDescending = FindMethod(enumerableMethods, nameof(Enumerable.ThenByDescending));
-    LambdaExpression lambda;
+    readonly LambdaExpression lambda;
 
     // The fully generic Enumerable method (e.g., OrderBy<ParentEntity, string>)
     // ready to be invoked without further generic type arguments.
-    MethodInfo enumerableMethod;
+    readonly MethodInfo enumerableMethod;
 
     // The fully generic Queryable method (e.g., OrderBy<ParentEntity, string>)
     // ready to be invoked without further generic type arguments.
-    MethodInfo queryableMethod;
+    readonly MethodInfo queryableMethod;
 
     public Expression AppendEnumerableOrder(Expression result) =>
         // Enumerable methods expect Func<T, TKey>, so we pass the lambda directly (no Quote)
         Expression.Call(enumerableMethod, result, lambda);
 
     // Queryable methods expect Expression<Func<T, TKey>>, so we use Quote()
-    UnaryExpression quotedLambda;
+    readonly UnaryExpression quotedLambda;
 
     public Expression AppendQueryableOrder(Expression result) =>
         Expression.Call(queryableMethod, result, quotedLambda);

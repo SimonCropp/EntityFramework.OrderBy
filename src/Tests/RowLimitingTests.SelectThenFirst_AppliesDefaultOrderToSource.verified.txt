@@ -1,0 +1,10 @@
+﻿{
+  target: Frank,
+  sql: {
+    Text:
+select   top (1) e.Name
+from     Employees as e
+order by e.HireDate desc,
+    HasTransaction: false
+  }
+}
