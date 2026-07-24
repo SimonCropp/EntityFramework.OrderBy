@@ -19,7 +19,10 @@ sealed class Interceptor : IQueryExpressionInterceptor
 
         RequiredOrder.Validate(context, extension);
 
-        var detectRedundantOrdering = extension?.ThrowOnRedundantOrderBy ?? false;
+        // Read per query rather than when the options are built, so a module initializer that
+        // runs after some options were already built still takes effect
+        var detectRedundantOrdering = extension?.ThrowOnRedundantOrderBy ??
+                                      OrderBySettings.ThrowOnRedundantOrderBy;
 
         // Analyze the query for ordering and includes in a single pass
         var (hasOrdering, hasInclude) = QueryAnalyzer.Analyze(query);

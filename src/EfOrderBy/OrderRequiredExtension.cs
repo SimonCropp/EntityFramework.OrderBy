@@ -1,8 +1,12 @@
-sealed class OrderRequiredExtension(bool requireOrderingForAllEntities, bool createIndexes, bool throwOnRedundantOrderBy) :
+sealed class OrderRequiredExtension(bool requireOrderingForAllEntities, bool createIndexes, bool? throwOnRedundantOrderBy) :
     IDbContextOptionsExtension
 {
     public bool RequireOrderingForAllEntities { get; } = requireOrderingForAllEntities;
-    public bool ThrowOnRedundantOrderBy { get; } = throwOnRedundantOrderBy;
+
+    // Null means the caller did not set it, so OrderBySettings decides. An explicit false is
+    // not the same thing: it opts this context out of a process wide setting of true.
+    public bool? ThrowOnRedundantOrderBy { get; } = throwOnRedundantOrderBy;
+
     bool CreateIndexes { get; } = createIndexes;
 
     public DbContextOptionsExtensionInfo Info => new ExtensionInfo(this);
@@ -34,7 +38,13 @@ sealed class OrderRequiredExtension(bool requireOrderingForAllEntities, bool cre
         public override string LogFragment =>
             $"{(Extension.RequireOrderingForAllEntities ? "RequireOrderingForAllEntities " : "")}" +
             $"{(Extension.CreateIndexes ? "" : "CreateIndexes=false ")}" +
-            $"{(Extension.ThrowOnRedundantOrderBy ? "ThrowOnRedundantOrderBy " : "")}";
+            // An explicit false is worth logging, since it overrides OrderBySettings
+            Extension.ThrowOnRedundantOrderBy switch
+            {
+                true => "ThrowOnRedundantOrderBy ",
+                false => "ThrowOnRedundantOrderBy=false ",
+                null => ""
+            };
 
         public override int GetServiceProviderHashCode() =>
             HashCode.Combine(Extension.RequireOrderingForAllEntities, Extension.CreateIndexes, Extension.ThrowOnRedundantOrderBy);
@@ -49,7 +59,7 @@ sealed class OrderRequiredExtension(bool requireOrderingForAllEntities, bool cre
         {
             debugInfo["DefaultOrderBy:RequireOrderingForAllEntities"] = Extension.RequireOrderingForAllEntities.ToString();
             debugInfo["DefaultOrderBy:CreateIndexes"] = Extension.CreateIndexes.ToString();
-            debugInfo["DefaultOrderBy:ThrowOnRedundantOrderBy"] = Extension.ThrowOnRedundantOrderBy.ToString();
+            debugInfo["DefaultOrderBy:ThrowOnRedundantOrderBy"] = Extension.ThrowOnRedundantOrderBy?.ToString() ?? "null";
         }
     }
 }

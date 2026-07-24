@@ -25,12 +25,14 @@ public static class OrderByExtensions
     /// When true, throws an exception when a query explicitly orders by exactly the same
     /// properties and directions as the configured default ordering. Useful in tests to
     /// find query ordering that is redundant because the default ordering already applies it.
+    /// When null (default), <see cref="OrderBySettings.ThrowOnRedundantOrderBy" /> is used,
+    /// so passing false here opts this context out of that process wide setting.
     /// </param>
     public static DbContextOptionsBuilder UseDefaultOrderBy(
         this DbContextOptionsBuilder builder,
         bool requireOrderingForAllEntities = false,
         bool? createIndexes = true,
-        bool throwOnRedundantOrderBy = false)
+        bool? throwOnRedundantOrderBy = null)
     {
         builder.AddInterceptors(interceptor);
 
