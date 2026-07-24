@@ -1,13 +1,13 @@
 static class RequiredOrder
 {
-    static ConcurrentBag<Type> validated = [];
+    static ConcurrentDictionary<Type, bool> validated = [];
 
     public static void Validate(DbContext context)
     {
         var contextType = context.GetType();
 
         // Only check and validate once per DbContext type
-        if (validated.Contains(contextType))
+        if (validated.ContainsKey(contextType))
         {
             return;
         }
@@ -24,7 +24,7 @@ static class RequiredOrder
 
         // Marked only after validation succeeds, so a failed validation keeps throwing
         // instead of silently passing on every subsequent query
-        validated.Add(contextType);
+        validated.TryAdd(contextType, true);
     }
 
     static void ValidateAllEntitiesHaveOrdering(IModel model)
