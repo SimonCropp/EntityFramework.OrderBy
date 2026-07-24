@@ -82,6 +82,27 @@ public class SnippetExamples
         #endregion
     }
 
+    static async Task PagingAndSingleResults()
+    {
+        AppDbContext context = null!;
+
+        #region PagingAndSingleResults
+
+        // The ordering is applied before the page is taken, so the page is
+        // taken from an ordered sequence rather than sorted after the fact
+        var secondPage = await context.Employees
+            .Skip(20)
+            .Take(20)
+            .ToListAsync();
+
+        // Ordered by HireDate, then Salary descending, so this is the
+        // earliest hire rather than an arbitrary row
+        var first = await context.Employees
+            .FirstAsync();
+
+        #endregion
+    }
+
     static async Task IncludeSupport()
     {
         AppDbContext context = null!;

@@ -16,6 +16,7 @@ https://nuget.org/packages/EfOrderBy/
 
 - **Automatic ordering**: Queries without explicit `OrderBy` automatically use configured default ordering
 - **Include() support**: Nested collections in `.Include()` expressions are automatically ordered
+- **Deterministic paging**: Ordering is applied before `Skip`/`Take`/`First`, so pages and single results are stable
 - **Inheritance support**: Ordering configured on a base entity type is automatically inherited by derived types (TPH)
 - **Fluent configuration**: Configure default ordering using the familiar EF Core fluent API
 - **Multi-column ordering**: Chain multiple ordering clauses with `ThenBy` and `ThenByDescending`
@@ -82,6 +83,37 @@ var employeesByName = await context.Employees
 <!-- endSnippet -->
 
 
+## Paging and Single Results
+
+The default ordering is applied *before* any operator that chooses which rows come back, so
+`Skip`, `Take`, `First`, `FirstOrDefault`, `Last`, `LastOrDefault` and `ElementAt` all select
+from an ordered sequence:
+
+<!-- snippet: PagingAndSingleResults -->
+<a id='snippet-PagingAndSingleResults'></a>
+```cs
+// The ordering is applied before the page is taken, so the page is
+// taken from an ordered sequence rather than sorted after the fact
+var secondPage = await context.Employees
+    .Skip(20)
+    .Take(20)
+    .ToListAsync();
+
+// Ordered by HireDate, then Salary descending, so this is the
+// earliest hire rather than an arbitrary row
+var first = await context.Employees
+    .FirstAsync();
+```
+<sup><a href='/src/Tests/Snippets.cs#L89-L103' title='Snippet source file'>snippet source</a> | <a href='#snippet-PagingAndSingleResults' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+Without this, a page would be an arbitrary set of rows that happens to be sorted, and pages
+could both skip and repeat rows.
+
+Aggregates such as `Count` and `Any`, and `Single`, are left alone, since ordering them is
+pointless work.
+
+
 ## Include() Support
 
 Nested collections in `.Include()` expressions are automatically ordered:
@@ -95,7 +127,7 @@ var departments = await context.Departments
     .Include(_ => _.Employees)
     .ToListAsync();
 ```
-<sup><a href='/src/Tests/Snippets.cs#L89-L97' title='Snippet source file'>snippet source</a> | <a href='#snippet-IncludeSupport' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L110-L118' title='Snippet source file'>snippet source</a> | <a href='#snippet-IncludeSupport' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -149,7 +181,7 @@ public class InheritanceDbContext : DbContext
     public DbSet<DerivedEntityB> DerivedEntitiesB => Set<DerivedEntityB>();
 }
 ```
-<sup><a href='/src/Tests/Snippets.cs#L165-L210' title='Snippet source file'>snippet source</a> | <a href='#snippet-InheritanceOrdering' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L186-L231' title='Snippet source file'>snippet source</a> | <a href='#snippet-InheritanceOrdering' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Behavior:
@@ -172,7 +204,7 @@ builder.Entity<Product>()
     .ThenBy(_ => _.Name)
     .ThenByDescending(_ => _.Price);
 ```
-<sup><a href='/src/Tests/Snippets.cs#L102-L109' title='Snippet source file'>snippet source</a> | <a href='#snippet-MultiColumnOrdering' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L123-L130' title='Snippet source file'>snippet source</a> | <a href='#snippet-MultiColumnOrdering' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -422,7 +454,7 @@ public class AppDbContext : DbContext
     public DbSet<Employee> Employees => Set<Employee>();
 }
 ```
-<sup><a href='/src/Tests/Snippets.cs#L113-L156' title='Snippet source file'>snippet source</a> | <a href='#snippet-CompleteExample' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L134-L177' title='Snippet source file'>snippet source</a> | <a href='#snippet-CompleteExample' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
