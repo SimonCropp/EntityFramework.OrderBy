@@ -51,6 +51,18 @@ public class ThrowOnRedundantOrderByExample : DbContext
     #endregion
 }
 
+public class OptOutOfThrowOnRedundantOrderByExample : DbContext
+{
+    #region OptOutOfThrowOnRedundantOrderBy
+
+    // Passing false explicitly overrides OrderBySettings.ThrowOnRedundantOrderBy
+    protected override void OnConfiguring(DbContextOptionsBuilder builder) =>
+        builder.UseDefaultOrderBy(
+            throwOnRedundantOrderBy: false);
+
+    #endregion
+}
+
 public class DisableIndexCreationExample : DbContext
 {
     #region DisableIndexCreation

@@ -8,5 +8,6 @@
     <File Path="Directory.Packages.props" />
   </Folder>
   <Project Path="EfOrderBy/EfOrderBy.csproj" />
+  <Project Path="Settings.Tests/Settings.Tests.csproj" />
   <Project Path="Tests/Tests.csproj" />
 </Solution>
