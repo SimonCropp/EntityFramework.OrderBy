@@ -96,7 +96,7 @@ static class RedundantOrder
     {
         if (call.Method.IsStatic &&
             call.Arguments.Count > 0 &&
-            typeof(System.Collections.IEnumerable).IsAssignableFrom(call.Arguments[0].Type))
+            typeof(IEnumerable).IsAssignableFrom(call.Arguments[0].Type))
         {
             return call.Arguments[0];
         }
@@ -164,7 +164,7 @@ static class RedundantOrder
     }
 
     static string Describe(List<Configuration.ClauseMetadata> clauses) =>
-        string.Join(".", clauses.Select(_ => $"{MethodName(_)}({_.PropertyName})"));
+        string.Join('.', clauses.Select(_ => $"{MethodName(_)}({_.PropertyName})"));
 
     static string MethodName(Configuration.ClauseMetadata clause) =>
         (clause.IsThenBy, clause.Descending) switch

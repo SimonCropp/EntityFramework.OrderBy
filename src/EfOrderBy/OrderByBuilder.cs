@@ -67,7 +67,10 @@ public sealed class OrderByBuilder<TEntity>
 
     static PropertyInfo GetPropertyInfo<TProperty>(Expression<Func<TEntity, TProperty>> property)
     {
-        if (property.Body is MemberExpression { Member: PropertyInfo propertyInfo })
+        if (property.Body is MemberExpression
+            {
+                Member: PropertyInfo propertyInfo
+            })
         {
             return propertyInfo;
         }

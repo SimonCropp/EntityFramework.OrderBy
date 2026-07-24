@@ -35,7 +35,8 @@ public static class OrderByExtensions
         builder.AddInterceptors(interceptor);
 
         // Always add the extension to register the convention that marks the model
-        ((IDbContextOptionsBuilderInfrastructure)builder).AddOrUpdateExtension(
+        IDbContextOptionsBuilderInfrastructure infrastructure = builder;
+        infrastructure.AddOrUpdateExtension(
             new OrderRequiredExtension(requireOrderingForAllEntities, createIndexes ?? true, throwOnRedundantOrderBy));
 
         return builder;
