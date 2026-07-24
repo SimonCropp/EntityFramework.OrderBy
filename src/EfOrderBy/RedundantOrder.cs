@@ -3,12 +3,6 @@
 /// </summary>
 static class RedundantOrder
 {
-    public static bool IsEnabled(DbContext context) =>
-        context.GetService<IDbContextOptions>()
-            .FindExtension<OrderRequiredExtension>()
-            ?.ThrowOnRedundantOrderBy ??
-        false;
-
     public static void Validate(Expression expression)
     {
         if (FindOrdering(expression) is not { } ordering)

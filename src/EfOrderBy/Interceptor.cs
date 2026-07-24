@@ -14,16 +14,28 @@ sealed class Interceptor : IQueryExpressionInterceptor
         }
 
         var model = context.Model;
-        RequiredOrder.Validate(context);
 
-        var detectRedundantOrdering = RedundantOrder.IsEnabled(context);
+        // Both of the options below live on the same extension, so resolve it once
+        var extension = context.GetService<IDbContextOptions>()
+            .FindExtension<OrderRequiredExtension>();
 
-        // First, process Include nodes to add ordering to nested collections
-        var visitor = new IncludeOrderingApplicator(model, detectRedundantOrdering);
-        var queryWithOrderedIncludes = visitor.Visit(query);
+        RequiredOrder.Validate(context, extension);
+
+        var detectRedundantOrdering = extension?.ThrowOnRedundantOrderBy ?? false;
 
         // Analyze the query for ordering and includes in a single pass
-        var (hasOrdering, _) = QueryAnalyzer.Analyze(queryWithOrderedIncludes);
+        var (hasOrdering, hasInclude) = QueryAnalyzer.Analyze(query);
+
+        var queryWithOrderedIncludes = query;
+
+        // Ordering nested collections rewrites the whole tree, so only do it when there is an
+        // Include to rewrite. Neither flag above can change as a result, since the rewrite only
+        // touches the inside of Include lambdas.
+        if (hasInclude)
+        {
+            var visitor = new IncludeOrderingApplicator(model, detectRedundantOrdering);
+            queryWithOrderedIncludes = visitor.Visit(query);
+        }
 
         if (hasOrdering)
         {
