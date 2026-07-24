@@ -55,6 +55,23 @@ public class RequireOrderingTests
     }
 
     [Test]
+    public async Task RequireOrderingForAllEntities_ThrowsOnEveryQueryNotJustTheFirst()
+    {
+        await using var database = await sqlInstanceWithMissing.Build();
+        await using var context = database.NewDbContext();
+
+        Assert.ThrowsAsync<Exception>(() => context.EntitiesWithoutDefaultOrder.ToListAsync());
+
+        // Validation is cached per DbContext type. A failed validation must not be cached,
+        // otherwise the error disappears after the first query and later queries silently
+        // return unordered results
+        var exception = Assert.ThrowsAsync<Exception>(() => context.EntitiesWithoutDefaultOrder.ToListAsync());
+
+        Assert.That(exception!.Message, Does.Contain("EntityWithoutDefaultOrder"));
+        Assert.That(exception.Message, Does.Contain("do not have ordering configured"));
+    }
+
+    [Test]
     public async Task RequireOrderingForAllEntities_SucceedsWhenAllEntitiesHaveOrdering()
     {
         await using var database = await sqlInstanceWithAll.Build();
