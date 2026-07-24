@@ -1,7 +1,7 @@
 /// <summary>
 /// Visitor that applies default ordering to nested collections in Include().
 /// </summary>
-sealed class IncludeOrderingApplicator(IModel model) :
+sealed class IncludeOrderingApplicator(IModel model, bool detectRedundantOrdering) :
     ExpressionVisitor
 {
     static readonly ConcurrentDictionary<Type, Type?> collectionElementTypeCache = new();
@@ -48,6 +48,11 @@ sealed class IncludeOrderingApplicator(IModel model) :
         if (Interceptor.HasOrdering(lambda.Body))
         {
             // Already has explicit ordering, don't apply default
+            if (detectRedundantOrdering)
+            {
+                RedundantOrder.Validate(lambda.Body);
+            }
+
             return includeCall;
         }
 

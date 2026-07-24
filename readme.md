@@ -21,6 +21,7 @@ https://nuget.org/packages/EfOrderBy/
 - **Multi-column ordering**: Chain multiple ordering clauses with `ThenBy` and `ThenByDescending`
 - **Automatic indexes**: Database indexes are automatically created for ordering columns
 - **Validation mode**: Optionally require all entities to have default ordering configured
+- **Redundant ordering detection**: Optionally throw when a query explicitly applies the same ordering as the configured default
 
 
 ## Usage
@@ -77,7 +78,7 @@ var employeesByName = await context.Employees
     .OrderBy(_ => _.Name)
     .ToListAsync();
 ```
-<sup><a href='/src/Tests/Snippets.cs#L60-L71' title='Snippet source file'>snippet source</a> | <a href='#snippet-QueryWithoutOrderBy' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L71-L82' title='Snippet source file'>snippet source</a> | <a href='#snippet-QueryWithoutOrderBy' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -94,7 +95,7 @@ var departments = await context.Departments
     .Include(_ => _.Employees)
     .ToListAsync();
 ```
-<sup><a href='/src/Tests/Snippets.cs#L78-L86' title='Snippet source file'>snippet source</a> | <a href='#snippet-IncludeSupport' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L89-L97' title='Snippet source file'>snippet source</a> | <a href='#snippet-IncludeSupport' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -148,7 +149,7 @@ public class InheritanceDbContext : DbContext
     public DbSet<DerivedEntityB> DerivedEntitiesB => Set<DerivedEntityB>();
 }
 ```
-<sup><a href='/src/Tests/Snippets.cs#L154-L199' title='Snippet source file'>snippet source</a> | <a href='#snippet-InheritanceOrdering' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L165-L210' title='Snippet source file'>snippet source</a> | <a href='#snippet-InheritanceOrdering' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Behavior:
@@ -171,7 +172,7 @@ builder.Entity<Product>()
     .ThenBy(_ => _.Name)
     .ThenByDescending(_ => _.Price);
 ```
-<sup><a href='/src/Tests/Snippets.cs#L91-L98' title='Snippet source file'>snippet source</a> | <a href='#snippet-MultiColumnOrdering' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L102-L109' title='Snippet source file'>snippet source</a> | <a href='#snippet-MultiColumnOrdering' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -254,7 +255,7 @@ protected override void OnConfiguring(DbContextOptionsBuilder builder) =>
     builder.UseDefaultOrderBy(
         createIndexes: false);
 ```
-<sup><a href='/src/Tests/Snippets.cs#L45-L51' title='Snippet source file'>snippet source</a> | <a href='#snippet-DisableIndexCreation' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L56-L62' title='Snippet source file'>snippet source</a> | <a href='#snippet-DisableIndexCreation' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 When index creation is disabled, calling `WithIndexName()` throws an `Exception`.
@@ -283,6 +284,76 @@ Use modelBuilder.Entity<T>().OrderBy() to configure default ordering.
 ```
 
 Validation occurs once per `DbContext` type for performance.
+
+
+## Detect Redundant Ordering
+
+Explicit ordering in a query takes precedence over the configured default. When that explicit ordering is an exact match for the default, it is redundant. This is usually a leftover from before the default ordering was configured.
+
+Enable detection to throw when a query does this. This is primarily useful in tests:
+
+<!-- snippet: ThrowOnRedundantOrderBy -->
+<a id='snippet-ThrowOnRedundantOrderBy'></a>
+```cs
+protected override void OnConfiguring(DbContextOptionsBuilder builder) =>
+    builder.UseDefaultOrderBy(
+        throwOnRedundantOrderBy: true);
+```
+<sup><a href='/src/Tests/Snippets.cs#L45-L51' title='Snippet source file'>snippet source</a> | <a href='#snippet-ThrowOnRedundantOrderBy' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+Given this configuration:
+
+```cs
+builder.Entity<Employee>()
+    .OrderBy(_ => _.HireDate)
+    .ThenByDescending(_ => _.Salary);
+```
+
+The following query throws, since it applies exactly the default ordering:
+
+```cs
+var employees = await context.Employees
+    .OrderBy(_ => _.HireDate)
+    .ThenByDescending(_ => _.Salary)
+    .ToListAsync();
+```
+
+```
+The query explicitly orders 'Employee' by OrderBy(HireDate).ThenByDescending(Salary),
+which exactly matches the default ordering configured for that entity.
+Remove the ordering from the query since it is applied automatically,
+or change it to a different ordering.
+```
+
+The match must be exact: the same properties, in the same sequence, with the same directions. Anything else is treated as an intentional override and does not throw:
+
+```cs
+// Only part of the default ordering
+.OrderBy(_ => _.HireDate)
+
+// Different direction
+.OrderByDescending(_ => _.HireDate)
+.ThenByDescending(_ => _.Salary)
+
+// Additional ordering column
+.OrderBy(_ => _.HireDate)
+.ThenByDescending(_ => _.Salary)
+.ThenBy(_ => _.Name)
+```
+
+Ordering of nested collections in `Include()` is checked the same way:
+
+```cs
+// Throws, since it matches the default ordering for Employee
+var departments = await context.Departments
+    .Include(_ => _.Employees
+        .OrderBy(employee => employee.HireDate)
+        .ThenByDescending(employee => employee.Salary))
+    .ToListAsync();
+```
+
+Detection happens during query compilation, so it applies to every distinct query the application executes, whether or not the query hits the database.
 
 
 ## Configuration Errors
@@ -351,7 +422,7 @@ public class AppDbContext : DbContext
     public DbSet<Employee> Employees => Set<Employee>();
 }
 ```
-<sup><a href='/src/Tests/Snippets.cs#L102-L145' title='Snippet source file'>snippet source</a> | <a href='#snippet-CompleteExample' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L113-L156' title='Snippet source file'>snippet source</a> | <a href='#snippet-CompleteExample' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 

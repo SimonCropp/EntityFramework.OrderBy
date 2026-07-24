@@ -12,8 +12,6 @@ static class RequiredOrder
             return;
         }
 
-        validated.TryAdd(contextType, true);
-
         // Check if this DbContext requires ordering for all entities (opt-in feature)
         var requireOrdering = context.GetService<IDbContextOptions>()
             .FindExtension<OrderRequiredExtension>()
@@ -23,6 +21,10 @@ static class RequiredOrder
         {
             ValidateAllEntitiesHaveOrdering(context.Model);
         }
+
+        // Marked only after validation succeeds, so a failed validation keeps throwing
+        // instead of silently passing on every subsequent query
+        validated.TryAdd(contextType, true);
     }
 
     static void ValidateAllEntitiesHaveOrdering(IModel model)

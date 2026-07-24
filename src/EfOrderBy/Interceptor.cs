@@ -16,8 +16,10 @@ sealed class Interceptor : IQueryExpressionInterceptor
         var model = context.Model;
         RequiredOrder.Validate(context);
 
+        var detectRedundantOrdering = RedundantOrder.IsEnabled(context);
+
         // First, process Include nodes to add ordering to nested collections
-        var visitor = new IncludeOrderingApplicator(model);
+        var visitor = new IncludeOrderingApplicator(model, detectRedundantOrdering);
         var queryWithOrderedIncludes = visitor.Visit(query);
 
         // Analyze the query for ordering and includes in a single pass
@@ -26,6 +28,11 @@ sealed class Interceptor : IQueryExpressionInterceptor
 
         if (analyzer.HasOrdering)
         {
+            if (detectRedundantOrdering)
+            {
+                RedundantOrder.Validate(query);
+            }
+
             return queryWithOrderedIncludes;
         }
 
