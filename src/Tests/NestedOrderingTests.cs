@@ -15,15 +15,14 @@ public class NestedOrderingTests
             .ToListAsync();
 
         // Employees keep their default ordering of HireDate descending
-        Assert.That(results.Select(_ => _.Name), Is.EqualTo(new[]
-        {
+        Assert.That(results.Select(_ => _.Name), Is.EqualTo([
             "Frank",   // 2024-04-10
             "Bob",     // 2024-03-20
             "Diana",   // 2024-02-05
             "Alice",   // 2024-01-15
             "Eve",     // 2023-11-01
             "Charlie"  // 2023-06-10
-        }));
+        ]));
         await Verify(results);
     }
 
@@ -73,12 +72,11 @@ public class NestedOrderingTests
 
         // The ordering inside the filter applies to Tasks, so Employees still get their default
         var engineering = results[0].Employees;
-        Assert.That(engineering.Select(_ => _.Name), Is.EqualTo(new[]
-        {
+        Assert.That(engineering.Select(_ => _.Name), Is.EqualTo([
             "Bob",     // 2024-03-20
             "Alice",   // 2024-01-15
             "Charlie"  // 2023-06-10
-        }));
+        ]));
         await Verify(results);
     }
 }

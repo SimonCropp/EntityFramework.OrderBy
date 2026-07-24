@@ -17,7 +17,7 @@ public class RowLimitingTests
             .Take(3)
             .ToListAsync();
 
-        Assert.That(results.Select(_ => _.Name), Is.EqualTo(new[] { "Frank", "Bob", "Diana" }));
+        Assert.That(results.Select(_ => _.Name), Is.EqualTo(["Frank", "Bob", "Diana"]));
         await Verify(results);
     }
 
@@ -33,7 +33,7 @@ public class RowLimitingTests
             .Take(2)
             .ToListAsync();
 
-        Assert.That(results.Select(_ => _.Name), Is.EqualTo(new[] { "Bob", "Diana" }));
+        Assert.That(results.Select(_ => _.Name), Is.EqualTo(["Bob", "Diana"]));
         await Verify(results);
     }
 
@@ -54,7 +54,7 @@ public class RowLimitingTests
         Assert.That(results.Single().Name, Is.EqualTo("Sales"));
 
         // The included collection keeps its own default ordering
-        Assert.That(results[0].Employees.Select(_ => _.Name), Is.EqualTo(new[] { "Diana", "Eve" }));
+        Assert.That(results[0].Employees.Select(_ => _.Name), Is.EqualTo(["Diana", "Eve"]));
         await Verify(results);
     }
 
