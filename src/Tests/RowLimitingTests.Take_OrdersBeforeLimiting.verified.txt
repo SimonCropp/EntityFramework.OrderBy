@@ -1,0 +1,39 @@
+﻿{
+  target: [
+    {
+      Id: 6,
+      DepartmentId: 3,
+      Name: Frank,
+      HireDate: 2024-04-10,
+      Salary: 65000
+    },
+    {
+      Id: 2,
+      DepartmentId: 1,
+      Name: Bob,
+      HireDate: 2024-03-20,
+      Salary: 85000
+    },
+    {
+      Id: 4,
+      DepartmentId: 2,
+      Name: Diana,
+      HireDate: 2024-02-05,
+      Salary: 70000
+    }
+  ],
+  sql: {
+    Text:
+select   top (@p) e.Id,
+                  e.DepartmentId,
+                  e.HireDate,
+                  e.Name,
+                  e.Salary
+from     Employees as e
+order by e.HireDate desc,
+    Parameters: {
+      @p: 3
+    },
+    HasTransaction: false
+  }
+}

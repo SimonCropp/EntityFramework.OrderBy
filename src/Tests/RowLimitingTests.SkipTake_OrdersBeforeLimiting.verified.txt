@@ -1,0 +1,34 @@
+﻿{
+  target: [
+    {
+      Id: 2,
+      DepartmentId: 1,
+      Name: Bob,
+      HireDate: 2024-03-20,
+      Salary: 85000
+    },
+    {
+      Id: 4,
+      DepartmentId: 2,
+      Name: Diana,
+      HireDate: 2024-02-05,
+      Salary: 70000
+    }
+  ],
+  sql: {
+    Text:
+select   e.Id,
+         e.DepartmentId,
+         e.HireDate,
+         e.Name,
+         e.Salary
+from     Employees as e
+order by e.HireDate desc
+offset @p rows fetch next @p1 rows only,
+    Parameters: {
+      @p: 1,
+      @p1: 2
+    },
+    HasTransaction: false
+  }
+}
