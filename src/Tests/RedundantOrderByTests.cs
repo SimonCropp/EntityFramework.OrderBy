@@ -208,6 +208,39 @@ public class RedundantOrderByTests
     }
 
     [Test]
+    public void ExactMatchInsideConcat_DoesNotThrow()
+    {
+        using var context = new RedundantEnabledContext(enabled);
+
+        // The default ordering is not applied to a combined sequence, so ordering one
+        // side of it is not redundant
+        Assert.DoesNotThrow(
+            () => context.Entities
+                .Where(_ => _.Priority > 1)
+                .OrderBy(_ => _.Name)
+                .ThenByDescending(_ => _.Priority)
+                .Concat(context.Entities.Where(_ => _.Priority <= 1))
+                .ToQueryString());
+    }
+
+    [Test]
+    public void ExactMatchInsideJoin_DoesNotThrow()
+    {
+        using var context = new RedundantEnabledContext(enabled);
+
+        Assert.DoesNotThrow(
+            () => context.Entities
+                .OrderBy(_ => _.Name)
+                .ThenByDescending(_ => _.Priority)
+                .Join(
+                    context.Children,
+                    entity => entity.Id,
+                    child => child.RedundantEntityId,
+                    (entity, child) => child.Title)
+                .ToQueryString());
+    }
+
+    [Test]
     public void Disabled_DoesNotThrow()
     {
         using var context = new RedundantDisabledContext(disabled);

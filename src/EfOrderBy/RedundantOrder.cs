@@ -90,12 +90,34 @@ static class RedundantOrder
         return (elementType, clauses);
     }
 
+    // Operators that combine two sequences. Their first argument is only one side of the
+    // query, and the default ordering is never applied to the combined result, so ordering
+    // found down that side is not made redundant by it.
+    static readonly HashSet<string> combining =
+    [
+        "Concat",
+        "Except",
+        "ExceptBy",
+        "GroupJoin",
+        "Intersect",
+        "IntersectBy",
+        "Join",
+        "LeftJoin",
+        "RightJoin",
+        "SequenceEqual",
+        "Union",
+        "UnionBy",
+        "Zip"
+    ];
+
     // Ordering can sit behind calls like Where, AsNoTracking, or TagWith,
     // all of which take the query being composed as their first argument.
     static Expression? FindSource(MethodCallExpression call)
     {
-        if (call.Method.IsStatic &&
+        var method = call.Method;
+        if (method.IsStatic &&
             call.Arguments.Count > 0 &&
+            !combining.Contains(method.Name) &&
             typeof(IEnumerable).IsAssignableFrom(call.Arguments[0].Type))
         {
             return call.Arguments[0];
