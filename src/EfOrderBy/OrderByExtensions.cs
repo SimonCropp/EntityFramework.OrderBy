@@ -21,16 +21,22 @@ public static class OrderByExtensions
     /// When true (default), automatically creates database indexes for configured orderings.
     /// Set to false to disable automatic index creation.
     /// </param>
+    /// <param name="throwOnRedundantOrderBy">
+    /// When true, throws an exception when a query explicitly orders by exactly the same
+    /// properties and directions as the configured default ordering. Useful in tests to
+    /// find query ordering that is redundant because the default ordering already applies it.
+    /// </param>
     public static DbContextOptionsBuilder UseDefaultOrderBy(
         this DbContextOptionsBuilder builder,
         bool requireOrderingForAllEntities = false,
-        bool? createIndexes = true)
+        bool? createIndexes = true,
+        bool throwOnRedundantOrderBy = false)
     {
         builder.AddInterceptors(interceptor);
 
         // Always add the extension to register the convention that marks the model
         ((IDbContextOptionsBuilderInfrastructure)builder).AddOrUpdateExtension(
-            new OrderRequiredExtension(requireOrderingForAllEntities, createIndexes ?? true));
+            new OrderRequiredExtension(requireOrderingForAllEntities, createIndexes ?? true, throwOnRedundantOrderBy));
 
         return builder;
     }
