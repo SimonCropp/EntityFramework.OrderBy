@@ -380,8 +380,8 @@ Ordering of nested collections in `Include()` is checked the same way:
 // Throws, since it matches the default ordering for Employee
 var departments = await context.Departments
     .Include(_ => _.Employees
-        .OrderBy(employee => employee.HireDate)
-        .ThenByDescending(employee => employee.Salary))
+        .OrderBy(_ => _.HireDate)
+        .ThenByDescending(_ => _.Salary))
     .ToListAsync();
 ```
 
