@@ -1,9 +1,15 @@
 ﻿sealed record OrderByClause
 {
-    internal OrderByClause(Type elementType, ParameterExpression parameter, PropertyInfo propertyInfo, bool descending, bool isThenBy)
+    internal OrderByClause(Type elementType, ParameterExpression parameter, PropertyInfo[] path, bool descending, bool isThenBy)
     {
-        // Pre-build the property access and lambda expression
-        var property = Expression.Property(parameter, propertyInfo);
+        // Pre-build the property access and lambda expression. The path has more than one entry
+        // when the ordering reaches through an owned type, for example into a JSON column.
+        Expression property = parameter;
+        foreach (var segment in path)
+        {
+            property = Expression.Property(property, segment);
+        }
+
         lambda = Expression.Lambda(property, parameter);
 
         MethodInfo genericQueryableMethod;
@@ -21,8 +27,9 @@
         }
 
         // Pre-compute the fully generic methods (e.g., OrderBy<ParentEntity, string>)
-        queryableMethod = genericQueryableMethod.MakeGenericMethod(elementType, propertyInfo.PropertyType);
-        enumerableMethod = genericEnumerableMethod.MakeGenericMethod(elementType, propertyInfo.PropertyType);
+        var keyType = path[^1].PropertyType;
+        queryableMethod = genericQueryableMethod.MakeGenericMethod(elementType, keyType);
+        enumerableMethod = genericEnumerableMethod.MakeGenericMethod(elementType, keyType);
         quotedLambda = Expression.Quote(lambda);
     }
 

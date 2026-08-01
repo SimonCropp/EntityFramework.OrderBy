@@ -63,8 +63,7 @@ public static class OrderByExtensions
     {
         ThrowIfInterceptorNotRegistered(builder);
         ThrowIfOrderingAlreadyConfigured(builder);
-        var propertyInfo = GetPropertyInfo(property);
-        return new(builder, propertyInfo, descending: false);
+        return new(builder, PropertyPath.Resolve(property), descending: false);
     }
 
     /// <summary>
@@ -86,8 +85,7 @@ public static class OrderByExtensions
     {
         ThrowIfInterceptorNotRegistered(builder);
         ThrowIfOrderingAlreadyConfigured(builder);
-        var propertyInfo = GetPropertyInfo(property);
-        return new(builder, propertyInfo, descending: true);
+        return new(builder, PropertyPath.Resolve(property), descending: true);
     }
 
     // Entity-level annotation helpers
@@ -128,16 +126,6 @@ public static class OrderByExtensions
 
     internal static void MarkIndexCreationDisabled(this IConventionModelBuilder builder) =>
         builder.HasAnnotation(indexCreationDisabledAnnotation, true);
-
-    static PropertyInfo GetPropertyInfo<TEntity, TProperty>(Expression<Func<TEntity, TProperty>> property)
-    {
-        if (property.Body is MemberExpression { Member: PropertyInfo propertyInfo })
-        {
-            return propertyInfo;
-        }
-
-        throw new ArgumentException("Expression must be a property access expression", nameof(property));
-    }
 
     static void ThrowIfInterceptorNotRegistered<TEntity>(EntityTypeBuilder<TEntity> builder)
         where TEntity : class

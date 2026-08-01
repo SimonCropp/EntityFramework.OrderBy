@@ -44,8 +44,12 @@ class FinalizingConvention(int? maxIndexableStringLength) : IModelFinalizingConv
                 continue;
             }
 
+            // A nested path orders by a property of an owned type, for example a property of a
+            // JSON column. That is not a column of this entity's table, so there is nothing to
+            // name in an index. The ordering itself still applies, the same as the skip below.
             if (createIndexes &&
                 !config.IsInherited &&
+                !config.HasNestedPath &&
                 !HasLargeStringProperty(entity, config, maxIndexableStringLength))
             {
                 var index = config.CustomIndexName ?? $"IX_{entity.ClrType.Name}_DefaultOrder";

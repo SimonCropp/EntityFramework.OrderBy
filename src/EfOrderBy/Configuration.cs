@@ -32,8 +32,16 @@ sealed class Configuration(Type elementType)
 
     /// <summary>
     /// Property names in order, used for creating composite indexes.
+    /// Only meaningful when <see cref="HasNestedPath" /> is false.
     /// </summary>
     internal List<string> PropertyNames { get; } = [];
+
+    /// <summary>
+    /// Whether any clause orders by a property reached through an owned type, for example a
+    /// property of a JSON mapped column. Those are not columns of the entity's own table, so
+    /// they cannot be named in an index.
+    /// </summary>
+    internal bool HasNestedPath { get; private set; }
 
     internal string? CustomIndexName { get; set; }
 
@@ -48,11 +56,17 @@ sealed class Configuration(Type elementType)
     /// </summary>
     internal List<ClauseMetadata> ClauseMetadataList { get; } = [];
 
-    internal void AddClause(PropertyInfo propertyInfo, bool descending, bool isThenBy)
+    internal void AddClause(PropertyInfo[] path, bool descending, bool isThenBy)
     {
-        Clauses.Add(new(elementType, parameter, propertyInfo, descending, isThenBy));
-        PropertyNames.Add(propertyInfo.Name);
-        ClauseMetadataList.Add(new(propertyInfo.Name, descending, isThenBy));
+        Clauses.Add(new(elementType, parameter, path, descending, isThenBy));
+
+        if (path.Length > 1)
+        {
+            HasNestedPath = true;
+        }
+
+        PropertyNames.Add(path[0].Name);
+        ClauseMetadataList.Add(new(PropertyPath.Describe(path), descending, isThenBy));
     }
 
     /// <summary>
@@ -71,18 +85,38 @@ sealed class Configuration(Type elementType)
         var derived = new Configuration(derivedType) { IsInherited = true };
         foreach (var meta in ClauseMetadataList)
         {
-            var property = derivedType.GetProperty(meta.PropertyName, propertyFlags);
-            if (property != null)
-            {
-                derived.AddClause(property, meta.Descending, meta.IsThenBy);
-                continue;
-            }
-
-            throw new($"Property '{meta.PropertyName}' not found on derived type '{derivedType.Name}'. Cannot inherit ordering from base type '{elementType.Name}'.");
+            derived.AddClause(ResolvePath(derivedType, meta.PropertyPath), meta.Descending, meta.IsThenBy);
         }
 
         return derived;
     }
 
-    internal readonly record struct ClauseMetadata(string PropertyName, bool Descending, bool IsThenBy);
+    // Only the first segment is declared by the entity, so only it changes on a derived type.
+    // The rest hang off the owned types the path reaches through and resolve the same way.
+    PropertyInfo[] ResolvePath(Type derivedType, string path)
+    {
+        var names = path.Split('.');
+        var resolved = new PropertyInfo[names.Length];
+        var declaring = derivedType;
+
+        for (var index = 0; index < names.Length; index++)
+        {
+            var property = declaring.GetProperty(names[index], propertyFlags);
+            if (property == null)
+            {
+                throw new($"Property '{path}' not found on derived type '{derivedType.Name}'. Cannot inherit ordering from base type '{elementType.Name}'.");
+            }
+
+            resolved[index] = property;
+            declaring = property.PropertyType;
+        }
+
+        return resolved;
+    }
+
+    /// <summary>
+    /// A clause as configured, with <paramref name="PropertyPath" /> dotted when the ordering
+    /// reaches through an owned type, for example "Metadata.Rank" for a JSON mapped column.
+    /// </summary>
+    internal readonly record struct ClauseMetadata(string PropertyPath, bool Descending, bool IsThenBy);
 }
