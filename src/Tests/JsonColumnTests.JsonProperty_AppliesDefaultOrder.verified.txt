@@ -1,0 +1,49 @@
+﻿{
+  target: [
+    {
+      Id: 2,
+      Name: Gadget,
+      Metadata: {
+        Rank: 1,
+        Label: 
+      }
+    },
+    {
+      Id: 3,
+      Name: Doohickey,
+      Metadata: {
+        Rank: 2,
+        Label: 
+      }
+    },
+    {
+      Id: 1,
+      Name: Widget,
+      Metadata: {
+        Rank: 3,
+        Label: 
+      },
+      Tags: [
+        {
+          Value: gamma
+        },
+        {
+          Value: alpha
+        },
+        {
+          Value: beta
+        }
+      ]
+    }
+  ],
+  sql: {
+    Text:
+select   p.Id,
+         p.Name,
+         p.Metadata,
+         p.Tags
+from     Products as p
+order by cast (JSON_VALUE(p.Metadata, '$.Rank') as int),
+    HasTransaction: false
+  }
+}

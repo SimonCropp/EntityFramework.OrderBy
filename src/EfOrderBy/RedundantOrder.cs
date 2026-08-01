@@ -50,12 +50,12 @@ static class RedundantOrder
                     return null;
                 }
 
-                if (FindPropertyName(call.Arguments[1]) is not { } propertyName)
+                if (FindPropertyPath(call.Arguments[1]) is not { } propertyPath)
                 {
                     return null;
                 }
 
-                clauses.Add(new(propertyName, descending, isThenBy));
+                clauses.Add(new(propertyPath, descending, isThenBy));
                 elementType = method.GetGenericArguments()[0];
                 expression = call.Arguments[0];
                 continue;
@@ -154,7 +154,7 @@ static class RedundantOrder
     }
 
     // Queryable methods take a quoted lambda, Enumerable methods take the lambda directly
-    static string? FindPropertyName(Expression keySelector)
+    static string? FindPropertyPath(Expression keySelector)
     {
         if (keySelector is UnaryExpression
             {
@@ -165,23 +165,21 @@ static class RedundantOrder
             keySelector = quoted;
         }
 
-        if (keySelector is LambdaExpression
-            {
-                Body: MemberExpression
-                {
-                    Expression: ParameterExpression,
-                    Member: PropertyInfo property
-                }
-            })
+        if (keySelector is not LambdaExpression lambda)
         {
-            return property.Name;
+            return null;
         }
 
-        return null;
+        if (PropertyPath.TryResolve(lambda.Body) is not { } path)
+        {
+            return null;
+        }
+
+        return PropertyPath.Describe(path);
     }
 
     static string Describe(List<Configuration.ClauseMetadata> clauses) =>
-        string.Join('.', clauses.Select(_ => $"{MethodName(_)}({_.PropertyName})"));
+        string.Join('.', clauses.Select(_ => $"{MethodName(_)}({_.PropertyPath})"));
 
     static string MethodName(Configuration.ClauseMetadata clause) =>
         (clause.IsThenBy, clause.Descending) switch

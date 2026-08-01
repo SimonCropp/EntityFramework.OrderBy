@@ -1,0 +1,39 @@
+﻿{
+  target: [
+    {
+      Id: 2,
+      Name: A-heavy,
+      Category: A,
+      Details: {
+        Weight: 9
+      }
+    },
+    {
+      Id: 3,
+      Name: A-light,
+      Category: A,
+      Details: {
+        Weight: 2
+      }
+    },
+    {
+      Id: 1,
+      Name: B-light,
+      Category: B,
+      Details: {
+        Weight: 1
+      }
+    }
+  ],
+  sql: {
+    Text:
+select   i.Id,
+         i.Category,
+         i.Name,
+         i.Details
+from     Items as i
+order by i.Category,
+         cast (JSON_VALUE(i.Details, '$.Weight') as int) desc,
+    HasTransaction: false
+  }
+}

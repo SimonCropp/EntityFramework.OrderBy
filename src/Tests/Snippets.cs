@@ -29,6 +29,24 @@ public class ConfigureOrderingExample : DbContext
     #endregion
 }
 
+public class JsonColumnExample : DbContext
+{
+    #region JsonColumnOrdering
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        builder.Entity<Order>()
+            .OwnsOne(_ => _.Metadata, _ => _.ToJson());
+
+        // Orders by a property of the JSON document rather than a column
+        builder.Entity<Order>()
+            .OrderByDescending(_ => _.Metadata.Priority)
+            .ThenBy(_ => _.Reference);
+    }
+
+    #endregion
+}
+
 public class RequireOrderingExample : DbContext
 {
     #region RequireOrdering
@@ -193,6 +211,18 @@ class Product
     public string Category { get; set; } = "";
     public string Name { get; set; } = "";
     public decimal Price { get; set; }
+}
+
+public class Order
+{
+    public int Id { get; set; }
+    public string Reference { get; set; } = "";
+    public OrderMetadata Metadata { get; set; } = new();
+}
+
+public class OrderMetadata
+{
+    public int Priority { get; set; }
 }
 
 #region InheritanceOrdering

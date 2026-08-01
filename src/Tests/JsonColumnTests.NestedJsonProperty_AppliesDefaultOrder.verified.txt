@@ -1,0 +1,40 @@
+﻿{
+  target: [
+    {
+      Id: 2,
+      Title: Newest,
+      Info: {
+        Audit: {
+          Modified: 2025-01-01
+        }
+      }
+    },
+    {
+      Id: 3,
+      Title: Middle,
+      Info: {
+        Audit: {
+          Modified: 2024-01-01
+        }
+      }
+    },
+    {
+      Id: 1,
+      Title: Oldest,
+      Info: {
+        Audit: {
+          Modified: 2023-01-01
+        }
+      }
+    }
+  ],
+  sql: {
+    Text:
+select   a.Id,
+         a.Title,
+         a.Info
+from     Articles as a
+order by cast (JSON_VALUE(a.Info, '$.Audit.Modified') as datetime2) desc,
+    HasTransaction: false
+  }
+}

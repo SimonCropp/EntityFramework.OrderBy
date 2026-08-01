@@ -20,6 +20,7 @@ https://nuget.org/packages/EfOrderBy/
 - **Inheritance support**: Ordering configured on a base entity type is automatically inherited by derived types (TPH)
 - **Fluent configuration**: Configure default ordering using the familiar EF Core fluent API
 - **Multi-column ordering**: Chain multiple ordering clauses with `ThenBy` and `ThenByDescending`
+- **JSON column support**: Order by a property inside a `ToJson()` mapped column, at any nesting depth
 - **Automatic indexes**: Database indexes are automatically created for ordering columns
 - **Validation mode**: Optionally require all entities to have default ordering configured
 - **Redundant ordering detection**: Optionally throw when a query explicitly applies the same ordering as the configured default, per context or process wide
@@ -79,7 +80,7 @@ var employeesByName = await context.Employees
     .OrderBy(_ => _.Name)
     .ToListAsync();
 ```
-<sup><a href='/src/Tests/Snippets.cs#L83-L94' title='Snippet source file'>snippet source</a> | <a href='#snippet-QueryWithoutOrderBy' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L101-L112' title='Snippet source file'>snippet source</a> | <a href='#snippet-QueryWithoutOrderBy' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -104,7 +105,7 @@ var secondPage = await context.Employees
 var first = await context.Employees
     .FirstAsync();
 ```
-<sup><a href='/src/Tests/Snippets.cs#L101-L115' title='Snippet source file'>snippet source</a> | <a href='#snippet-PagingAndSingleResults' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L119-L133' title='Snippet source file'>snippet source</a> | <a href='#snippet-PagingAndSingleResults' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Without this, a page would be an arbitrary set of rows that happens to be sorted, and pages
@@ -127,7 +128,7 @@ var departments = await context.Departments
     .Include(_ => _.Employees)
     .ToListAsync();
 ```
-<sup><a href='/src/Tests/Snippets.cs#L122-L130' title='Snippet source file'>snippet source</a> | <a href='#snippet-IncludeSupport' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L140-L148' title='Snippet source file'>snippet source</a> | <a href='#snippet-IncludeSupport' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -181,7 +182,7 @@ public class InheritanceDbContext : DbContext
     public DbSet<DerivedEntityB> DerivedEntitiesB => Set<DerivedEntityB>();
 }
 ```
-<sup><a href='/src/Tests/Snippets.cs#L198-L243' title='Snippet source file'>snippet source</a> | <a href='#snippet-InheritanceOrdering' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L228-L273' title='Snippet source file'>snippet source</a> | <a href='#snippet-InheritanceOrdering' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Behavior:
@@ -204,8 +205,71 @@ builder.Entity<Product>()
     .ThenBy(_ => _.Name)
     .ThenByDescending(_ => _.Price);
 ```
-<sup><a href='/src/Tests/Snippets.cs#L135-L142' title='Snippet source file'>snippet source</a> | <a href='#snippet-MultiColumnOrdering' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L153-L160' title='Snippet source file'>snippet source</a> | <a href='#snippet-MultiColumnOrdering' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
+
+
+## JSON Columns
+
+Default ordering can target a property inside a column mapped with `ToJson()`. Pass the full property path, and EF Core translates it to a read of the JSON document:
+
+<!-- snippet: JsonColumnOrdering -->
+<a id='snippet-JsonColumnOrdering'></a>
+```cs
+protected override void OnModelCreating(ModelBuilder builder)
+{
+    builder.Entity<Order>()
+        .OwnsOne(_ => _.Metadata, _ => _.ToJson());
+
+    // Orders by a property of the JSON document rather than a column
+    builder.Entity<Order>()
+        .OrderByDescending(_ => _.Metadata.Priority)
+        .ThenBy(_ => _.Reference);
+}
+```
+<sup><a href='/src/Tests/Snippets.cs#L34-L47' title='Snippet source file'>snippet source</a> | <a href='#snippet-JsonColumnOrdering' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+The above produces:
+
+```sql
+ORDER BY CAST(JSON_VALUE([o].[Metadata], '$.Priority') AS int) DESC, [o].[Reference]
+```
+
+Paths of any depth are supported, so an owned type nested inside another owned type works the same way:
+
+```cs
+builder.Entity<Article>()
+    .OrderByDescending(_ => _.Info.Audit.Modified);
+
+// ORDER BY CAST(JSON_VALUE([a].[Info], '$.Audit.Modified') AS datetime2) DESC
+```
+
+JSON properties can be mixed freely with ordinary columns in the same ordering chain.
+
+Everything else behaves as it does for a column: the ordering is applied before `Skip`/`Take`/`First`, explicit ordering in a query still takes precedence, and [redundant ordering detection](#detect-redundant-ordering) recognises the path.
+
+### Indexes for JSON properties
+
+A JSON property is not a column of the entity's table, so there is nothing to name in an index. Automatic index creation is skipped for any ordering that reaches into JSON — the ordering itself still applies. As with [string columns](#string-column-indexes), a composite ordering is skipped whole when any one of its clauses reaches into JSON.
+
+To index a JSON property, map a computed column over it and index that using the provider's own tooling.
+
+### JSON collections
+
+A collection mapped with `ToJson()` is read out of its parent's JSON document rather than joined, and EF Core rejects an ordered `Include` over one on a tracking query. Applying default ordering to such a collection would break queries that work today, so JSON collections are left in document order:
+
+```cs
+builder.Entity<Product>()
+    .OwnsMany(_ => _.Tags, _ => _.ToJson());
+
+// Tags come back in the order they are stored in the JSON array
+var products = await context.Products
+    .Include(_ => _.Tags)
+    .ToListAsync();
+```
+
+To control the order of a JSON collection, store it ordered, or sort it after materialization.
 
 
 ## Automatic Index Creation
@@ -287,7 +351,7 @@ protected override void OnConfiguring(DbContextOptionsBuilder builder) =>
     builder.UseDefaultOrderBy(
         createIndexes: false);
 ```
-<sup><a href='/src/Tests/Snippets.cs#L68-L74' title='Snippet source file'>snippet source</a> | <a href='#snippet-DisableIndexCreation' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L86-L92' title='Snippet source file'>snippet source</a> | <a href='#snippet-DisableIndexCreation' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 When index creation is disabled, calling `WithIndexName()` throws an `Exception`.
@@ -304,7 +368,7 @@ protected override void OnConfiguring(DbContextOptionsBuilder builder) =>
     builder.UseDefaultOrderBy(
         requireOrderingForAllEntities: true);
 ```
-<sup><a href='/src/Tests/Snippets.cs#L34-L40' title='Snippet source file'>snippet source</a> | <a href='#snippet-RequireOrdering' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L52-L58' title='Snippet source file'>snippet source</a> | <a href='#snippet-RequireOrdering' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 This throws an exception during the first query if any entity type lacks default ordering configuration:
@@ -331,7 +395,7 @@ protected override void OnConfiguring(DbContextOptionsBuilder builder) =>
     builder.UseDefaultOrderBy(
         throwOnRedundantOrderBy: true);
 ```
-<sup><a href='/src/Tests/Snippets.cs#L45-L51' title='Snippet source file'>snippet source</a> | <a href='#snippet-ThrowOnRedundantOrderBy' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L63-L69' title='Snippet source file'>snippet source</a> | <a href='#snippet-ThrowOnRedundantOrderBy' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Given this configuration:
@@ -412,7 +476,7 @@ protected override void OnConfiguring(DbContextOptionsBuilder builder) =>
     builder.UseDefaultOrderBy(
         throwOnRedundantOrderBy: false);
 ```
-<sup><a href='/src/Tests/Snippets.cs#L56-L63' title='Snippet source file'>snippet source</a> | <a href='#snippet-OptOutOfThrowOnRedundantOrderBy' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L74-L81' title='Snippet source file'>snippet source</a> | <a href='#snippet-OptOutOfThrowOnRedundantOrderBy' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 The setting is read during query compilation rather than when the options are built, so it applies to contexts whose options were built before the initializer ran.
@@ -484,7 +548,7 @@ public class AppDbContext : DbContext
     public DbSet<Employee> Employees => Set<Employee>();
 }
 ```
-<sup><a href='/src/Tests/Snippets.cs#L146-L189' title='Snippet source file'>snippet source</a> | <a href='#snippet-CompleteExample' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L164-L207' title='Snippet source file'>snippet source</a> | <a href='#snippet-CompleteExample' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 

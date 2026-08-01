@@ -151,6 +151,14 @@ sealed class IncludeOrderingApplicator(IModel model, bool detectRedundantOrderin
             return null;
         }
 
+        // A JSON mapped collection is read out of its parent's JSON document rather than joined,
+        // and EF Core rejects an ordered Include over one on a tracking query. Ordering it would
+        // break queries that work today, so the document order is left as it is.
+        if (entity.IsMappedToJson())
+        {
+            return null;
+        }
+
         return Configuration.TryGet(element);
     }
 }
