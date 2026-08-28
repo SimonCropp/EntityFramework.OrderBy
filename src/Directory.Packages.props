@@ -10,7 +10,7 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.11" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.11" />
-    <PackageVersion Include="EfLocalDb" Version="25.0.0" />
+    <PackageVersion Include="EfLocalDb" Version="26.0.0" />
     <PackageVersion Include="NUnit" Version="4.6.1" />
     <PackageVersion Include="NUnit3TestAdapter" Version="6.3.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
@@ -18,7 +18,7 @@
     <PackageVersion Include="Verify.NUnit" Version="32.0.0" />
     <PackageVersion Include="Verify.EntityFramework" Version="15.4.0" />
     <PackageVersion Include="Verify.SqlServer" Version="12.2.0" />
-    <PackageVersion Include="Argon" Version="0.35.2" />
+    <PackageVersion Include="Argon" Version="0.36.0" />
     <PackageVersion Include="DiffEngine" Version="20.1.2" />
     <PackageVersion Include="EmptyFiles" Version="8.18.2" />
     <PackageVersion Include="SimpleInfoName" Version="3.2.0" />
