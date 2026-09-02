@@ -1,5 +1,6 @@
 <Project>
   <PropertyGroup>
+    <NoWarn>SC023</NoWarn>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -11,5 +12,6 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <PackageTags>EntityFramework. Ordering</PackageTags>
     <Description>Applies default ordering to Entity Framework Core queries based on fluent configuration. This ensures consistent query results and prevents non-deterministic ordering issues.</Description>
+    <Verify_SponsorshipLicenseIgnored>true</Verify_SponsorshipLicenseIgnored>
   </PropertyGroup>
 </Project>
