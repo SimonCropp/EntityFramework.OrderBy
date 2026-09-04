@@ -23,6 +23,6 @@
     <PackageVersion Include="EmptyFiles" Version="8.18.2" />
     <PackageVersion Include="SimpleInfoName" Version="3.2.0" />
     <PackageVersion Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.53.3" />
-    <PackageVersion Include="Verify" Version="33.0.0-beta.4" />
+    <PackageVersion Include="Verify" Version="33.0.0-beta.7" />
   </ItemGroup>
 </Project>
