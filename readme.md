@@ -1,6 +1,6 @@
 # <img src="/src/icon.png" height="30px"> EntityFramework.OrderBy
 
-[![Build status](https://img.shields.io/appveyor/build/SimonCropp/entityframework-orderby)](https://ci.appveyor.com/project/SimonCropp/entityframework-orderby)
+[![Build status](https://github.com/SimonCropp/EntityFramework.OrderBy/actions/workflows/build.yml/badge.svg)](https://github.com/SimonCropp/EntityFramework.OrderBy/actions/workflows/build.yml)
 [![NuGet Status](https://img.shields.io/nuget/v/EfOrderBy.svg)](https://www.nuget.org/packages/EfOrderBy/)
 
 **See [Milestones](../../milestones?state=closed) for release notes.**
