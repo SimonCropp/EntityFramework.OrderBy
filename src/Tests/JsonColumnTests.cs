@@ -1,6 +1,5 @@
 // Ordering that reaches into a JSON mapped column. EF Core translates the property path to a
 // read of the JSON document, so the default ordering applies the same way it does to a column.
-[TestFixture]
 public class JsonColumnTests
 {
     static readonly SqlInstance<JsonDbContext> sqlInstance = new(
@@ -121,7 +120,7 @@ public class JsonColumnTests
         Recording.Start();
         var results = await context.Products.ToListAsync();
 
-        Assert.That(results.Select(_ => _.Name), Is.EqualTo(["Gadget", "Doohickey", "Widget"]));
+        await Assert.That(results.Select(_ => _.Name)).IsEquivalentTo(["Gadget", "Doohickey", "Widget"], CollectionOrdering.Matching);
         await Verify(results);
     }
 
@@ -135,7 +134,7 @@ public class JsonColumnTests
         var results = await context.Articles.ToListAsync();
 
         // Info.Audit.Modified descending, two owned types deep
-        Assert.That(results.Select(_ => _.Title), Is.EqualTo(["Newest", "Middle", "Oldest"]));
+        await Assert.That(results.Select(_ => _.Title)).IsEquivalentTo(["Newest", "Middle", "Oldest"], CollectionOrdering.Matching);
         await Verify(results);
     }
 
@@ -149,7 +148,7 @@ public class JsonColumnTests
         var results = await context.Items.ToListAsync();
 
         // Category ascending, then Details.Weight descending
-        Assert.That(results.Select(_ => _.Name), Is.EqualTo(["A-heavy", "A-light", "B-light"]));
+        await Assert.That(results.Select(_ => _.Name)).IsEquivalentTo(["A-heavy", "A-light", "B-light"], CollectionOrdering.Matching);
         await Verify(results);
     }
 
@@ -163,7 +162,7 @@ public class JsonColumnTests
             .OrderBy(_ => _.Name)
             .ToListAsync();
 
-        Assert.That(results.Select(_ => _.Name), Is.EqualTo(["Doohickey", "Gadget", "Widget"]));
+        await Assert.That(results.Select(_ => _.Name)).IsEquivalentTo(["Doohickey", "Gadget", "Widget"], CollectionOrdering.Matching);
     }
 
     [Test]
@@ -177,7 +176,7 @@ public class JsonColumnTests
             .Take(1)
             .ToListAsync();
 
-        Assert.That(results.Single().Name, Is.EqualTo("Gadget"));
+        await Assert.That(results.Single().Name).IsEqualTo("Gadget");
     }
 
     // A JSON mapped collection is read out of its parent's JSON document. EF Core throws on an
@@ -193,29 +192,29 @@ public class JsonColumnTests
             .ToListAsync();
 
         var widget = results.Single(_ => _.Name == "Widget");
-        Assert.That(widget.Tags.Select(_ => _.Value), Is.EqualTo(["gamma", "alpha", "beta"]));
+        await Assert.That(widget.Tags.Select(_ => _.Value)).IsEquivalentTo(["gamma", "alpha", "beta"], CollectionOrdering.Matching);
     }
 
     [Test]
-    public void JsonPath_SkipsIndexCreation()
+    public async Task JsonPath_SkipsIndexCreation()
     {
         using var context = NewModelOnlyContext();
 
         // A JSON property is not a column of the entity's table, so there is nothing to index
         var product = context.Model.FindEntityType(typeof(JsonProduct))!;
-        Assert.That(product.GetIndexes(), Is.Empty);
+        await Assert.That(product.GetIndexes()).IsEmpty();
 
         var article = context.Model.FindEntityType(typeof(JsonArticle))!;
-        Assert.That(article.GetIndexes(), Is.Empty);
+        await Assert.That(article.GetIndexes()).IsEmpty();
 
         // A composite ordering is skipped whole when any one of its clauses reaches into JSON
         var item = context.Model.FindEntityType(typeof(JsonItem))!;
-        Assert.That(item.GetIndexes(), Is.Empty);
+        await Assert.That(item.GetIndexes()).IsEmpty();
     }
 
     // Validation runs on the first query rather than when the model is built
     [Test]
-    public void JsonOwnedTypes_DoNotRequireOrdering()
+    public async Task JsonOwnedTypes_DoNotRequireOrdering()
     {
         var builder = new DbContextOptionsBuilder<JsonRequiredContext>()
             .UseSqlServer("Server=.;Database=Test;");
@@ -225,33 +224,33 @@ public class JsonColumnTests
 
         // The owned types behind a JSON column are not separately queryable,
         // so ordering must not be demanded for them
-        Assert.DoesNotThrow(() => context.Entities.ToQueryString());
+        await Assert.That(() => context.Entities.ToQueryString()).ThrowsNothing();
     }
 
     [Test]
-    public void RedundantJsonOrderBy_Throws()
+    public async Task RedundantJsonOrderBy_Throws()
     {
         using var context = new JsonRedundantContext(redundantOptions);
 
-        var exception = Assert.Throws<Exception>(
+        var exception = Assert.ThrowsExactly<Exception>(
             () => context.Entities
                 .OrderBy(_ => _.Meta.Rank)
                 .ToQueryString())!;
 
-        Assert.That(exception.Message, Does.Contain("JsonRedundantEntity"));
-        Assert.That(exception.Message, Does.Contain("OrderBy(Meta.Rank)"));
+        await Assert.That(exception.Message).Contains("JsonRedundantEntity");
+        await Assert.That(exception.Message).Contains("OrderBy(Meta.Rank)");
     }
 
     [Test]
-    public void DifferentJsonOrderBy_DoesNotThrow()
+    public async Task DifferentJsonOrderBy_DoesNotThrow()
     {
         using var context = new JsonRedundantContext(redundantOptions);
 
         // A different property of the same JSON column is not the configured ordering
-        Assert.DoesNotThrow(
+        await Assert.That(
             () => context.Entities
                 .OrderBy(_ => _.Meta.Label)
-                .ToQueryString());
+                .ToQueryString()).ThrowsNothing();
     }
 
     static readonly DbContextOptions<JsonRedundantContext> redundantOptions = BuildRedundantOptions();

@@ -1,12 +1,12 @@
-[TestFixture]
+#pragma warning disable TUnit0023 // LocalDb instances are intentionally left open
 public class RequireOrderingTests
 {
     static SqlInstance<ContextMissingOrdering> sqlInstanceWithMissing = null!;
     static SqlInstance<ContextAllOrdering> sqlInstanceWithAll = null!;
     static SqlInstance<ContextMissingOrderingNoValidation> sqlInstanceNoValidation = null!;
 
-    [OneTimeSetUp]
-    public void Setup()
+    [Before(Class)]
+    public static void Setup()
     {
         sqlInstanceWithMissing = new(
             constructInstance: builder =>
@@ -48,10 +48,10 @@ public class RequireOrderingTests
         await context.SaveChangesAsync();
 
         // First query should throw because EntityWithoutDefaultOrder doesn't have ordering
-        var ex = await Assert.ThrowsAsync<Exception>(() => context.EntitiesWithoutDefaultOrder.ToListAsync());
+        var ex = await Assert.ThrowsExactlyAsync<Exception>(() => context.EntitiesWithoutDefaultOrder.ToListAsync());
 
-        Assert.That(ex!.Message, Does.Contain("EntityWithoutDefaultOrder"));
-        Assert.That(ex.Message, Does.Contain("do not have ordering configured"));
+        await Assert.That(ex!.Message).Contains("EntityWithoutDefaultOrder");
+        await Assert.That(ex.Message).Contains("do not have ordering configured");
     }
 
     [Test]
@@ -60,15 +60,15 @@ public class RequireOrderingTests
         await using var database = await sqlInstanceWithMissing.Build();
         await using var context = database.NewDbContext();
 
-        await Assert.ThrowsAsync<Exception>(() => context.EntitiesWithoutDefaultOrder.ToListAsync());
+        await Assert.ThrowsExactlyAsync<Exception>(() => context.EntitiesWithoutDefaultOrder.ToListAsync());
 
         // Validation is cached per DbContext type. A failed validation must not be cached,
         // otherwise the error disappears after the first query and later queries silently
         // return unordered results
-        var exception = await Assert.ThrowsAsync<Exception>(() => context.EntitiesWithoutDefaultOrder.ToListAsync());
+        var exception = await Assert.ThrowsExactlyAsync<Exception>(() => context.EntitiesWithoutDefaultOrder.ToListAsync());
 
-        Assert.That(exception!.Message, Does.Contain("EntityWithoutDefaultOrder"));
-        Assert.That(exception.Message, Does.Contain("do not have ordering configured"));
+        await Assert.That(exception!.Message).Contains("EntityWithoutDefaultOrder");
+        await Assert.That(exception.Message).Contains("do not have ordering configured");
     }
 
     [Test]
@@ -88,7 +88,7 @@ public class RequireOrderingTests
 
         // Should not throw
         var results = await context.TestEntities.ToListAsync();
-        Assert.That(results, Has.Count.EqualTo(1));
+        await Assert.That(results).Count().IsEqualTo(1);
     }
 
     [Test]
@@ -107,7 +107,7 @@ public class RequireOrderingTests
 
         // Should not throw
         var results = await context.EntitiesWithoutDefaultOrder.ToListAsync();
-        Assert.That(results, Has.Count.EqualTo(1));
+        await Assert.That(results).Count().IsEqualTo(1);
     }
 }
 

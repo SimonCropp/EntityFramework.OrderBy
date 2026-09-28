@@ -1,119 +1,118 @@
-[TestFixture]
 public class DuplicateOrderByTests
 {
     [Test]
-    public void OrderBy_CalledTwice_Throws()
+    public async Task OrderBy_CalledTwice_Throws()
     {
         var options = new DbContextOptionsBuilder<OrderByTwiceContext>()
             .UseSqlServer("Server=.;Database=Test;")
             .UseDefaultOrderBy()
             .Options;
 
-        var exception = Assert.Throws<Exception>(() =>
+        var exception = Assert.ThrowsExactly<Exception>(() =>
         {
             using var context = new OrderByTwiceContext(options);
             _ = context.Model;
         });
 
-        Assert.That(exception!.Message, Does.Contain("DuplicateTestEntity"));
-        Assert.That(exception.Message, Does.Contain("ThenBy"));
+        await Assert.That(exception!.Message).Contains("DuplicateTestEntity");
+        await Assert.That(exception.Message).Contains("ThenBy");
     }
 
     [Test]
-    public void OrderByDescending_CalledTwice_Throws()
+    public async Task OrderByDescending_CalledTwice_Throws()
     {
         var options = new DbContextOptionsBuilder<OrderByDescendingTwiceContext>()
             .UseSqlServer("Server=.;Database=Test;")
             .UseDefaultOrderBy()
             .Options;
 
-        var exception = Assert.Throws<Exception>(() =>
+        var exception = Assert.ThrowsExactly<Exception>(() =>
         {
             using var context = new OrderByDescendingTwiceContext(options);
             _ = context.Model;
         });
 
-        Assert.That(exception!.Message, Does.Contain("DuplicateTestEntity"));
-        Assert.That(exception.Message, Does.Contain("ThenBy"));
+        await Assert.That(exception!.Message).Contains("DuplicateTestEntity");
+        await Assert.That(exception.Message).Contains("ThenBy");
     }
 
     [Test]
-    public void OrderBy_ThenOrderByDescending_Throws()
+    public async Task OrderBy_ThenOrderByDescending_Throws()
     {
         var options = new DbContextOptionsBuilder<OrderByThenDescendingContext>()
             .UseSqlServer("Server=.;Database=Test;")
             .UseDefaultOrderBy()
             .Options;
 
-        var exception = Assert.Throws<Exception>(() =>
+        var exception = Assert.ThrowsExactly<Exception>(() =>
         {
             using var context = new OrderByThenDescendingContext(options);
             _ = context.Model;
         });
 
-        Assert.That(exception!.Message, Does.Contain("DuplicateTestEntity"));
+        await Assert.That(exception!.Message).Contains("DuplicateTestEntity");
     }
 
     [Test]
-    public void OrderByDescending_ThenOrderBy_Throws()
+    public async Task OrderByDescending_ThenOrderBy_Throws()
     {
         var options = new DbContextOptionsBuilder<OrderByDescendingThenAscContext>()
             .UseSqlServer("Server=.;Database=Test;")
             .UseDefaultOrderBy()
             .Options;
 
-        var exception = Assert.Throws<Exception>(() =>
+        var exception = Assert.ThrowsExactly<Exception>(() =>
         {
             using var context = new OrderByDescendingThenAscContext(options);
             _ = context.Model;
         });
 
-        Assert.That(exception!.Message, Does.Contain("DuplicateTestEntity"));
+        await Assert.That(exception!.Message).Contains("DuplicateTestEntity");
     }
 
     [Test]
-    public void OrderBy_WithThenBy_DoesNotThrow()
+    public async Task OrderBy_WithThenBy_DoesNotThrow()
     {
         var options = new DbContextOptionsBuilder<OrderByWithThenByContext>()
             .UseSqlServer("Server=.;Database=Test;")
             .UseDefaultOrderBy()
             .Options;
 
-        Assert.DoesNotThrow(() =>
+        await Assert.That(() =>
         {
             using var context = new OrderByWithThenByContext(options);
             _ = context.Model;
-        });
+        }).ThrowsNothing();
     }
 
     [Test]
-    public void OrderByDescending_WithThenByDescending_DoesNotThrow()
+    public async Task OrderByDescending_WithThenByDescending_DoesNotThrow()
     {
         var options = new DbContextOptionsBuilder<OrderByDescWithThenByDescContext>()
             .UseSqlServer("Server=.;Database=Test;")
             .UseDefaultOrderBy()
             .Options;
 
-        Assert.DoesNotThrow(() =>
+        await Assert.That(() =>
         {
             using var context = new OrderByDescWithThenByDescContext(options);
             _ = context.Model;
-        });
+        }).ThrowsNothing();
     }
 
     [Test]
-    public void MultipleEntities_EachCanHaveOwnOrderBy()
+    public async Task MultipleEntities_EachCanHaveOwnOrderBy()
     {
         var options = new DbContextOptionsBuilder<MultipleEntitiesOrderByContext>()
             .UseSqlServer("Server=.;Database=Test;")
             .UseDefaultOrderBy()
             .Options;
 
-        Assert.DoesNotThrow(() =>
+        await Assert.That(() =>
         {
             using var context = new MultipleEntitiesOrderByContext(options);
             _ = context.Model;
-        });
+        }).ThrowsNothing();
     }
 }
 

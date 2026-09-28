@@ -12,3 +12,4 @@ nul
 /src/Benchmarks/BenchmarkDotNet.Artifacts
 tmpclaude*
 *.lnk
+TestResults/

@@ -1,4 +1,3 @@
-[TestFixture]
 public class MigrationTests
 {
     static DbContextOptions<TestDbContext> CreateOptions()
@@ -26,41 +25,42 @@ public class MigrationTests
     }
 
     [Test]
-    public void ProducesCreateIndexOperations()
+    public async Task ProducesCreateIndexOperations()
     {
         var indexOps = GetDefaultOrderIndexOperations();
-        Assert.That(indexOps, Has.Count.EqualTo(8));
+        await Assert.That(indexOps).Count().IsEqualTo(8);
         var indexNames = indexOps.Select(_ => _.Name).ToList();
-        Assert.That(indexNames, Does.Contain("IX_TestEntity_DefaultOrder"));
-        Assert.That(indexNames, Does.Contain("IX_AnotherEntity_DefaultOrder"));
-        Assert.That(indexNames, Does.Contain("IX_EntityWithMultipleOrderings_DefaultOrder"));
-        Assert.That(indexNames, Does.Contain("IX_Department_DefaultOrder"));
-        Assert.That(indexNames, Does.Contain("IX_Employee_DefaultOrder"));
-        Assert.That(indexNames, Does.Contain("IX_EmployeeTask_DefaultOrder"));
-        Assert.That(indexNames, Does.Contain("IX_BaseEntity_DefaultOrder"));
-        Assert.That(indexNames, Does.Contain("IX_DerivedEntityB_DefaultOrder"));
+        await Assert.That(indexNames).Contains("IX_TestEntity_DefaultOrder");
+        await Assert.That(indexNames).Contains("IX_AnotherEntity_DefaultOrder");
+        await Assert.That(indexNames).Contains("IX_EntityWithMultipleOrderings_DefaultOrder");
+        await Assert.That(indexNames).Contains("IX_Department_DefaultOrder");
+        await Assert.That(indexNames).Contains("IX_Employee_DefaultOrder");
+        await Assert.That(indexNames).Contains("IX_EmployeeTask_DefaultOrder");
+        await Assert.That(indexNames).Contains("IX_BaseEntity_DefaultOrder");
+        await Assert.That(indexNames).Contains("IX_DerivedEntityB_DefaultOrder");
     }
 
     [Test]
-    public void MultiColumnIndex_HasCorrectColumns()
+    public async Task MultiColumnIndex_HasCorrectColumns()
     {
         var indexOps = GetDefaultOrderIndexOperations();
         var multiColumnOp = indexOps.Single(_ => _.Name == "IX_EntityWithMultipleOrderings_DefaultOrder");
-        Assert.That(multiColumnOp.Columns, Is.EqualTo(["Category", "Priority", "Name"]));
+        await Assert.That(multiColumnOp.Columns).IsEquivalentTo(["Category", "Priority", "Name"], CollectionOrdering.Matching);
     }
 
-    [TestCase("IX_TestEntity_DefaultOrder", "CreatedDate")]
-    [TestCase("IX_AnotherEntity_DefaultOrder", "Name")]
-    [TestCase("IX_Department_DefaultOrder", "DisplayOrder")]
-    [TestCase("IX_Employee_DefaultOrder", "HireDate")]
-    [TestCase("IX_EmployeeTask_DefaultOrder", "Priority")]
-    [TestCase("IX_BaseEntity_DefaultOrder", "SortOrder")]
-    [TestCase("IX_DerivedEntityB_DefaultOrder", "Name")]
-    public void SingleColumnIndex_HasCorrectColumn(string indexName, string expectedColumn)
+    [Test]
+    [Arguments("IX_TestEntity_DefaultOrder", "CreatedDate")]
+    [Arguments("IX_AnotherEntity_DefaultOrder", "Name")]
+    [Arguments("IX_Department_DefaultOrder", "DisplayOrder")]
+    [Arguments("IX_Employee_DefaultOrder", "HireDate")]
+    [Arguments("IX_EmployeeTask_DefaultOrder", "Priority")]
+    [Arguments("IX_BaseEntity_DefaultOrder", "SortOrder")]
+    [Arguments("IX_DerivedEntityB_DefaultOrder", "Name")]
+    public async Task SingleColumnIndex_HasCorrectColumn(string indexName, string expectedColumn)
     {
         var indexOps = GetDefaultOrderIndexOperations();
         var op = indexOps.Single(_ => _.Name == indexName);
-        Assert.That(op.Columns, Is.EqualTo([expectedColumn]));
+        await Assert.That(op.Columns).IsEquivalentTo([expectedColumn], CollectionOrdering.Matching);
     }
 
     [Test]
@@ -79,7 +79,7 @@ public class MigrationTests
     }
 
     [Test]
-    public void DesignTimeModelHasNoConfigurationAnnotations()
+    public async Task DesignTimeModelHasNoConfigurationAnnotations()
     {
         using var context = new TestDbContext(CreateOptions());
         _ = context.Model;
@@ -91,17 +91,16 @@ public class MigrationTests
         // "Cannot scaffold C# literals of type 'Configuration'"
         foreach (var entityType in designTimeModel.GetEntityTypes())
         {
-            Assert.That(entityType.GetOrderByConfiguration(), Is.Null,
-                $"Entity {entityType.ClrType.Name} still has DefaultOrderBy:Configuration annotation");
+            await Assert.That(entityType.GetOrderByConfiguration()).IsNull().Because($"Entity {entityType.ClrType.Name} still has DefaultOrderBy:Configuration annotation");
         }
 
         // Model-level annotations should also be removed
-        Assert.That(designTimeModel.IsInterceptorRegistered(), Is.False);
-        Assert.That(designTimeModel.IsIndexCreationDisabled(), Is.False);
+        await Assert.That(designTimeModel.IsInterceptorRegistered()).IsFalse();
+        await Assert.That(designTimeModel.IsIndexCreationDisabled()).IsFalse();
     }
 
     [Test]
-    public void ConflictingOrderingAcrossContexts_Throws()
+    public async Task ConflictingOrderingAcrossContexts_Throws()
     {
         // First context configures SharedEntity with OrderBy(Name)
         var options1 = new DbContextOptionsBuilder<ContextWithNameOrdering>()
@@ -120,14 +119,14 @@ public class MigrationTests
             .UseDefaultOrderBy()
             .Options;
 
-        var exception = Assert.Throws<Exception>(() =>
+        var exception = Assert.ThrowsExactly<Exception>(() =>
         {
             using var context = new ContextWithValueOrdering(options2);
             _ = context.Model;
         });
 
-        Assert.That(exception!.Message, Does.Contain("SharedEntity"));
-        Assert.That(exception.Message, Does.Contain("Conflicting"));
+        await Assert.That(exception!.Message).Contains("SharedEntity");
+        await Assert.That(exception.Message).Contains("Conflicting");
     }
 }
 

@@ -1,40 +1,39 @@
-[TestFixture]
 public class InterceptorRegistrationTests
 {
     [Test]
-    public void OrderBy_ThrowsWhenUseDefaultOrderByNotCalled()
+    public async Task OrderBy_ThrowsWhenUseDefaultOrderByNotCalled()
     {
         var options = new DbContextOptionsBuilder<ContextWithoutUseDefaultOrderBy>()
             .UseSqlServer("Server=.;Database=Test;Trusted_Connection=True")
             .Options;
 
-        var exception = Assert.Throws<Exception>(() =>
+        var exception = Assert.ThrowsExactly<Exception>(() =>
         {
             using var context = new ContextWithoutUseDefaultOrderBy(options);
             // Force model creation
             _ = context.Model;
         })!;
 
-        Assert.That(exception.Message, Does.Contain("UseDefaultOrderBy()"));
-        Assert.That(exception.Message, Does.Contain("must be called"));
+        await Assert.That(exception.Message).Contains("UseDefaultOrderBy()");
+        await Assert.That(exception.Message).Contains("must be called");
     }
 
     [Test]
-    public void OrderByDescending_ThrowsWhenUseDefaultOrderByNotCalled()
+    public async Task OrderByDescending_ThrowsWhenUseDefaultOrderByNotCalled()
     {
         var options = new DbContextOptionsBuilder<ContextWithoutUseDefaultOrderByDescending>()
             .UseSqlServer("Server=.;Database=Test;Trusted_Connection=True")
             .Options;
 
-        var exception = Assert.Throws<Exception>(() =>
+        var exception = Assert.ThrowsExactly<Exception>(() =>
         {
             using var context = new ContextWithoutUseDefaultOrderByDescending(options);
             // Force model creation
             _ = context.Model;
         })!;
 
-        Assert.That(exception.Message, Does.Contain("UseDefaultOrderBy()"));
-        Assert.That(exception.Message, Does.Contain("must be called"));
+        await Assert.That(exception.Message).Contains("UseDefaultOrderBy()");
+        await Assert.That(exception.Message).Contains("must be called");
     }
 
     [Test]

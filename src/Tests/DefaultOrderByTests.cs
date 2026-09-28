@@ -1,4 +1,3 @@
-[TestFixture]
 public class DefaultOrderByTests
 {
     [Test]
@@ -19,9 +18,9 @@ public class DefaultOrderByTests
         var results = await context.TestEntities.ToListAsync();
 
         // Should be ordered by CreatedDate descending (newest first)
-        Assert.That(results[0].Name, Is.EqualTo("Beta"));   // 2024-06-15
-        Assert.That(results[1].Name, Is.EqualTo("Gamma"));  // 2024-03-10
-        Assert.That(results[2].Name, Is.EqualTo("Alpha"));  // 2024-01-01
+        await Assert.That(results[0].Name).IsEqualTo("Beta");   // 2024-06-15
+        await Assert.That(results[1].Name).IsEqualTo("Gamma");  // 2024-03-10
+        await Assert.That(results[2].Name).IsEqualTo("Alpha");  // 2024-01-01
         await Verify(results);
     }
 
@@ -35,9 +34,9 @@ public class DefaultOrderByTests
         var results = await context.AnotherEntities.ToListAsync();
 
         // Should be ordered by Name ascending
-        Assert.That(results[0].Name, Is.EqualTo("Apple"));
-        Assert.That(results[1].Name, Is.EqualTo("Mango"));
-        Assert.That(results[2].Name, Is.EqualTo("Zebra"));
+        await Assert.That(results[0].Name).IsEqualTo("Apple");
+        await Assert.That(results[1].Name).IsEqualTo("Mango");
+        await Assert.That(results[2].Name).IsEqualTo("Zebra");
         await Verify(results);
     }
 
@@ -53,9 +52,9 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Should be ordered by Name (explicit), not CreatedDate (default)
-        Assert.That(results[0].Name, Is.EqualTo("Alpha"));
-        Assert.That(results[1].Name, Is.EqualTo("Beta"));
-        Assert.That(results[2].Name, Is.EqualTo("Gamma"));
+        await Assert.That(results[0].Name).IsEqualTo("Alpha");
+        await Assert.That(results[1].Name).IsEqualTo("Beta");
+        await Assert.That(results[2].Name).IsEqualTo("Gamma");
         await Verify(results);
     }
 
@@ -69,7 +68,7 @@ public class DefaultOrderByTests
         // Should work without throwing - no ordering guaranteed
         var results = await context.EntitiesWithoutDefaultOrder.ToListAsync();
 
-        Assert.That(results, Has.Count.EqualTo(3));
+        await Assert.That(results).Count().IsEqualTo(3);
         await Verify(results);
     }
 
@@ -85,8 +84,8 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Should still apply default ordering
-        Assert.That(results[0].Name, Is.EqualTo("Beta"));   // 2024-06-15
-        Assert.That(results[1].Name, Is.EqualTo("Gamma"));  // 2024-03-10
+        await Assert.That(results[0].Name).IsEqualTo("Beta");   // 2024-06-15
+        await Assert.That(results[1].Name).IsEqualTo("Gamma");  // 2024-03-10
         await Verify(results);
     }
 
@@ -105,23 +104,23 @@ public class DefaultOrderByTests
         // A, 1, Item3
         // B, 2, Item4
         // B, 1, Item1
-        Assert.That(results, Has.Count.EqualTo(5));
-        Assert.That(results[0].Category, Is.EqualTo("A"));
-        Assert.That(results[0].Priority, Is.EqualTo(2));
-        Assert.That(results[0].Name, Is.EqualTo("Item1"));
+        await Assert.That(results).Count().IsEqualTo(5);
+        await Assert.That(results[0].Category).IsEqualTo("A");
+        await Assert.That(results[0].Priority).IsEqualTo(2);
+        await Assert.That(results[0].Name).IsEqualTo("Item1");
 
-        Assert.That(results[1].Category, Is.EqualTo("A"));
-        Assert.That(results[1].Priority, Is.EqualTo(2));
-        Assert.That(results[1].Name, Is.EqualTo("Item2"));
+        await Assert.That(results[1].Category).IsEqualTo("A");
+        await Assert.That(results[1].Priority).IsEqualTo(2);
+        await Assert.That(results[1].Name).IsEqualTo("Item2");
 
-        Assert.That(results[2].Category, Is.EqualTo("A"));
-        Assert.That(results[2].Priority, Is.EqualTo(1));
+        await Assert.That(results[2].Category).IsEqualTo("A");
+        await Assert.That(results[2].Priority).IsEqualTo(1);
 
-        Assert.That(results[3].Category, Is.EqualTo("B"));
-        Assert.That(results[3].Priority, Is.EqualTo(2));
+        await Assert.That(results[3].Category).IsEqualTo("B");
+        await Assert.That(results[3].Priority).IsEqualTo(2);
 
-        Assert.That(results[4].Category, Is.EqualTo("B"));
-        Assert.That(results[4].Priority, Is.EqualTo(1));
+        await Assert.That(results[4].Category).IsEqualTo("B");
+        await Assert.That(results[4].Priority).IsEqualTo(1);
         await Verify(results);
     }
 
@@ -137,23 +136,23 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Departments should be ordered by DisplayOrder (1, 2, 3)
-        Assert.That(results, Has.Count.EqualTo(3));
-        Assert.That(results[0].Name, Is.EqualTo("Engineering"));
-        Assert.That(results[1].Name, Is.EqualTo("Sales"));
-        Assert.That(results[2].Name, Is.EqualTo("HR"));
+        await Assert.That(results).Count().IsEqualTo(3);
+        await Assert.That(results[0].Name).IsEqualTo("Engineering");
+        await Assert.That(results[1].Name).IsEqualTo("Sales");
+        await Assert.That(results[2].Name).IsEqualTo("HR");
 
         // Employees in Engineering should be ordered by HireDate descending (newest first)
         var engEmployees = results[0].Employees;
-        Assert.That(engEmployees, Has.Count.EqualTo(3));
-        Assert.That(engEmployees[0].Name, Is.EqualTo("Bob"));      // 2024-03-20
-        Assert.That(engEmployees[1].Name, Is.EqualTo("Alice"));    // 2024-01-15
-        Assert.That(engEmployees[2].Name, Is.EqualTo("Charlie"));  // 2023-06-10
+        await Assert.That(engEmployees).Count().IsEqualTo(3);
+        await Assert.That(engEmployees[0].Name).IsEqualTo("Bob");      // 2024-03-20
+        await Assert.That(engEmployees[1].Name).IsEqualTo("Alice");    // 2024-01-15
+        await Assert.That(engEmployees[2].Name).IsEqualTo("Charlie");  // 2023-06-10
 
         // Employees in Sales should be ordered by HireDate descending
         var salesEmployees = results[1].Employees;
-        Assert.That(salesEmployees, Has.Count.EqualTo(2));
-        Assert.That(salesEmployees[0].Name, Is.EqualTo("Diana"));  // 2024-02-05
-        Assert.That(salesEmployees[1].Name, Is.EqualTo("Eve"));    // 2023-11-01
+        await Assert.That(salesEmployees).Count().IsEqualTo(2);
+        await Assert.That(salesEmployees[0].Name).IsEqualTo("Diana");  // 2024-02-05
+        await Assert.That(salesEmployees[1].Name).IsEqualTo("Eve");    // 2023-11-01
         await Verify(results);
     }
 
@@ -171,23 +170,23 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Departments ordered by DisplayOrder
-        Assert.That(results[0].Name, Is.EqualTo("Engineering"));
+        await Assert.That(results[0].Name).IsEqualTo("Engineering");
 
         // Employees ordered by HireDate descending
         var engEmployees = results[0].Employees;
-        Assert.That(engEmployees[0].Name, Is.EqualTo("Bob"));
+        await Assert.That(engEmployees[0].Name).IsEqualTo("Bob");
 
         // Tasks ordered by Priority ascending (via ThenInclude)
         var aliceTasks = engEmployees[1].Tasks; // Alice
-        Assert.That(aliceTasks, Has.Count.EqualTo(3));
-        Assert.That(aliceTasks[0].Title, Is.EqualTo("Code review")); // Priority 1
-        Assert.That(aliceTasks[1].Title, Is.EqualTo("Testing"));     // Priority 2
-        Assert.That(aliceTasks[2].Title, Is.EqualTo("Design"));      // Priority 3
+        await Assert.That(aliceTasks).Count().IsEqualTo(3);
+        await Assert.That(aliceTasks[0].Title).IsEqualTo("Code review"); // Priority 1
+        await Assert.That(aliceTasks[1].Title).IsEqualTo("Testing");     // Priority 2
+        await Assert.That(aliceTasks[2].Title).IsEqualTo("Design");      // Priority 3
 
         var bobTasks = engEmployees[0].Tasks; // Bob
-        Assert.That(bobTasks, Has.Count.EqualTo(2));
-        Assert.That(bobTasks[0].Title, Is.EqualTo("Monitor")); // Priority 1
-        Assert.That(bobTasks[1].Title, Is.EqualTo("Deploy"));  // Priority 2
+        await Assert.That(bobTasks).Count().IsEqualTo(2);
+        await Assert.That(bobTasks[0].Title).IsEqualTo("Monitor"); // Priority 1
+        await Assert.That(bobTasks[1].Title).IsEqualTo("Deploy");  // Priority 2
 
         await Verify(results);
     }
@@ -204,15 +203,15 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Departments should be ordered by DisplayOrder (default)
-        Assert.That(results, Has.Count.EqualTo(3));
-        Assert.That(results[0].Name, Is.EqualTo("Engineering"));
+        await Assert.That(results).Count().IsEqualTo(3);
+        await Assert.That(results[0].Name).IsEqualTo("Engineering");
 
         // Employees should be ordered by Name (explicit), not HireDate (default)
         var engEmployees = results[0].Employees;
-        Assert.That(engEmployees, Has.Count.EqualTo(3));
-        Assert.That(engEmployees[0].Name, Is.EqualTo("Alice"));
-        Assert.That(engEmployees[1].Name, Is.EqualTo("Bob"));
-        Assert.That(engEmployees[2].Name, Is.EqualTo("Charlie"));
+        await Assert.That(engEmployees).Count().IsEqualTo(3);
+        await Assert.That(engEmployees[0].Name).IsEqualTo("Alice");
+        await Assert.That(engEmployees[1].Name).IsEqualTo("Bob");
+        await Assert.That(engEmployees[2].Name).IsEqualTo("Charlie");
         await Verify(results);
     }
 
@@ -226,10 +225,10 @@ public class DefaultOrderByTests
         // Query departments without Include - should apply default ordering
         var results = await context.Departments.ToListAsync();
 
-        Assert.That(results, Has.Count.EqualTo(3));
-        Assert.That(results[0].Name, Is.EqualTo("Engineering"));  // DisplayOrder 1
-        Assert.That(results[1].Name, Is.EqualTo("Sales"));        // DisplayOrder 2
-        Assert.That(results[2].Name, Is.EqualTo("HR"));           // DisplayOrder 3
+        await Assert.That(results).Count().IsEqualTo(3);
+        await Assert.That(results[0].Name).IsEqualTo("Engineering");  // DisplayOrder 1
+        await Assert.That(results[1].Name).IsEqualTo("Sales");        // DisplayOrder 2
+        await Assert.That(results[2].Name).IsEqualTo("HR");           // DisplayOrder 3
         await Verify(results);
     }
 
@@ -246,15 +245,15 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Departments should be ordered by Name descending (explicit), not DisplayOrder (default)
-        Assert.That(results, Has.Count.EqualTo(3));
-        Assert.That(results[0].Name, Is.EqualTo("Sales"));
-        Assert.That(results[1].Name, Is.EqualTo("HR"));
-        Assert.That(results[2].Name, Is.EqualTo("Engineering"));
+        await Assert.That(results).Count().IsEqualTo(3);
+        await Assert.That(results[0].Name).IsEqualTo("Sales");
+        await Assert.That(results[1].Name).IsEqualTo("HR");
+        await Assert.That(results[2].Name).IsEqualTo("Engineering");
 
         // Nested employees should still get default ordering (HireDate descending)
         var salesEmployees = results[0].Employees;
-        Assert.That(salesEmployees[0].Name, Is.EqualTo("Diana"));  // 2024-02-05
-        Assert.That(salesEmployees[1].Name, Is.EqualTo("Eve"));    // 2023-11-01
+        await Assert.That(salesEmployees[0].Name).IsEqualTo("Diana");  // 2024-02-05
+        await Assert.That(salesEmployees[1].Name).IsEqualTo("Eve");    // 2023-11-01
         await Verify(results);
     }
 
@@ -270,9 +269,9 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Should be ordered by Name descending (explicit), not CreatedDate descending (default)
-        Assert.That(results[0].Name, Is.EqualTo("Gamma"));
-        Assert.That(results[1].Name, Is.EqualTo("Beta"));
-        Assert.That(results[2].Name, Is.EqualTo("Alpha"));
+        await Assert.That(results[0].Name).IsEqualTo("Gamma");
+        await Assert.That(results[1].Name).IsEqualTo("Beta");
+        await Assert.That(results[2].Name).IsEqualTo("Alpha");
         await Verify(results);
     }
 
@@ -294,8 +293,8 @@ public class DefaultOrderByTests
 
         // Should use explicit ordering, not default
         var betaDelta = results.Where(_ => _.CreatedDate == DateTime.Parse("2024-06-15")).ToList();
-        Assert.That(betaDelta[0].Name, Is.EqualTo("Beta"));
-        Assert.That(betaDelta[1].Name, Is.EqualTo("Delta"));
+        await Assert.That(betaDelta[0].Name).IsEqualTo("Beta");
+        await Assert.That(betaDelta[1].Name).IsEqualTo("Delta");
         await Verify(results);
     }
 
@@ -312,8 +311,8 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Should be ordered by Name (explicit), not CreatedDate (default)
-        Assert.That(results[0].Name, Is.EqualTo("Beta"));
-        Assert.That(results[1].Name, Is.EqualTo("Gamma"));
+        await Assert.That(results[0].Name).IsEqualTo("Beta");
+        await Assert.That(results[1].Name).IsEqualTo("Gamma");
         await Verify(results);
     }
 
@@ -330,9 +329,9 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Should be ordered by Name (explicit), not CreatedDate (default)
-        Assert.That(results[0].Name, Is.EqualTo("Alpha"));
-        Assert.That(results[1].Name, Is.EqualTo("Beta"));
-        Assert.That(results[2].Name, Is.EqualTo("Gamma"));
+        await Assert.That(results[0].Name).IsEqualTo("Alpha");
+        await Assert.That(results[1].Name).IsEqualTo("Beta");
+        await Assert.That(results[2].Name).IsEqualTo("Gamma");
         await Verify(results);
     }
 
@@ -349,14 +348,14 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Should use explicit ordering (Category ASC, Name DESC), not default
-        Assert.That(results[0].Category, Is.EqualTo("A"));
-        Assert.That(results[0].Name, Is.EqualTo("Item3"));
+        await Assert.That(results[0].Category).IsEqualTo("A");
+        await Assert.That(results[0].Name).IsEqualTo("Item3");
 
-        Assert.That(results[1].Category, Is.EqualTo("A"));
-        Assert.That(results[1].Name, Is.EqualTo("Item2"));
+        await Assert.That(results[1].Category).IsEqualTo("A");
+        await Assert.That(results[1].Name).IsEqualTo("Item2");
 
-        Assert.That(results[2].Category, Is.EqualTo("A"));
-        Assert.That(results[2].Name, Is.EqualTo("Item1"));
+        await Assert.That(results[2].Category).IsEqualTo("A");
+        await Assert.That(results[2].Name).IsEqualTo("Item1");
         await Verify(results);
     }
 
@@ -373,9 +372,9 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Should use explicit ordering (Name ASC, DisplayOrder DESC), not default (DisplayOrder ASC)
-        Assert.That(results[0].Name, Is.EqualTo("Engineering"));
-        Assert.That(results[1].Name, Is.EqualTo("HR"));
-        Assert.That(results[2].Name, Is.EqualTo("Sales"));
+        await Assert.That(results[0].Name).IsEqualTo("Engineering");
+        await Assert.That(results[1].Name).IsEqualTo("HR");
+        await Assert.That(results[2].Name).IsEqualTo("Sales");
         await Verify(results);
     }
 
@@ -392,9 +391,9 @@ public class DefaultOrderByTests
 
         // Employees should be ordered by Name descending (explicit), not HireDate descending (default)
         var engEmployees = results[0].Employees;
-        Assert.That(engEmployees[0].Name, Is.EqualTo("Charlie"));
-        Assert.That(engEmployees[1].Name, Is.EqualTo("Bob"));
-        Assert.That(engEmployees[2].Name, Is.EqualTo("Alice"));
+        await Assert.That(engEmployees[0].Name).IsEqualTo("Charlie");
+        await Assert.That(engEmployees[1].Name).IsEqualTo("Bob");
+        await Assert.That(engEmployees[2].Name).IsEqualTo("Alice");
         await Verify(results);
     }
 
@@ -411,11 +410,11 @@ public class DefaultOrderByTests
 
         // Employees should use explicit ordering (Salary ASC, Name ASC), not default (HireDate DESC)
         var engEmployees = results[0].Employees;
-        Assert.That(engEmployees, Has.Count.EqualTo(3));
+        await Assert.That(engEmployees).Count().IsEqualTo(3);
 
         // Verify they're ordered by Salary first, then Name
-        Assert.That(engEmployees[0].Salary, Is.LessThanOrEqualTo(engEmployees[1].Salary));
-        Assert.That(engEmployees[1].Salary, Is.LessThanOrEqualTo(engEmployees[2].Salary));
+        await Assert.That(engEmployees[0].Salary).IsLessThanOrEqualTo(engEmployees[1].Salary);
+        await Assert.That(engEmployees[1].Salary).IsLessThanOrEqualTo(engEmployees[2].Salary);
         await Verify(results);
     }
 
@@ -436,7 +435,7 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Should apply default ordering (CreatedDate DESC) and translate properly
-        Assert.That(results, Is.Empty);
+        await Assert.That(results).IsEmpty();
         await Verify(results);
     }
 
@@ -453,8 +452,8 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Should apply default ordering (CreatedDate DESC) and translate properly
-        Assert.That(results, Has.Count.EqualTo(3));
-        Assert.That(results[0].Name, Is.EqualTo("Beta"));
+        await Assert.That(results).Count().IsEqualTo(3);
+        await Assert.That(results[0].Name).IsEqualTo("Beta");
         await Verify(results);
     }
 
@@ -471,9 +470,9 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Should apply default ordering (CreatedDate DESC)
-        Assert.That(results, Has.Count.EqualTo(2));
-        Assert.That(results[0].Name, Is.EqualTo("Beta"));   // 2024-06-15
-        Assert.That(results[1].Name, Is.EqualTo("Alpha"));  // 2024-01-01
+        await Assert.That(results).Count().IsEqualTo(2);
+        await Assert.That(results[0].Name).IsEqualTo("Beta");   // 2024-06-15
+        await Assert.That(results[1].Name).IsEqualTo("Alpha");  // 2024-01-01
         await Verify(results);
     }
 
@@ -487,8 +486,8 @@ public class DefaultOrderByTests
         var query = context.TestEntities.Where(_ => _.Name != "");
         var sql = query.ToQueryString();
 
-        Assert.That(sql, Does.Contain("ORDER BY"));
-        Assert.That(sql, Does.Contain("CreatedDate"));
+        await Assert.That(sql).Contains("ORDER BY");
+        await Assert.That(sql).Contains("CreatedDate");
     }
 
     [Test]
@@ -502,8 +501,8 @@ public class DefaultOrderByTests
             .Where(_ => string.Equals(_.Name, "Alpha"));
         var sql = query.ToQueryString();
 
-        Assert.That(sql, Does.Contain("ORDER BY"));
-        Assert.That(sql, Does.Contain("WHERE"));
+        await Assert.That(sql).Contains("ORDER BY");
+        await Assert.That(sql).Contains("WHERE");
     }
 
     [Test]
@@ -519,9 +518,9 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Should apply default ordering (CreatedDate DESC)
-        Assert.That(results, Has.Count.EqualTo(2));
-        Assert.That(results[0].Name, Is.EqualTo("Beta"));
-        Assert.That(results[1].Name, Is.EqualTo("Gamma"));
+        await Assert.That(results).Count().IsEqualTo(2);
+        await Assert.That(results[0].Name).IsEqualTo("Beta");
+        await Assert.That(results[1].Name).IsEqualTo("Gamma");
         await Verify(results);
     }
 
@@ -538,11 +537,11 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Should apply ordering to both parent and nested collections
-        Assert.That(results, Has.Count.EqualTo(3));
-        Assert.That(results[0].Name, Is.EqualTo("Engineering"));
+        await Assert.That(results).Count().IsEqualTo(3);
+        await Assert.That(results[0].Name).IsEqualTo("Engineering");
 
         var engEmployees = results[0].Employees;
-        Assert.That(engEmployees[0].Name, Is.EqualTo("Bob"));
+        await Assert.That(engEmployees[0].Name).IsEqualTo("Bob");
         await Verify(results);
     }
 
@@ -557,7 +556,7 @@ public class DefaultOrderByTests
             .Where(_ => string.Equals(_.Name, null));
 
         var sql = query.ToQueryString();
-        Assert.That(sql, Does.Contain("WHERE"));
+        await Assert.That(sql).Contains("WHERE");
     }
 
     [Test]
@@ -574,10 +573,10 @@ public class DefaultOrderByTests
 
         // Should be ordered by CreatedDate descending (default ordering applied before Select)
         // Even though CreatedDate is not in the projection
-        Assert.That(results, Has.Count.EqualTo(3));
-        Assert.That(results[0].Name, Is.EqualTo("Beta"));
-        Assert.That(results[1].Name, Is.EqualTo("Gamma"));
-        Assert.That(results[2].Name, Is.EqualTo("Alpha"));
+        await Assert.That(results).Count().IsEqualTo(3);
+        await Assert.That(results[0].Name).IsEqualTo("Beta");
+        await Assert.That(results[1].Name).IsEqualTo("Gamma");
+        await Assert.That(results[2].Name).IsEqualTo("Alpha");
         await Verify(results);
     }
 
@@ -596,10 +595,10 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Should be ordered by CreatedDate descending (applied before the Select)
-        Assert.That(results, Has.Count.EqualTo(3));
-        Assert.That(results[0].Name, Is.EqualTo("Beta"));   // 2024-06-15
-        Assert.That(results[1].Name, Is.EqualTo("Gamma"));  // 2024-03-10
-        Assert.That(results[2].Name, Is.EqualTo("Alpha"));  // 2024-01-01
+        await Assert.That(results).Count().IsEqualTo(3);
+        await Assert.That(results[0].Name).IsEqualTo("Beta");   // 2024-06-15
+        await Assert.That(results[1].Name).IsEqualTo("Gamma");  // 2024-03-10
+        await Assert.That(results[2].Name).IsEqualTo("Alpha");  // 2024-01-01
         await Verify(results);
     }
 
@@ -619,7 +618,7 @@ public class DefaultOrderByTests
 
         // The query should translate successfully without throwing
         // "OrderBy(p => new TestEntity{ Id = p.Id }.Property)" error
-        Assert.That(results, Is.Empty);
+        await Assert.That(results).IsEmpty();
         await Verify(results);
     }
 
@@ -637,8 +636,8 @@ public class DefaultOrderByTests
         var sql = query.ToQueryString();
 
         // SQL should contain ORDER BY and it should work correctly
-        Assert.That(sql, Does.Contain("ORDER BY"));
-        Assert.That(sql, Does.Contain("CreatedDate"));
+        await Assert.That(sql).Contains("ORDER BY");
+        await Assert.That(sql).Contains("CreatedDate");
     }
 
     [Test]
@@ -654,9 +653,9 @@ public class DefaultOrderByTests
             .Select(_ => new TestEntity { Id = _.Id })
             .ToListAsync();
 
-        Assert.That(results, Has.Count.EqualTo(3));
+        await Assert.That(results).Count().IsEqualTo(3);
         // All should have Ids, ordered by CreatedDate descending
-        Assert.That(results.All(_ => _.Id > 0), Is.True);
+        await Assert.That(results.All(_ => _.Id > 0)).IsTrue();
         await Verify(results);
     }
 
@@ -674,9 +673,9 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Should be ordered by CreatedDate descending
-        Assert.That(results, Has.Count.EqualTo(2));
-        Assert.That(results[0].Name, Is.EqualTo("Beta"));   // 2024-06-15
-        Assert.That(results[1].Name, Is.EqualTo("Alpha"));  // 2024-01-01
+        await Assert.That(results).Count().IsEqualTo(2);
+        await Assert.That(results[0].Name).IsEqualTo("Beta");   // 2024-06-15
+        await Assert.That(results[1].Name).IsEqualTo("Alpha");  // 2024-01-01
         await Verify(results);
     }
 
@@ -694,8 +693,8 @@ public class DefaultOrderByTests
         // Should not throw translation error
         var sql = query.ToQueryString();
 
-        Assert.That(sql, Does.Contain("WHERE"));
-        Assert.That(sql, Does.Contain("ORDER BY"));
+        await Assert.That(sql).Contains("WHERE");
+        await Assert.That(sql).Contains("ORDER BY");
     }
 
     [Test]
@@ -713,15 +712,15 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Verify results are correct
-        Assert.That(results, Has.Count.EqualTo(3));
-        Assert.That(results[0].Name, Is.EqualTo("Engineering"));  // DisplayOrder 1
-        Assert.That(results[1].Name, Is.EqualTo("Sales"));        // DisplayOrder 2
-        Assert.That(results[2].Name, Is.EqualTo("HR"));           // DisplayOrder 3
+        await Assert.That(results).Count().IsEqualTo(3);
+        await Assert.That(results[0].Name).IsEqualTo("Engineering");  // DisplayOrder 1
+        await Assert.That(results[1].Name).IsEqualTo("Sales");        // DisplayOrder 2
+        await Assert.That(results[2].Name).IsEqualTo("HR");           // DisplayOrder 3
 
         // Verify nested collections have employees
-        Assert.That(results[0].Employees, Has.Count.EqualTo(3));
-        Assert.That(results[1].Employees, Has.Count.EqualTo(2));
-        Assert.That(results[2].Employees, Has.Count.EqualTo(1));
+        await Assert.That(results[0].Employees).Count().IsEqualTo(3);
+        await Assert.That(results[1].Employees).Count().IsEqualTo(2);
+        await Assert.That(results[2].Employees).Count().IsEqualTo(1);
 
         // The generated SQL will show:
         // ORDER BY d.Id, e.HireDate desc
@@ -750,19 +749,19 @@ public class DefaultOrderByTests
         var results = await query.ToListAsync();
 
         // SQL should have: ORDER BY DisplayOrder DESC, d.Id, e.HireDate DESC
-        Assert.That(sql, Does.Contain("DisplayOrder"));
-        Assert.That(sql, Does.Contain("DESC"));
+        await Assert.That(sql).Contains("DisplayOrder");
+        await Assert.That(sql).Contains("DESC");
 
         // Results ordered by DisplayOrder descending
-        Assert.That(results, Has.Count.EqualTo(3));
-        Assert.That(results[0].DisplayOrder, Is.EqualTo(3));  // HR
-        Assert.That(results[1].DisplayOrder, Is.EqualTo(2));  // Sales
-        Assert.That(results[2].DisplayOrder, Is.EqualTo(1));  // Engineering
+        await Assert.That(results).Count().IsEqualTo(3);
+        await Assert.That(results[0].DisplayOrder).IsEqualTo(3);  // HR
+        await Assert.That(results[1].DisplayOrder).IsEqualTo(2);  // Sales
+        await Assert.That(results[2].DisplayOrder).IsEqualTo(1);  // Engineering
 
         // Employee collections properly populated
-        Assert.That(results[0].Employees, Has.Count.EqualTo(1)); // HR
-        Assert.That(results[1].Employees, Has.Count.EqualTo(2)); // Sales
-        Assert.That(results[2].Employees, Has.Count.EqualTo(3)); // Engineering
+        await Assert.That(results[0].Employees).Count().IsEqualTo(1); // HR
+        await Assert.That(results[1].Employees).Count().IsEqualTo(2); // Sales
+        await Assert.That(results[2].Employees).Count().IsEqualTo(3); // Engineering
 
         await Verify(new
         {
@@ -790,15 +789,15 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Parent ordering is applied: DisplayOrder ascending
-        Assert.That(results[0].DisplayOrder, Is.EqualTo(1));  // Engineering
-        Assert.That(results[1].DisplayOrder, Is.EqualTo(2));  // Sales
-        Assert.That(results[2].DisplayOrder, Is.EqualTo(3));  // HR
+        await Assert.That(results[0].DisplayOrder).IsEqualTo(1);  // Engineering
+        await Assert.That(results[1].DisplayOrder).IsEqualTo(2);  // Sales
+        await Assert.That(results[2].DisplayOrder).IsEqualTo(3);  // HR
 
         // Child ordering is applied within each parent: HireDate descending
         var engEmployees = results[0].Employees;
-        Assert.That(engEmployees[0].HireDate, Is.EqualTo(new DateTime(2024, 3, 20)));  // Bob (newest)
-        Assert.That(engEmployees[1].HireDate, Is.EqualTo(new DateTime(2024, 1, 15)));  // Alice
-        Assert.That(engEmployees[2].HireDate, Is.EqualTo(new DateTime(2023, 6, 10)));  // Charlie (oldest)
+        await Assert.That(engEmployees[0].HireDate).IsEqualTo(new DateTime(2024, 3, 20));  // Bob (newest)
+        await Assert.That(engEmployees[1].HireDate).IsEqualTo(new DateTime(2024, 1, 15));  // Alice
+        await Assert.That(engEmployees[2].HireDate).IsEqualTo(new DateTime(2023, 6, 10));  // Charlie (oldest)
 
         // The SQL will have: ORDER BY d.DisplayOrder, d.Id, e.HireDate DESC
         // Where:
@@ -830,14 +829,14 @@ public class DefaultOrderByTests
         // EF Core adds d.Id after it for materialization, but doesn't replace it
 
         // Results are ordered by DisplayOrder (configured default), NOT just by Id
-        Assert.That(results[0].DisplayOrder, Is.EqualTo(1));  // Engineering
-        Assert.That(results[1].DisplayOrder, Is.EqualTo(2));  // Sales
-        Assert.That(results[2].DisplayOrder, Is.EqualTo(3));  // HR
+        await Assert.That(results[0].DisplayOrder).IsEqualTo(1);  // Engineering
+        await Assert.That(results[1].DisplayOrder).IsEqualTo(2);  // Sales
+        await Assert.That(results[2].DisplayOrder).IsEqualTo(3);  // HR
 
         // Verify the SQL contains both DisplayOrder and Id in ORDER BY
-        Assert.That(sql, Does.Contain("ORDER BY"));
-        Assert.That(sql, Does.Contain("DisplayOrder"));
-        Assert.That(sql, Does.Contain("Id"));
+        await Assert.That(sql).Contains("ORDER BY");
+        await Assert.That(sql).Contains("DisplayOrder");
+        await Assert.That(sql).Contains("Id");
 
         await Verify(new
         {
@@ -916,10 +915,10 @@ public class DefaultOrderByTests
         var results = await context.DerivedEntitiesA.ToListAsync();
 
         // Should be ordered by SortOrder ascending (inherited from BaseEntity)
-        Assert.That(results, Has.Count.EqualTo(3));
-        Assert.That(results[0].Name, Is.EqualTo("DerivedA2")); // SortOrder 1
-        Assert.That(results[1].Name, Is.EqualTo("DerivedA1")); // SortOrder 2
-        Assert.That(results[2].Name, Is.EqualTo("DerivedA3")); // SortOrder 3
+        await Assert.That(results).Count().IsEqualTo(3);
+        await Assert.That(results[0].Name).IsEqualTo("DerivedA2"); // SortOrder 1
+        await Assert.That(results[1].Name).IsEqualTo("DerivedA1"); // SortOrder 2
+        await Assert.That(results[2].Name).IsEqualTo("DerivedA3"); // SortOrder 3
         await Verify(results);
     }
 
@@ -933,7 +932,7 @@ public class DefaultOrderByTests
         var results = await context.BaseEntities.ToListAsync();
 
         // Should be ordered by SortOrder ascending (all types in TPH table)
-        Assert.That(results[0].SortOrder, Is.LessThanOrEqualTo(results[1].SortOrder));
+        await Assert.That(results[0].SortOrder).IsLessThanOrEqualTo(results[1].SortOrder);
         await Verify(results);
     }
 
@@ -949,9 +948,9 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Should be ordered by Name descending (explicit query), not SortOrder (inherited default)
-        Assert.That(results[0].Name, Is.EqualTo("DerivedA3"));
-        Assert.That(results[1].Name, Is.EqualTo("DerivedA2"));
-        Assert.That(results[2].Name, Is.EqualTo("DerivedA1"));
+        await Assert.That(results[0].Name).IsEqualTo("DerivedA3");
+        await Assert.That(results[1].Name).IsEqualTo("DerivedA2");
+        await Assert.That(results[2].Name).IsEqualTo("DerivedA1");
         await Verify(results);
     }
 
@@ -966,9 +965,9 @@ public class DefaultOrderByTests
 
         // DerivedEntityB has its own .OrderByDescending(_ => _.Name) configured in OnModelCreating
         // This should take precedence over BaseEntity's .OrderBy(_ => _.SortOrder)
-        Assert.That(results, Has.Count.EqualTo(2));
-        Assert.That(results[0].Name, Is.EqualTo("DerivedB2")); // Name DESC: B2 > B1
-        Assert.That(results[1].Name, Is.EqualTo("DerivedB1"));
+        await Assert.That(results).Count().IsEqualTo(2);
+        await Assert.That(results[0].Name).IsEqualTo("DerivedB2"); // Name DESC: B2 > B1
+        await Assert.That(results[1].Name).IsEqualTo("DerivedB1");
         await Verify(results);
     }
 
@@ -992,13 +991,13 @@ public class DefaultOrderByTests
             .ToListAsync();
 
         // Should be ordered by DisplayOrder (default), not affected by the OrderBy in the projection
-        Assert.That(results, Has.Count.EqualTo(3));
-        Assert.That(results[0].Name, Is.EqualTo("Engineering"));  // DisplayOrder 1
-        Assert.That(results[1].Name, Is.EqualTo("Sales"));        // DisplayOrder 2
-        Assert.That(results[2].Name, Is.EqualTo("HR"));           // DisplayOrder 3
+        await Assert.That(results).Count().IsEqualTo(3);
+        await Assert.That(results[0].Name).IsEqualTo("Engineering");  // DisplayOrder 1
+        await Assert.That(results[1].Name).IsEqualTo("Sales");        // DisplayOrder 2
+        await Assert.That(results[2].Name).IsEqualTo("HR");           // DisplayOrder 3
 
         // Verify the nested employees are ordered by Id (from the Select projection)
-        Assert.That(results[0].Employees[0].Id, Is.LessThan(results[0].Employees[1].Id));
+        await Assert.That(results[0].Employees[0].Id).IsLessThan(results[0].Employees[1].Id);
 
         await Verify(results);
     }

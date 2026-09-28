@@ -1,4 +1,3 @@
-[TestFixture]
 public class InheritedOrderingTests
 {
     static DbContextOptions options =
@@ -8,14 +7,14 @@ public class InheritedOrderingTests
             .Options;
 
     [Test]
-    public void NonPublicProperty_InheritsOrderingToDerivedType()
+    public async Task NonPublicProperty_InheritsOrderingToDerivedType()
     {
         using var context = new InternalOrderContext(options);
 
         var sql = context.Derived.ToQueryString();
 
-        Assert.That(sql, Does.Contain("ORDER BY"));
-        Assert.That(sql, Does.Contain("SortOrder"));
+        await Assert.That(sql).Contains("ORDER BY");
+        await Assert.That(sql).Contains("SortOrder");
     }
 }
 

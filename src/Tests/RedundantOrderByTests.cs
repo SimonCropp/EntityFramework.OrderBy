@@ -1,4 +1,3 @@
-[TestFixture]
 public class RedundantOrderByTests
 {
     static DbContextOptions enabled =
@@ -14,18 +13,18 @@ public class RedundantOrderByTests
             .Options;
 
     [Test]
-    public void ExactMatch_Throws()
+    public async Task ExactMatch_Throws()
     {
         using var context = new RedundantEnabledContext(enabled);
 
-        var exception = Assert.Throws<Exception>(
+        var exception = Assert.ThrowsExactly<Exception>(
             () => context.Entities
                 .OrderBy(_ => _.Name)
                 .ThenByDescending(_ => _.Priority)
                 .ToQueryString());
 
-        Assert.That(exception!.Message, Does.Contain("RedundantEntity"));
-        Assert.That(exception.Message, Does.Contain("OrderBy(Name).ThenByDescending(Priority)"));
+        await Assert.That(exception!.Message).Contains("RedundantEntity");
+        await Assert.That(exception.Message).Contains("OrderBy(Name).ThenByDescending(Priority)");
     }
 
     [Test]
@@ -33,7 +32,7 @@ public class RedundantOrderByTests
     {
         using var context = new RedundantEnabledContext(enabled);
 
-        Assert.Throws<Exception>(
+        Assert.ThrowsExactly<Exception>(
             () => context.Entities
                 .Where(_ => _.Priority > 1)
                 .OrderBy(_ => _.Name)
@@ -46,7 +45,7 @@ public class RedundantOrderByTests
     {
         using var context = new RedundantEnabledContext(enabled);
 
-        Assert.Throws<Exception>(
+        Assert.ThrowsExactly<Exception>(
             () => context.Entities
                 .OrderBy(_ => _.Name)
                 .ThenByDescending(_ => _.Priority)
@@ -59,7 +58,7 @@ public class RedundantOrderByTests
     {
         using var context = new RedundantEnabledContext(enabled);
 
-        Assert.Throws<Exception>(
+        Assert.ThrowsExactly<Exception>(
             () => context.Entities
                 .OrderBy(_ => _.Name)
                 .ThenByDescending(_ => _.Priority)
@@ -72,104 +71,104 @@ public class RedundantOrderByTests
     {
         using var context = new RedundantEnabledContext(enabled);
 
-        Assert.Throws<Exception>(
+        Assert.ThrowsExactly<Exception>(
             () => context.Children
                 .OrderBy(_ => _.SortOrder)
                 .ToQueryString());
     }
 
     [Test]
-    public void PartialMatch_DoesNotThrow()
+    public async Task PartialMatch_DoesNotThrow()
     {
         using var context = new RedundantEnabledContext(enabled);
 
-        Assert.DoesNotThrow(
+        await Assert.That(
             () => context.Entities
                 .OrderBy(_ => _.Name)
-                .ToQueryString());
+                .ToQueryString()).ThrowsNothing();
     }
 
     [Test]
-    public void ExtraClause_DoesNotThrow()
+    public async Task ExtraClause_DoesNotThrow()
     {
         using var context = new RedundantEnabledContext(enabled);
 
-        Assert.DoesNotThrow(
+        await Assert.That(
             () => context.Entities
                 .OrderBy(_ => _.Name)
                 .ThenByDescending(_ => _.Priority)
                 .ThenBy(_ => _.Id)
-                .ToQueryString());
+                .ToQueryString()).ThrowsNothing();
     }
 
     [Test]
-    public void DifferentDirection_DoesNotThrow()
+    public async Task DifferentDirection_DoesNotThrow()
     {
         using var context = new RedundantEnabledContext(enabled);
 
-        Assert.DoesNotThrow(
+        await Assert.That(
             () => context.Entities
                 .OrderByDescending(_ => _.Name)
                 .ThenByDescending(_ => _.Priority)
-                .ToQueryString());
+                .ToQueryString()).ThrowsNothing();
     }
 
     [Test]
-    public void DifferentProperty_DoesNotThrow()
+    public async Task DifferentProperty_DoesNotThrow()
     {
         using var context = new RedundantEnabledContext(enabled);
 
-        Assert.DoesNotThrow(
+        await Assert.That(
             () => context.Entities
                 .OrderBy(_ => _.Id)
-                .ToQueryString());
+                .ToQueryString()).ThrowsNothing();
     }
 
     [Test]
-    public void ReorderedClauses_DoesNotThrow()
+    public async Task ReorderedClauses_DoesNotThrow()
     {
         using var context = new RedundantEnabledContext(enabled);
 
-        Assert.DoesNotThrow(
+        await Assert.That(
             () => context.Entities
                 .OrderByDescending(_ => _.Priority)
                 .ThenBy(_ => _.Name)
-                .ToQueryString());
+                .ToQueryString()).ThrowsNothing();
     }
 
     [Test]
-    public void NoExplicitOrdering_DoesNotThrow()
+    public async Task NoExplicitOrdering_DoesNotThrow()
     {
         using var context = new RedundantEnabledContext(enabled);
 
-        Assert.DoesNotThrow(
+        await Assert.That(
             () => context.Entities
-                .ToQueryString());
+                .ToQueryString()).ThrowsNothing();
     }
 
     [Test]
-    public void EntityWithoutConfiguration_DoesNotThrow()
+    public async Task EntityWithoutConfiguration_DoesNotThrow()
     {
         using var context = new RedundantEnabledContext(enabled);
 
-        Assert.DoesNotThrow(
+        await Assert.That(
             () => context.Unordered
                 .OrderBy(_ => _.Value)
-                .ToQueryString());
+                .ToQueryString()).ThrowsNothing();
     }
 
     [Test]
-    public void Include_ExactMatch_Throws()
+    public async Task Include_ExactMatch_Throws()
     {
         using var context = new RedundantEnabledContext(enabled);
 
-        var exception = Assert.Throws<Exception>(
+        var exception = Assert.ThrowsExactly<Exception>(
             () => context.Entities
                 .Include(_ => _.Children.OrderBy(child => child.SortOrder))
                 .ToQueryString());
 
-        Assert.That(exception!.Message, Does.Contain("RedundantChild"));
-        Assert.That(exception.Message, Does.Contain("OrderBy(SortOrder)"));
+        await Assert.That(exception!.Message).Contains("RedundantChild");
+        await Assert.That(exception.Message).Contains("OrderBy(SortOrder)");
     }
 
     [Test]
@@ -177,7 +176,7 @@ public class RedundantOrderByTests
     {
         using var context = new RedundantEnabledContext(enabled);
 
-        Assert.Throws<Exception>(
+        Assert.ThrowsExactly<Exception>(
             () => context.Entities
                 .Include(_ => _.Children
                     .Where(child => child.SortOrder > 0)
@@ -186,49 +185,49 @@ public class RedundantOrderByTests
     }
 
     [Test]
-    public void Include_DifferentOrdering_DoesNotThrow()
+    public async Task Include_DifferentOrdering_DoesNotThrow()
     {
         using var context = new RedundantEnabledContext(enabled);
 
-        Assert.DoesNotThrow(
+        await Assert.That(
             () => context.Entities
                 .Include(_ => _.Children.OrderBy(child => child.Title))
-                .ToQueryString());
+                .ToQueryString()).ThrowsNothing();
     }
 
     [Test]
-    public void Include_WithoutOrdering_DoesNotThrow()
+    public async Task Include_WithoutOrdering_DoesNotThrow()
     {
         using var context = new RedundantEnabledContext(enabled);
 
-        Assert.DoesNotThrow(
+        await Assert.That(
             () => context.Entities
                 .Include(_ => _.Children)
-                .ToQueryString());
+                .ToQueryString()).ThrowsNothing();
     }
 
     [Test]
-    public void ExactMatchInsideConcat_DoesNotThrow()
+    public async Task ExactMatchInsideConcat_DoesNotThrow()
     {
         using var context = new RedundantEnabledContext(enabled);
 
         // The default ordering is not applied to a combined sequence, so ordering one
         // side of it is not redundant
-        Assert.DoesNotThrow(
+        await Assert.That(
             () => context.Entities
                 .Where(_ => _.Priority > 1)
                 .OrderBy(_ => _.Name)
                 .ThenByDescending(_ => _.Priority)
                 .Concat(context.Entities.Where(_ => _.Priority <= 1))
-                .ToQueryString());
+                .ToQueryString()).ThrowsNothing();
     }
 
     [Test]
-    public void ExactMatchInsideJoin_DoesNotThrow()
+    public async Task ExactMatchInsideJoin_DoesNotThrow()
     {
         using var context = new RedundantEnabledContext(enabled);
 
-        Assert.DoesNotThrow(
+        await Assert.That(
             () => context.Entities
                 .OrderBy(_ => _.Name)
                 .ThenByDescending(_ => _.Priority)
@@ -237,19 +236,19 @@ public class RedundantOrderByTests
                     entity => entity.Id,
                     child => child.RedundantEntityId,
                     (entity, child) => child.Title)
-                .ToQueryString());
+                .ToQueryString()).ThrowsNothing();
     }
 
     [Test]
-    public void Disabled_DoesNotThrow()
+    public async Task Disabled_DoesNotThrow()
     {
         using var context = new RedundantDisabledContext(disabled);
 
-        Assert.DoesNotThrow(
+        await Assert.That(
             () => context.Entities
                 .OrderBy(_ => _.Name)
                 .ThenByDescending(_ => _.Priority)
-                .ToQueryString());
+                .ToQueryString()).ThrowsNothing();
     }
 }
 

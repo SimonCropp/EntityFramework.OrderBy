@@ -1,4 +1,3 @@
-[TestFixture]
 public class ThrowOnRedundantOrderBySettingTests
 {
     static DbContextOptions unset =
@@ -20,34 +19,34 @@ public class ThrowOnRedundantOrderBySettingTests
             .Options;
 
     [Test]
-    public void ModuleInitializerAppliesTheSetting() =>
-        Assert.That(OrderBySettings.ThrowOnRedundantOrderBy, Is.True);
+    public async Task ModuleInitializerAppliesTheSetting() =>
+        await Assert.That(OrderBySettings.ThrowOnRedundantOrderBy).IsTrue();
 
     [Test]
-    public void NotSetOnTheContext_UsesTheSetting()
+    public async Task NotSetOnTheContext_UsesTheSetting()
     {
         using var context = new UnsetContext(unset);
 
-        var exception = Assert.Throws<Exception>(
+        var exception = Assert.ThrowsExactly<Exception>(
             () => context.Entities
                 .OrderBy(_ => _.Name)
                 .ThenByDescending(_ => _.Priority)
                 .ToQueryString());
 
-        Assert.That(exception!.Message, Does.Contain("SettingsEntity"));
-        Assert.That(exception.Message, Does.Contain("OrderBy(Name).ThenByDescending(Priority)"));
+        await Assert.That(exception!.Message).Contains("SettingsEntity");
+        await Assert.That(exception.Message).Contains("OrderBy(Name).ThenByDescending(Priority)");
     }
 
     [Test]
-    public void FalseOnTheContext_OverridesTheSetting()
+    public async Task FalseOnTheContext_OverridesTheSetting()
     {
         using var context = new OptedOutContext(optedOut);
 
-        Assert.DoesNotThrow(
+        await Assert.That(
             () => context.Entities
                 .OrderBy(_ => _.Name)
                 .ThenByDescending(_ => _.Priority)
-                .ToQueryString());
+                .ToQueryString()).ThrowsNothing();
     }
 
     [Test]
@@ -55,7 +54,7 @@ public class ThrowOnRedundantOrderBySettingTests
     {
         using var context = new OptedInContext(optedIn);
 
-        Assert.Throws<Exception>(
+        Assert.ThrowsExactly<Exception>(
             () => context.Entities
                 .OrderBy(_ => _.Name)
                 .ThenByDescending(_ => _.Priority)
@@ -67,32 +66,32 @@ public class ThrowOnRedundantOrderBySettingTests
     {
         using var context = new UnsetContext(unset);
 
-        Assert.Throws<Exception>(
+        Assert.ThrowsExactly<Exception>(
             () => context.Entities
                 .Include(_ => _.Children.OrderBy(child => child.SortOrder))
                 .ToQueryString());
     }
 
     [Test]
-    public void FalseOnTheContext_OverridesTheSettingForIncludes()
+    public async Task FalseOnTheContext_OverridesTheSettingForIncludes()
     {
         using var context = new OptedOutContext(optedOut);
 
-        Assert.DoesNotThrow(
+        await Assert.That(
             () => context.Entities
                 .Include(_ => _.Children.OrderBy(child => child.SortOrder))
-                .ToQueryString());
+                .ToQueryString()).ThrowsNothing();
     }
 
     [Test]
-    public void NonRedundantOrdering_DoesNotThrow()
+    public async Task NonRedundantOrdering_DoesNotThrow()
     {
         using var context = new UnsetContext(unset);
 
-        Assert.DoesNotThrow(
+        await Assert.That(
             () => context.Entities
                 .OrderByDescending(_ => _.Name)
-                .ToQueryString());
+                .ToQueryString()).ThrowsNothing();
     }
 }
 
