@@ -1,21 +1,12 @@
 #pragma warning disable TUnit0023 // LocalDb instances are intentionally left open
 public class RequireOrderingTests
 {
-    static SqlInstance<ContextMissingOrdering> sqlInstanceWithMissing = null!;
     static SqlInstance<ContextAllOrdering> sqlInstanceWithAll = null!;
     static SqlInstance<ContextMissingOrderingNoValidation> sqlInstanceNoValidation = null!;
 
     [Before(Class)]
     public static void Setup()
     {
-        sqlInstanceWithMissing = new(
-            constructInstance: builder =>
-            {
-                builder.UseDefaultOrderBy(requireOrderingForAllEntities: true);
-                return new(builder.Options);
-            },
-            buildTemplate: _ => _.Database.EnsureCreatedAsync());
-
         sqlInstanceWithAll = new(
             constructInstance: builder =>
             {
@@ -33,19 +24,20 @@ public class RequireOrderingTests
             buildTemplate: _ => _.Database.EnsureCreatedAsync());
     }
 
+    // Ordering is validated when the query is compiled, before a connection is opened, so the
+    // throwing tests use a context whose connection is never opened
+    static ContextMissingOrdering NewModelOnlyContextMissingOrdering()
+    {
+        var builder = new DbContextOptionsBuilder<ContextMissingOrdering>()
+            .UseSqlServer("Server=.;Database=Test;");
+        builder.UseDefaultOrderBy(requireOrderingForAllEntities: true);
+        return new(builder.Options);
+    }
+
     [Test]
     public async Task RequireOrderingForAllEntities_ThrowsWhenEntityMissingOrdering()
     {
-        await using var database = await sqlInstanceWithMissing.Build();
-        await using var context = database.NewDbContext();
-
-        context.EntitiesWithoutDefaultOrder
-            .Add(
-                new()
-                {
-                    Value = "Test"
-                });
-        await context.SaveChangesAsync();
+        await using var context = NewModelOnlyContextMissingOrdering();
 
         // First query should throw because EntityWithoutDefaultOrder doesn't have ordering
         var ex = await Assert.ThrowsExactlyAsync<Exception>(() => context.EntitiesWithoutDefaultOrder.ToListAsync());
@@ -57,8 +49,7 @@ public class RequireOrderingTests
     [Test]
     public async Task RequireOrderingForAllEntities_ThrowsOnEveryQueryNotJustTheFirst()
     {
-        await using var database = await sqlInstanceWithMissing.Build();
-        await using var context = database.NewDbContext();
+        await using var context = NewModelOnlyContextMissingOrdering();
 
         await Assert.ThrowsExactlyAsync<Exception>(() => context.EntitiesWithoutDefaultOrder.ToListAsync());
 
