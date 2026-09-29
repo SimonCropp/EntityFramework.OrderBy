@@ -479,8 +479,7 @@ public class DefaultOrderByTests
     [Test]
     public async Task ToQueryString_WorksWithDefaultOrdering()
     {
-        await using var database = await ModuleInitializer.SqlInstance.Build();
-        await using var context = database.NewDbContext();
+        await using var context = NewModelOnlyContext();
 
         // ToQueryString should not throw - expression must be translatable
         var query = context.TestEntities.Where(_ => _.Name != "");
@@ -493,8 +492,7 @@ public class DefaultOrderByTests
     [Test]
     public async Task ToQueryString_WorksWithWhereAndDefaultOrdering()
     {
-        await using var database = await ModuleInitializer.SqlInstance.Build();
-        await using var context = database.NewDbContext();
+        await using var context = NewModelOnlyContext();
 
         // Complex query with Where and default ordering
         var query = context.TestEntities
@@ -548,8 +546,7 @@ public class DefaultOrderByTests
     [Test]
     public async Task ToQueryString_WithNullableStringProperty()
     {
-        await using var database = await ModuleInitializer.SqlInstance.Build();
-        await using var context = database.NewDbContext();
+        await using var context = NewModelOnlyContext();
 
         // This reproduces the GraphQL scenario with nullable string properties
         var query = context.TestEntities
@@ -625,8 +622,7 @@ public class DefaultOrderByTests
     [Test]
     public async Task ToQueryString_WithSelectProjection_ShowsOrderByBeforeSelect()
     {
-        await using var database = await ModuleInitializer.SqlInstance.Build();
-        await using var context = database.NewDbContext();
+        await using var context = NewModelOnlyContext();
 
         // Verify the SQL shows ORDER BY is applied correctly
         var query = context.TestEntities
@@ -682,8 +678,7 @@ public class DefaultOrderByTests
     [Test]
     public async Task ToQueryString_WithWhereNullComparisonAndSelectProjection()
     {
-        await using var database = await ModuleInitializer.SqlInstance.Build();
-        await using var context = database.NewDbContext();
+        await using var context = NewModelOnlyContext();
 
         // This exact scenario was failing in GraphQL.EntityFramework
         var query = context.TestEntities
@@ -1000,5 +995,13 @@ public class DefaultOrderByTests
         await Assert.That(results[0].Employees[0].Id).IsLessThan(results[0].Employees[1].Id);
 
         await Verify(results);
+    }
+
+    static TestDbContext NewModelOnlyContext()
+    {
+        var builder = new DbContextOptionsBuilder<TestDbContext>()
+            .UseSqlServer("Server=.;Database=Test;");
+        builder.UseDefaultOrderBy();
+        return new(builder.Options);
     }
 }
