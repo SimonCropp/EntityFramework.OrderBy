@@ -14,13 +14,13 @@
     <PackageVersion Include="TUnit" Version="1.72.16" />
     <PackageVersion Include="ProjectDefaults" Version="1.0.184" />
     <PackageVersion Include="Verify.TUnit" Version="33.3.0" />
-    <PackageVersion Include="Verify.EntityFramework" Version="16.0.0-beta.7" />
+    <PackageVersion Include="Verify.EntityFramework" Version="16.0.0-beta.8" />
     <PackageVersion Include="Verify.SqlServer" Version="12.2.0" />
-    <PackageVersion Include="Argon" Version="0.37.0" />
+    <PackageVersion Include="Argon" Version="0.38.0" />
     <PackageVersion Include="DiffEngine" Version="20.7.0" />
     <PackageVersion Include="EmptyFiles" Version="8.20.0" />
     <PackageVersion Include="SimpleInfoName" Version="3.2.0" />
     <PackageVersion Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.53.3" />
-    <PackageVersion Include="Verify" Version="33.3.0" />
+    <PackageVersion Include="Verify" Version="33.3.1" />
   </ItemGroup>
 </Project>
