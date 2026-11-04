@@ -148,6 +148,28 @@ public class SnippetExamples
         #endregion
     }
 
+    static async Task ProjectionSupport()
+    {
+        AppDbContext context = null!;
+
+        #region ProjectionSupport
+
+        // Departments ordered by DisplayOrder
+        // Employees ordered by HireDate, then Salary descending
+        var departments = await context.Departments
+            .Select(_ => new
+            {
+                _.Name,
+                Employees = _.Employees
+                    .Where(employee => employee.Salary > 0)
+                    .Select(employee => employee.Name)
+                    .ToList()
+            })
+            .ToListAsync();
+
+        #endregion
+    }
+
     static void MultiColumnOrdering(ModelBuilder builder)
     {
         #region MultiColumnOrdering

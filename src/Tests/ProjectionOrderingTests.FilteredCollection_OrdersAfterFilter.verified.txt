@@ -1,0 +1,44 @@
+﻿{
+  target: [
+    {
+      Name: Engineering,
+      Employees: [
+        Bob,
+        Charlie
+      ]
+    },
+    {
+      Name: Sales,
+      Employees: [
+        Diana,
+        Eve
+      ]
+    },
+    {
+      Name: HR,
+      Employees: [
+        Frank
+      ]
+    }
+  ],
+  sql: {
+    Text:
+select   d.Name,
+         d.Id,
+         e0.Name,
+         e0.Id
+from     Departments as d
+         left outer join
+         (select e.Name,
+                 e.Id,
+                 e.HireDate,
+                 e.DepartmentId
+          from   Employees as e
+          where  e.Name <> N'Alice') as e0
+         on d.Id = e0.DepartmentId
+order by d.DisplayOrder,
+         d.Id,
+         e0.HireDate desc,
+    HasTransaction: false
+  }
+}

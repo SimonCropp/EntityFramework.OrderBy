@@ -1,5 +1,6 @@
 /// <summary>
-/// Scans the outermost chain of a query for existing ordering and for Include calls.
+/// Scans the outermost chain of a query for existing ordering, for Include calls, and for Select
+/// projections.
 /// </summary>
 /// <remarks>
 /// Only the chain is walked, never the lambdas passed to it. Ordering nested inside a lambda,
@@ -8,10 +9,11 @@
 /// </remarks>
 static class QueryAnalyzer
 {
-    public static (bool HasOrdering, bool HasInclude) Analyze(Expression expression)
+    public static (bool HasOrdering, bool HasInclude, bool HasSelect) Analyze(Expression expression)
     {
         var hasOrdering = false;
         var hasInclude = false;
+        var hasSelect = false;
 
         while (expression is MethodCallExpression call)
         {
@@ -23,6 +25,11 @@ static class QueryAnalyzer
                 name is "Include" or "ThenInclude")
             {
                 hasInclude = true;
+            }
+            else if (declaringType == typeof(Queryable) &&
+                     name == "Select")
+            {
+                hasSelect = true;
             }
             else if ((declaringType == typeof(Queryable) ||
                       declaringType == typeof(Enumerable)) &&
@@ -45,7 +52,7 @@ static class QueryAnalyzer
             expression = call.Arguments[0];
         }
 
-        return (hasOrdering, hasInclude);
+        return (hasOrdering, hasInclude, hasSelect);
     }
 
     public static bool HasOrdering(Expression expression) =>

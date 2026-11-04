@@ -24,18 +24,24 @@ sealed class Interceptor : IQueryExpressionInterceptor
         var detectRedundantOrdering = extension?.ThrowOnRedundantOrderBy ??
                                       OrderBySettings.ThrowOnRedundantOrderBy;
 
-        // Analyze the query for ordering and includes in a single pass
-        var (hasOrdering, hasInclude) = QueryAnalyzer.Analyze(query);
+        // Analyze the query for ordering, includes and projections in a single pass
+        var (hasOrdering, hasInclude, hasSelect) = QueryAnalyzer.Analyze(query);
 
         var queryWithOrderedIncludes = query;
 
         // Ordering nested collections rewrites the whole tree, so only do it when there is an
-        // Include to rewrite. Neither flag above can change as a result, since the rewrite only
-        // touches the inside of Include lambdas.
+        // Include or a projection to rewrite. None of the flags above can change as a result, since
+        // the rewrites only touch the inside of Include and Select lambdas.
         if (hasInclude)
         {
             var visitor = new IncludeOrderingApplicator(model, detectRedundantOrdering);
-            queryWithOrderedIncludes = visitor.Visit(query);
+            queryWithOrderedIncludes = visitor.Visit(queryWithOrderedIncludes);
+        }
+
+        if (hasSelect)
+        {
+            var visitor = new ProjectionOrderingApplicator(model, detectRedundantOrdering);
+            queryWithOrderedIncludes = visitor.Visit(queryWithOrderedIncludes);
         }
 
         if (hasOrdering)

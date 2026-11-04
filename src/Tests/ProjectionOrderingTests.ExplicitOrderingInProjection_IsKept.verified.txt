@@ -1,0 +1,40 @@
+﻿{
+  target: [
+    {
+      Name: Engineering,
+      Employees: [
+        Alice,
+        Bob,
+        Charlie
+      ]
+    },
+    {
+      Name: Sales,
+      Employees: [
+        Diana,
+        Eve
+      ]
+    },
+    {
+      Name: HR,
+      Employees: [
+        Frank
+      ]
+    }
+  ],
+  sql: {
+    Text:
+select   d.Name,
+         d.Id,
+         e.Name,
+         e.Id
+from     Departments as d
+         left outer join
+         Employees as e
+         on d.Id = e.DepartmentId
+order by d.DisplayOrder,
+         d.Id,
+         e.Name,
+    HasTransaction: false
+  }
+}

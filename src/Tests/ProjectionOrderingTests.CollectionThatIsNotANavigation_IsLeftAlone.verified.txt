@@ -1,0 +1,11 @@
+﻿DECLARE @names1 nvarchar(4000) = N'Bob';
+DECLARE @names2 nvarchar(4000) = N'Alice';
+
+SELECT [d].[Name], [d].[Id], [e0].[Name], [e0].[Id]
+FROM [Departments] AS [d]
+LEFT JOIN (
+    SELECT [e].[Name], [e].[Id], [e].[HireDate], [e].[DepartmentId]
+    FROM [Employees] AS [e]
+    WHERE [e].[Name] IN (@names1, @names2)
+) AS [e0] ON [d].[Id] = [e0].[DepartmentId]
+ORDER BY [d].[DisplayOrder], [d].[Id], [e0].[HireDate] DESC

@@ -1,0 +1,50 @@
+﻿{
+  target: [
+    {
+      Name: Engineering,
+      Employees: [
+        Bob,
+        Alice
+      ]
+    },
+    {
+      Name: Sales,
+      Employees: [
+        Diana,
+        Eve
+      ]
+    },
+    {
+      Name: HR,
+      Employees: [
+        Frank
+      ]
+    }
+  ],
+  sql: {
+    Text:
+select   d.Name,
+         d.Id,
+         e1.Name,
+         e1.Id
+from     Departments as d
+         left outer join
+         (select e0.Name,
+                 e0.Id,
+                 e0.DepartmentId,
+                 e0.HireDate
+          from   (select e.Name,
+                         e.Id,
+                         e.DepartmentId,
+                         ROW_NUMBER() over (partition by e.DepartmentId order by e.HireDate desc) as row,
+                         e.HireDate
+                  from   Employees as e) as e0
+          where  e0.row <= 2) as e1
+         on d.Id = e1.DepartmentId
+order by d.DisplayOrder,
+         d.Id,
+         e1.DepartmentId,
+         e1.HireDate desc,
+    HasTransaction: false
+  }
+}
