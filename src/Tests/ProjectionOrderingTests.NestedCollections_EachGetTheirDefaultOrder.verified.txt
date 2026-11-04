@@ -1,0 +1,75 @@
+﻿{
+  target: [
+    {
+      Name: Engineering,
+      Employees: [
+        {
+          Name: Bob,
+          Tasks: [
+            Monitor,
+            Deploy
+          ]
+        },
+        {
+          Name: Alice,
+          Tasks: [
+            Code review,
+            Testing,
+            Design
+          ]
+        },
+        {
+          Name: Charlie
+        }
+      ]
+    },
+    {
+      Name: Sales,
+      Employees: [
+        {
+          Name: Diana
+        },
+        {
+          Name: Eve
+        }
+      ]
+    },
+    {
+      Name: HR,
+      Employees: [
+        {
+          Name: Frank
+        }
+      ]
+    }
+  ],
+  sql: {
+    Text:
+select   d.Name,
+         d.Id,
+         s.Name,
+         s.Id,
+         s.Title,
+         s.Id0
+from     Departments as d
+         left outer join
+         (select e.Name,
+                 e.Id,
+                 e0.Title,
+                 e0.Id as Id0,
+                 e.HireDate,
+                 e0.Priority,
+                 e.DepartmentId
+          from   Employees as e
+                 left outer join
+                 EmployeeTasks as e0
+                 on e.Id = e0.EmployeeId) as s
+         on d.Id = s.DepartmentId
+order by d.DisplayOrder,
+         d.Id,
+         s.HireDate desc,
+         s.Id,
+         s.Priority,
+    HasTransaction: false
+  }
+}

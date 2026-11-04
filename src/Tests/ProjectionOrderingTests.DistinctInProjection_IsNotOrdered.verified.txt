@@ -1,0 +1,8 @@
+﻿SELECT [d].[Name], [d].[Id], [e0].[Name]
+FROM [Departments] AS [d]
+OUTER APPLY (
+    SELECT DISTINCT [e].[Name]
+    FROM [Employees] AS [e]
+    WHERE [d].[Id] = [e].[DepartmentId]
+) AS [e0]
+ORDER BY [d].[DisplayOrder], [d].[Id]

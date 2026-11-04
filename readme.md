@@ -16,6 +16,7 @@ https://nuget.org/packages/EfOrderBy/
 
 - **Automatic ordering**: Queries without explicit `OrderBy` automatically use configured default ordering
 - **Include() support**: Nested collections in `.Include()` expressions are automatically ordered
+- **Projection support**: Collection navigations loaded by a `.Select()` projection are automatically ordered
 - **Deterministic paging**: Ordering is applied before `Skip`/`Take`/`First`, so pages and single results are stable
 - **Inheritance support**: Ordering configured on a base entity type is automatically inherited by derived types (TPH)
 - **Fluent configuration**: Configure default ordering using the familiar EF Core fluent API
@@ -132,6 +133,34 @@ var departments = await context.Departments
 <!-- endSnippet -->
 
 
+## Projection Support
+
+A collection navigation read inside a `Select` projection is loaded by a subquery of its own, and is ordered the same way as one in an `Include`:
+
+<!-- snippet: ProjectionSupport -->
+<a id='snippet-ProjectionSupport'></a>
+```cs
+// Departments ordered by DisplayOrder
+// Employees ordered by HireDate, then Salary descending
+var departments = await context.Departments
+    .Select(_ => new
+    {
+        _.Name,
+        Employees = _.Employees
+            .Where(employee => employee.Salary > 0)
+            .Select(employee => employee.Name)
+            .ToList()
+    })
+    .ToListAsync();
+```
+<sup><a href='/src/Tests/Snippets.cs#L155-L170' title='Snippet source file'>snippet source</a> | <a href='#snippet-ProjectionSupport' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+The ordering goes after any `Where` filters and before the operators that project the entity away or choose which rows come back: `Select`, `Skip`, `Take`, `First`, `FirstOrDefault`, `Last`, `LastOrDefault`, `ElementAt`, `ElementAtOrDefault`, `ToList`, `ToArray` and `AsEnumerable`. A navigation bound into the result as it is, such as `new { _.Name, _.Employees }`, is ordered too.
+
+A collection whose order cannot reach the result is left alone: one that is only aggregated, with `Count`, `Any`, `Sum` and the like, or one composed with an operator EF Core drops ordering beneath, such as `Distinct`. Explicit ordering inside the projection is kept, and is checked by [redundant ordering detection](#detect-redundant-ordering) the same way as ordering inside an `Include`.
+
+
 ## Inheritance Support
 
 When using TPH (Table Per Hierarchy) inheritance, ordering configured on a base entity type is automatically inherited by derived types. This eliminates the need to duplicate `.OrderBy()` on every derived type.
@@ -182,7 +211,7 @@ public class InheritanceDbContext : DbContext
     public DbSet<DerivedEntityB> DerivedEntitiesB => Set<DerivedEntityB>();
 }
 ```
-<sup><a href='/src/Tests/Snippets.cs#L228-L273' title='Snippet source file'>snippet source</a> | <a href='#snippet-InheritanceOrdering' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L250-L295' title='Snippet source file'>snippet source</a> | <a href='#snippet-InheritanceOrdering' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Behavior:
@@ -205,7 +234,7 @@ builder.Entity<Product>()
     .ThenBy(_ => _.Name)
     .ThenByDescending(_ => _.Price);
 ```
-<sup><a href='/src/Tests/Snippets.cs#L153-L160' title='Snippet source file'>snippet source</a> | <a href='#snippet-MultiColumnOrdering' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L175-L182' title='Snippet source file'>snippet source</a> | <a href='#snippet-MultiColumnOrdering' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -548,7 +577,7 @@ public class AppDbContext : DbContext
     public DbSet<Employee> Employees => Set<Employee>();
 }
 ```
-<sup><a href='/src/Tests/Snippets.cs#L164-L207' title='Snippet source file'>snippet source</a> | <a href='#snippet-CompleteExample' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Tests/Snippets.cs#L186-L229' title='Snippet source file'>snippet source</a> | <a href='#snippet-CompleteExample' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 

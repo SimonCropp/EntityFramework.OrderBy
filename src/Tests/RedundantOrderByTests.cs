@@ -207,6 +207,90 @@ public class RedundantOrderByTests
     }
 
     [Test]
+    public async Task Projection_ExactMatch_Throws()
+    {
+        using var context = new RedundantEnabledContext(enabled);
+
+        var exception = Assert.ThrowsExactly<Exception>(
+            () => context.Entities
+                .Select(_ => new
+                {
+                    _.Name,
+                    Children = _.Children
+                        .OrderBy(child => child.SortOrder)
+                        .Select(child => child.Title)
+                        .ToList()
+                })
+                .ToQueryString());
+
+        await Assert.That(exception!.Message).Contains("RedundantChild");
+        await Assert.That(exception.Message).Contains("OrderBy(SortOrder)");
+    }
+
+    [Test]
+    public void Projection_ExactMatchWithFilter_Throws()
+    {
+        using var context = new RedundantEnabledContext(enabled);
+
+        Assert.ThrowsExactly<Exception>(
+            () => context.Entities
+                .Select(_ => new
+                {
+                    Children = _.Children
+                        .Where(child => child.SortOrder > 0)
+                        .OrderBy(child => child.SortOrder)
+                        .ToList()
+                })
+                .ToQueryString());
+    }
+
+    [Test]
+    public async Task Projection_DifferentOrdering_DoesNotThrow()
+    {
+        using var context = new RedundantEnabledContext(enabled);
+
+        await Assert.That(
+            () => context.Entities
+                .Select(_ => new
+                {
+                    Children = _.Children
+                        .OrderBy(child => child.Title)
+                        .ToList()
+                })
+                .ToQueryString()).ThrowsNothing();
+    }
+
+    [Test]
+    public async Task Projection_WithoutOrdering_DoesNotThrow()
+    {
+        using var context = new RedundantEnabledContext(enabled);
+
+        await Assert.That(
+            () => context.Entities
+                .Select(_ => new
+                {
+                    Children = _.Children.ToList()
+                })
+                .ToQueryString()).ThrowsNothing();
+    }
+
+    [Test]
+    public async Task Projection_ExactMatch_DetectionDisabled_DoesNotThrow()
+    {
+        using var context = new RedundantDisabledContext(disabled);
+
+        await Assert.That(
+            () => context.Entities
+                .Select(_ => new
+                {
+                    Children = _.Children
+                        .OrderBy(child => child.SortOrder)
+                        .ToList()
+                })
+                .ToQueryString()).ThrowsNothing();
+    }
+
+    [Test]
     public async Task ExactMatchInsideConcat_DoesNotThrow()
     {
         using var context = new RedundantEnabledContext(enabled);

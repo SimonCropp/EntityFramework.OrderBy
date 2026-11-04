@@ -1,0 +1,15 @@
+﻿SELECT [d].[Name], (
+    SELECT COUNT(*)
+    FROM [Employees] AS [e]
+    WHERE [d].[Id] = [e].[DepartmentId]) AS [Count], CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Employees] AS [e0]
+        WHERE [d].[Id] = [e0].[DepartmentId] AND [e0].[HireDate] > '2024-01-01T00:00:00.0000000') THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END AS [AnyRecent], (
+    SELECT COALESCE(SUM([e1].[Salary]), 0)
+    FROM [Employees] AS [e1]
+    WHERE [d].[Id] = [e1].[DepartmentId]) AS [Payroll]
+FROM [Departments] AS [d]
+ORDER BY [d].[DisplayOrder]

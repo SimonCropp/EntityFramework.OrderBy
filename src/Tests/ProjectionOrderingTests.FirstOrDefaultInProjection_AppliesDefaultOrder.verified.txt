@@ -1,0 +1,27 @@
+﻿{
+  target: [
+    {
+      Name: Engineering,
+      NewestHire: Bob
+    },
+    {
+      Name: Sales,
+      NewestHire: Diana
+    },
+    {
+      Name: HR,
+      NewestHire: Frank
+    }
+  ],
+  sql: {
+    Text:
+select   d.Name,
+         (select   top (1) e.Name
+          from     Employees as e
+          where    d.Id = e.DepartmentId
+          order by e.HireDate desc) as NewestHire
+from     Departments as d
+order by d.DisplayOrder,
+    HasTransaction: false
+  }
+}
