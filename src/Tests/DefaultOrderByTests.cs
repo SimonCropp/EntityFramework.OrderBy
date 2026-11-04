@@ -790,9 +790,9 @@ public class DefaultOrderByTests
 
         // Child ordering is applied within each parent: HireDate descending
         var engEmployees = results[0].Employees;
-        await Assert.That(engEmployees[0].HireDate).IsEqualTo(new DateTime(2024, 3, 20));  // Bob (newest)
-        await Assert.That(engEmployees[1].HireDate).IsEqualTo(new DateTime(2024, 1, 15));  // Alice
-        await Assert.That(engEmployees[2].HireDate).IsEqualTo(new DateTime(2023, 6, 10));  // Charlie (oldest)
+        await Assert.That(engEmployees[0].HireDate).IsEqualTo(new(2024, 3, 20));  // Bob (newest)
+        await Assert.That(engEmployees[1].HireDate).IsEqualTo(new(2024, 1, 15));  // Alice
+        await Assert.That(engEmployees[2].HireDate).IsEqualTo(new(2023, 6, 10));  // Charlie (oldest)
 
         // The SQL will have: ORDER BY d.DisplayOrder, d.Id, e.HireDate DESC
         // Where:

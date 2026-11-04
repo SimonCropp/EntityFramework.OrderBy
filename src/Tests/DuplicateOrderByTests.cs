@@ -14,7 +14,7 @@ public class DuplicateOrderByTests
             _ = context.Model;
         });
 
-        await Assert.That(exception!.Message).Contains("DuplicateTestEntity");
+        await Assert.That(exception.Message).Contains("DuplicateTestEntity");
         await Assert.That(exception.Message).Contains("ThenBy");
     }
 
@@ -32,7 +32,7 @@ public class DuplicateOrderByTests
             _ = context.Model;
         });
 
-        await Assert.That(exception!.Message).Contains("DuplicateTestEntity");
+        await Assert.That(exception.Message).Contains("DuplicateTestEntity");
         await Assert.That(exception.Message).Contains("ThenBy");
     }
 
@@ -50,7 +50,7 @@ public class DuplicateOrderByTests
             _ = context.Model;
         });
 
-        await Assert.That(exception!.Message).Contains("DuplicateTestEntity");
+        await Assert.That(exception.Message).Contains("DuplicateTestEntity");
     }
 
     [Test]
@@ -67,7 +67,7 @@ public class DuplicateOrderByTests
             _ = context.Model;
         });
 
-        await Assert.That(exception!.Message).Contains("DuplicateTestEntity");
+        await Assert.That(exception.Message).Contains("DuplicateTestEntity");
     }
 
     [Test]

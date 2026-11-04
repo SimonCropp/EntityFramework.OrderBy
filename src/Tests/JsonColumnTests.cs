@@ -235,7 +235,7 @@ public class JsonColumnTests
         var exception = Assert.ThrowsExactly<Exception>(
             () => context.Entities
                 .OrderBy(_ => _.Meta.Rank)
-                .ToQueryString())!;
+                .ToQueryString());
 
         await Assert.That(exception.Message).Contains("JsonRedundantEntity");
         await Assert.That(exception.Message).Contains("OrderBy(Meta.Rank)");

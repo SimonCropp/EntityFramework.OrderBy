@@ -44,8 +44,7 @@ sealed class ProjectionOrderingApplicator(IModel model, bool detectRedundantOrde
     static bool IsQueryableSelect(MethodCallExpression node) =>
         node.Method.DeclaringType == typeof(Queryable) &&
         node.Method.Name == nameof(Queryable.Select) &&
-        node.Arguments.Count == 2 &&
-        node.Arguments[1] is UnaryExpression { Operand: LambdaExpression };
+        node.Arguments is [_, UnaryExpression { Operand: LambdaExpression }];
 
     Expression VisitSelect(MethodCallExpression node)
     {

@@ -48,8 +48,11 @@ class FinalizingConvention(int? maxIndexableStringLength) : IModelFinalizingConv
             // JSON column. That is not a column of this entity's table, so there is nothing to
             // name in an index. The ordering itself still applies, the same as the skip below.
             if (createIndexes &&
-                !config.IsInherited &&
-                !config.HasNestedPath &&
+                config is
+                {
+                    IsInherited: false,
+                    HasNestedPath: false
+                } &&
                 !HasLargeStringProperty(entity, config, maxIndexableStringLength))
             {
                 var index = config.CustomIndexName ?? $"IX_{entity.ClrType.Name}_DefaultOrder";

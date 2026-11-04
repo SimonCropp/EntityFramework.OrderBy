@@ -12,7 +12,7 @@ public class InterceptorRegistrationTests
             using var context = new ContextWithoutUseDefaultOrderBy(options);
             // Force model creation
             _ = context.Model;
-        })!;
+        });
 
         await Assert.That(exception.Message).Contains("UseDefaultOrderBy()");
         await Assert.That(exception.Message).Contains("must be called");
@@ -30,7 +30,7 @@ public class InterceptorRegistrationTests
             using var context = new ContextWithoutUseDefaultOrderByDescending(options);
             // Force model creation
             _ = context.Model;
-        })!;
+        });
 
         await Assert.That(exception.Message).Contains("UseDefaultOrderBy()");
         await Assert.That(exception.Message).Contains("must be called");

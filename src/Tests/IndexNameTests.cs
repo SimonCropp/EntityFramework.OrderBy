@@ -27,7 +27,7 @@ public class IndexNameTests
         {
             using var context = new ContextWithLongEntityName(CreateOptions());
             _ = context.Model;
-        })!;
+        });
 
         await Assert.That(exception.Message).Contains("exceeds the maximum length of 128");
         await Assert.That(exception.Message).Contains("WithIndexName()");
@@ -54,7 +54,7 @@ public class IndexNameTests
         {
             using var context = new ContextWithTooLongCustomIndexName(CreateOptions());
             _ = context.Model;
-        })!;
+        });
 
         await Assert.That(exception.Message).Contains("exceeds maximum length of 128");
     }
@@ -66,7 +66,7 @@ public class IndexNameTests
         {
             using var context = new ContextWithEmptyCustomIndexName(CreateOptions());
             _ = context.Model;
-        })!;
+        });
 
         await Assert.That(exception.Message).Contains("cannot be null or whitespace");
     }
@@ -89,7 +89,7 @@ public class IndexNameTests
         {
             using var context = new ContextWithIndexCreationDisabledAndWithIndexName(CreateOptions(createIndexes: false));
             _ = context.Model;
-        })!;
+        });
 
         await Assert.That(exception.Message).Contains("index creation is disabled");
     }

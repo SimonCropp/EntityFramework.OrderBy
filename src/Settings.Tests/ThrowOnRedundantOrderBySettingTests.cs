@@ -25,7 +25,7 @@ public class ThrowOnRedundantOrderBySettingTests
     [Test]
     public async Task NotSetOnTheContext_UsesTheSetting()
     {
-        using var context = new UnsetContext(unset);
+        await using var context = new UnsetContext(unset);
 
         var exception = Assert.ThrowsExactly<Exception>(
             () => context.Entities
@@ -33,7 +33,7 @@ public class ThrowOnRedundantOrderBySettingTests
                 .ThenByDescending(_ => _.Priority)
                 .ToQueryString());
 
-        await Assert.That(exception!.Message).Contains("SettingsEntity");
+        await Assert.That(exception.Message).Contains("SettingsEntity");
         await Assert.That(exception.Message).Contains("OrderBy(Name).ThenByDescending(Priority)");
     }
 

@@ -125,7 +125,7 @@ public class MigrationTests
             _ = context.Model;
         });
 
-        await Assert.That(exception!.Message).Contains("SharedEntity");
+        await Assert.That(exception.Message).Contains("SharedEntity");
         await Assert.That(exception.Message).Contains("Conflicting");
     }
 }

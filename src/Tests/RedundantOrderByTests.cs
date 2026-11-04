@@ -23,7 +23,7 @@ public class RedundantOrderByTests
                 .ThenByDescending(_ => _.Priority)
                 .ToQueryString());
 
-        await Assert.That(exception!.Message).Contains("RedundantEntity");
+        await Assert.That(exception.Message).Contains("RedundantEntity");
         await Assert.That(exception.Message).Contains("OrderBy(Name).ThenByDescending(Priority)");
     }
 
@@ -160,14 +160,14 @@ public class RedundantOrderByTests
     [Test]
     public async Task Include_ExactMatch_Throws()
     {
-        using var context = new RedundantEnabledContext(enabled);
+        await using var context = new RedundantEnabledContext(enabled);
 
         var exception = Assert.ThrowsExactly<Exception>(
             () => context.Entities
                 .Include(_ => _.Children.OrderBy(child => child.SortOrder))
                 .ToQueryString());
 
-        await Assert.That(exception!.Message).Contains("RedundantChild");
+        await Assert.That(exception.Message).Contains("RedundantChild");
         await Assert.That(exception.Message).Contains("OrderBy(SortOrder)");
     }
 
@@ -223,7 +223,7 @@ public class RedundantOrderByTests
                 })
                 .ToQueryString());
 
-        await Assert.That(exception!.Message).Contains("RedundantChild");
+        await Assert.That(exception.Message).Contains("RedundantChild");
         await Assert.That(exception.Message).Contains("OrderBy(SortOrder)");
     }
 
