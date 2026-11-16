@@ -381,6 +381,12 @@ public class JsonDbContext(DbContextOptions<JsonDbContext> options) :
     public DbSet<JsonArticle> Articles => Set<JsonArticle>();
     public DbSet<JsonItem> Items => Set<JsonItem>();
 
+    // EF Core 11 warns that an owned collection mapped to JSON is obsolete, and EfLocalDb turns
+    // every warning into an exception. Owned JSON collections are still supported and still in
+    // use, so Tags stays an owned collection to keep covering how they are ordered.
+    protected override void OnConfiguring(DbContextOptionsBuilder builder) =>
+        builder.ConfigureWarnings(_ => _.Ignore(RelationalEventId.OwnedEntityMappedToJsonCollectionWarning));
+
     protected override void OnModelCreating(ModelBuilder model)
     {
         base.OnModelCreating(model);

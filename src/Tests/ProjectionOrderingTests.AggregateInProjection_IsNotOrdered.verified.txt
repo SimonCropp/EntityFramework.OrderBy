@@ -8,7 +8,7 @@
         WHERE [d].[Id] = [e0].[DepartmentId] AND [e0].[HireDate] > '2024-01-01T00:00:00.0000000') THEN CAST(1 AS bit)
     ELSE CAST(0 AS bit)
 END AS [AnyRecent], (
-    SELECT COALESCE(SUM([e1].[Salary]), 0)
+    SELECT ISNULL(SUM([e1].[Salary]), 0)
     FROM [Employees] AS [e1]
     WHERE [d].[Id] = [e1].[DepartmentId]) AS [Payroll]
 FROM [Departments] AS [d]
