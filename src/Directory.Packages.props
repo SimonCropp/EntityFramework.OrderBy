@@ -10,7 +10,7 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="11.0.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="11.0.0" />
-    <PackageVersion Include="EfLocalDb" Version="28.0.0" />
+    <PackageVersion Include="EfLocalDb" Version="28.1.0" />
     <PackageVersion Include="TUnit" Version="1.85.0" />
     <PackageVersion Include="ProjectDefaults" Version="1.0.189" />
     <PackageVersion Include="Verify.TUnit" Version="33.4.0" />
